@@ -195,38 +195,6 @@ Deno.serve(async (req) => {
       return json({ ok: true, col: newColLetter, existed: false })
     }
 
-    // ── Action: sync total points to "Top 50 Members" tab ────────
-    if (body.action === 'sync_total') {
-      const { member_id, total } = body
-
-      const sb = createClient(SUPABASE_URL, SERVICE_KEY)
-      const { data: member, error: me } = await sb
-        .from('members').select('name, first_name, last_name').eq('id', member_id).single()
-      if (me) throw me
-
-      const firstName = (member.first_name ?? member.name?.split(' ')[0] ?? '').trim()
-      const lastName  = (member.last_name  ?? member.name?.split(' ').slice(1).join(' ') ?? '').trim()
-
-      const token = await getToken()
-
-      // Find the member row by Last Name (col E) and First Name (col F)
-      const nameRows = await sheetsGet(token, "'Top 50 Members'!E:F")
-      let rowIdx = -1
-      for (let i = 1; i < nameRows.length; i++) {
-        const rLast  = (nameRows[i][0] ?? '').trim().toLowerCase()
-        const rFirst = (nameRows[i][1] ?? '').trim().toLowerCase()
-        if (rLast === lastName.toLowerCase() && rFirst === firstName.toLowerCase()) {
-          rowIdx = i; break
-        }
-      }
-
-      // Member may not be in the tab yet — skip gracefully
-      if (rowIdx < 0) return json({ ok: true, skipped: true, reason: `Member "${firstName} ${lastName}" not found in Top 50 Members tab` })
-
-      const cellRef = `'Top 50 Members'!G${rowIdx + 1}`
-      await sheetsSet(token, cellRef, total)
-      return json({ ok: true, cell: cellRef, value: total })
-    }
 
     // ── Original action: update a single cell for an assignment ──
     const { member_id, category, event_name, value } = body

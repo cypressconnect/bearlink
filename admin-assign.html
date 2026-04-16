@@ -143,7 +143,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 <script type="module">
 import { requireAdmin } from './js/auth.js'
 import { supabase } from './js/supabase-client.js'
-import { assignPoints, recalcMemberTotal, triggerSheetSync, triggerSheetTotalSync } from './js/data.js'
+import { assignPoints, recalcMemberTotal, triggerSheetSync } from './js/data.js'
 
 await requireAdmin()
 
@@ -271,9 +271,8 @@ window.submitPoints = async function() {
         // Always save to Supabase for all categories
         await assignPoints(eventId, memberIds, ev.point_value)
 
-        const memberTotals = {}
         for (const memberId of memberIds) {
-            memberTotals[memberId] = await recalcMemberTotal(memberId)
+            await recalcMemberTotal(memberId)
         }
 
         // Sync event cell — non-fatal per member
@@ -282,15 +281,6 @@ window.submitPoints = async function() {
                 await triggerSheetSync(memberId, ev.category, ev.name, ev.point_value)
             } catch (sheetErr) {
                 console.warn(`Sheet sync failed for member ${memberId}:`, sheetErr)
-            }
-        }
-
-        // Sync total points to Top 50 Members tab — non-fatal per member
-        for (const memberId of memberIds) {
-            try {
-                await triggerSheetTotalSync(memberId, memberTotals[memberId])
-            } catch (sheetErr) {
-                console.warn(`Total sheet sync failed for member ${memberId}:`, sheetErr)
             }
         }
 

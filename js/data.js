@@ -155,18 +155,6 @@ export async function triggerSheetAddEventColumn(category, eventName) {
     }
 }
 
-/** Sync a member's total_points into column G of the "Top 50 Members" sheet tab. */
-export async function triggerSheetTotalSync(memberId, total) {
-    const { error } = await supabase.functions.invoke('sync-to-sheets', {
-        body: { action: 'sync_total', member_id: memberId, total },
-    })
-    if (error) {
-        const detail = error.context
-            ? await error.context.text().catch(() => '')
-            : ''
-        throw new Error(detail || error.message)
-    }
-}
 
 /** Update a single cell in the Google Sheet for the given assignment. */
 export async function triggerSheetSync(memberId, category, eventName, value) {

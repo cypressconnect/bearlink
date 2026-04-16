@@ -114,7 +114,7 @@ tailwind.config = {
 
 <script type="module">
 import { requireAdmin, signOut } from './js/auth.js'
-import { fetchMember, updatePointsAwarded, removeAssignment, recalcMemberTotal, triggerSheetSync, triggerSheetTotalSync } from './js/data.js'
+import { fetchMember, updatePointsAwarded, removeAssignment, recalcMemberTotal, triggerSheetSync } from './js/data.js'
 
 await requireAdmin()
 document.querySelectorAll('[data-signout]').forEach(el => el.addEventListener('click', () => signOut()))
@@ -253,10 +253,9 @@ window.saveEv = async (eventId, memberId) => {
     btn.textContent = '…'; btn.disabled = true
     try {
         await updatePointsAwarded(memberId, eventId, newPts)
-        const newTotal = await recalcMemberTotal(memberId)
+        await recalcMemberTotal(memberId)
         const a = memberData.assignments.find(a => a.event_id === eventId)
-        if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, newPts)
-        try { await triggerSheetTotalSync(memberId, newTotal) } catch (e) { console.warn('Total sheet sync failed:', e) }
+        try { if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, newPts) } catch (e) { console.warn('Sheet sync failed:', e) }
         await load()
     } catch (err) {
         showError(err.message)
@@ -270,9 +269,8 @@ window.deleteAssignment = async (memberId, eventId, eventName) => {
     try {
         const a = memberData.assignments.find(a => a.event_id === eventId)
         await removeAssignment(memberId, eventId)
-        const newTotal = await recalcMemberTotal(memberId)
-        if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, 0)
-        try { await triggerSheetTotalSync(memberId, newTotal) } catch (e) { console.warn('Total sheet sync failed:', e) }
+        await recalcMemberTotal(memberId)
+        try { if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, 0) } catch (e) { console.warn('Sheet sync failed:', e) }
         await load()
     } catch (err) {
         showError(err.message)

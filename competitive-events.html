@@ -82,6 +82,10 @@ tailwind.config = {
                     <a href="#categories" class="px-8 py-4 bg-white/10 text-white backdrop-blur-md rounded-md font-semibold text-sm hover:bg-white/20 transition-colors">
                         Explore Categories
                     </a>
+                    <a href="#matchmaker" class="px-8 py-4 bg-white/10 text-white backdrop-blur-md rounded-md font-semibold text-sm hover:bg-white/20 transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">quiz</span>
+                        Event Matchmaker
+                    </a>
                 </div>
             </div>
         </div>
@@ -218,19 +222,347 @@ tailwind.config = {
         </div>
     </section>
 
-    <!-- CTA -->
-    <section class="py-20 bg-surface-container-highest">
-        <div class="max-w-5xl mx-auto px-8 text-center">
-            <h2 class="text-3xl font-bold font-headline text-primary mb-6">Not sure where you fit in?</h2>
-            <p class="text-lg text-on-surface-variant mb-10 font-light">
-                Our "Bear Link" competition advisors are here to help you match your academic strengths to the perfect event. Let's find your gold medal path today.
-            </p>
-            <div class="flex justify-center gap-4">
-                <button class="px-10 py-4 bg-primary text-white rounded-md font-bold transition-all hover:shadow-xl active:scale-95">Speak to an Advisor</button>
-                <button class="px-10 py-4 border-2 border-primary text-primary rounded-md font-bold hover:bg-primary/5 transition-colors">View Past Winners</button>
+    <!-- Event Matchmaker Quiz -->
+    <section class="py-20 bg-surface-container-highest" id="matchmaker">
+        <div class="max-w-3xl mx-auto px-8">
+            <!-- Section Header -->
+            <div class="text-center mb-12">
+                <span class="inline-block px-3 py-1 rounded-full bg-secondary text-on-secondary text-xs font-bold tracking-widest uppercase mb-4">Find Your Event</span>
+                <h2 class="text-4xl font-bold font-headline text-primary tracking-tight mb-4">Event Matchmaker</h2>
+                <p class="text-on-surface-variant text-lg font-light">Answer 8 quick questions and we'll recommend your top 3 FBLA competitive events.</p>
+            </div>
+
+            <!-- Quiz Card -->
+            <div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden" id="quiz-card">
+
+                <!-- Progress Bar -->
+                <div class="h-1.5 bg-surface-container-high">
+                    <div class="h-full bg-secondary transition-all duration-500 ease-out" id="quiz-progress" style="width:0%"></div>
+                </div>
+
+                <!-- Question Panel -->
+                <div class="p-8 md:p-12" id="quiz-panel">
+                    <div class="flex items-center justify-between mb-8">
+                        <span class="text-xs font-bold uppercase tracking-widest text-outline" id="quiz-counter">Question 1 of 8</span>
+                        <button onclick="quizReset()" class="text-xs font-medium text-outline hover:text-primary transition-colors flex items-center gap-1 opacity-0" id="quiz-restart-btn">
+                            <span class="material-symbols-outlined text-sm">refresh</span> Restart
+                        </button>
+                    </div>
+
+                    <h3 class="text-2xl font-bold font-headline text-primary mb-8 leading-snug" id="quiz-question"></h3>
+
+                    <div class="space-y-3" id="quiz-options"></div>
+
+                    <!-- Nav -->
+                    <div class="flex items-center justify-between mt-10">
+                        <button onclick="quizPrev()" id="quiz-prev-btn"
+                            class="flex items-center gap-2 text-sm font-semibold text-outline hover:text-primary transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                            <span class="material-symbols-outlined text-sm">arrow_back</span> Back
+                        </button>
+                        <button onclick="quizNext()" id="quiz-next-btn"
+                            class="px-8 py-3 bg-primary text-white rounded-md font-bold text-sm transition-all hover:shadow-lg active:scale-95 opacity-50 pointer-events-none"
+                            disabled>
+                            Next <span class="material-symbols-outlined text-sm align-middle">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results Panel (hidden until done) -->
+                <div class="p-8 md:p-12 hidden" id="quiz-results">
+                    <div class="text-center mb-10">
+                        <div class="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-4xl text-secondary">trophy</span>
+                        </div>
+                        <h3 class="text-3xl font-bold font-headline text-primary mb-2">Your Top Matches</h3>
+                        <p class="text-on-surface-variant font-light">Based on your answers, here are your best FBLA event fits:</p>
+                    </div>
+                    <div class="space-y-4" id="quiz-result-list"></div>
+                    <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="quizReset()"
+                            class="px-8 py-3 border-2 border-primary text-primary rounded-md font-bold text-sm hover:bg-primary/5 transition-colors flex items-center gap-2 justify-center">
+                            <span class="material-symbols-outlined text-sm">refresh</span> Retake Quiz
+                        </button>
+                        <a href="https://www.fbla-pbl.org/competitive-events/" target="_blank"
+                            class="px-8 py-3 bg-secondary text-white rounded-md font-bold text-sm hover:bg-[#c04d00] transition-colors flex items-center gap-2 justify-center">
+                            Explore All Events <span class="material-symbols-outlined text-sm">open_in_new</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
+
+    <script>
+    // ─── Quiz Data ────────────────────────────────────────────────────────────────
+    const QUIZ_QUESTIONS = [
+        {
+            q: "How do you prefer to demonstrate your knowledge?",
+            options: [
+                { text: "Acing a written test on a subject I've studied",   cat: "Objective Test" },
+                { text: "Presenting a prepared project or speech to judges", cat: "Presentation"   },
+                { text: "Solving a surprise business problem on the spot",   cat: "Role Play"      },
+                { text: "Building or designing something from scratch",      cat: "Production"     }
+            ]
+        },
+        {
+            q: "When starting a new project, your first instinct is to:",
+            options: [
+                { text: "Hit the books and master every detail",             cat: "Objective Test" },
+                { text: "Sketch out a plan and create polished visuals",     cat: "Production"     },
+                { text: "Draft a persuasive pitch or presentation",          cat: "Presentation"   },
+                { text: "Jump in and problem-solve as you go",               cat: "Role Play"      }
+            ]
+        },
+        {
+            q: "Your friends would most likely describe you as:",
+            options: [
+                { text: "The knowledgeable one who always has the facts",    cat: "Objective Test" },
+                { text: "The creative one who makes things look amazing",    cat: "Production"     },
+                { text: "The confident speaker who owns the room",           cat: "Presentation"   },
+                { text: "The quick thinker who thrives under pressure",      cat: "Role Play"      }
+            ]
+        },
+        {
+            q: "In a group project, you naturally take on the role of:",
+            options: [
+                { text: "The researcher who verifies every fact",            cat: "Objective Test" },
+                { text: "The designer who creates graphics and layouts",     cat: "Production"     },
+                { text: "The presenter who delivers the final pitch",        cat: "Presentation"   },
+                { text: "The strategist who adapts the plan in real time",   cat: "Role Play"      }
+            ]
+        },
+        {
+            q: "Which class do you enjoy or excel in most?",
+            options: [
+                { text: "Business Law, Economics, Finance, or Accounting",   cat: "Objective Test" },
+                { text: "Computer Science, Graphic Design, or Video Arts",   cat: "Production"     },
+                { text: "Speech, Public Speaking, or Marketing",             cat: "Presentation"   },
+                { text: "Leadership, Management, or Entrepreneurship",       cat: "Role Play"      }
+            ]
+        },
+        {
+            q: "Your ideal competition setup would be:",
+            options: [
+                { text: "Sitting down for a timed 100-question exam",        cat: "Objective Test" },
+                { text: "Submitting a polished creative or technical work",  cat: "Production"     },
+                { text: "Delivering a prepared 7-minute speech to a panel",  cat: "Presentation"   },
+                { text: "Receiving a scenario and improvising a solution",   cat: "Role Play"      }
+            ]
+        },
+        {
+            q: "When you have extra time to prepare for a competition, you:",
+            options: [
+                { text: "Quiz yourself on content and review notes",         cat: "Objective Test" },
+                { text: "Refine your design, code, or final product",        cat: "Production"     },
+                { text: "Practice your speech and slide delivery",           cat: "Presentation"   },
+                { text: "Role-play scenarios and sharpen your responses",    cat: "Role Play"      }
+            ]
+        },
+        {
+            q: "What motivates you most about competing in FBLA?",
+            options: [
+                { text: "Proving I know my subject better than anyone",      cat: "Objective Test" },
+                { text: "Showing off something I built or designed",         cat: "Production"     },
+                { text: "Moving an audience with a powerful presentation",   cat: "Presentation"   },
+                { text: "Thinking fast and outsmarting a tough scenario",    cat: "Role Play"      }
+            ]
+        }
+    ];
+
+    // ─── Event Database (2025-2026 HS Competitive Events) ─────────────────────────
+    const EVENTS = {
+        "Objective Test": [
+            { name: "Business Law",                  desc: "Test your knowledge of legal concepts in a business context.",            icon: "gavel"           },
+            { name: "Cybersecurity",                 desc: "Demonstrate expertise in network security and data protection.",          icon: "security"        },
+            { name: "Economics",                     desc: "Apply micro and macroeconomic principles to real-world scenarios.",       icon: "show_chart"      },
+            { name: "Accounting I",                  desc: "Prove your skills in fundamental accounting practices.",                  icon: "calculate"       },
+            { name: "Business Communications",       desc: "Show mastery of professional written and verbal communication.",          icon: "chat"            },
+            { name: "Introduction to IT",            desc: "Demonstrate broad knowledge of modern information technology.",           icon: "computer"        },
+            { name: "Finance",                       desc: "Apply personal and corporate finance concepts under timed conditions.",   icon: "payments"        },
+            { name: "Organizational Leadership",     desc: "Test your understanding of leadership theory and business management.",   icon: "manage_accounts" }
+        ],
+        "Presentation": [
+            { name: "Public Speaking I",             desc: "Deliver a prepared 5-minute speech on a business topic.",                icon: "mic"             },
+            { name: "Public Speaking II",            desc: "Showcase advanced oratory skills with a longer prepared address.",       icon: "record_voice_over"},
+            { name: "Entrepreneurship",              desc: "Present a complete business plan to a panel of judges.",                 icon: "lightbulb"       },
+            { name: "Sales Presentation",            desc: "Pitch a product or service persuasively to simulated buyers.",           icon: "storefront"      },
+            { name: "Marketing",                     desc: "Develop and present a full marketing strategy for a given scenario.",    icon: "campaign"        },
+            { name: "Social Media Campaign",         desc: "Create and present a strategic social media marketing campaign.",        icon: "thumb_up"        },
+            { name: "American Enterprise Project",   desc: "Research and present on a free-enterprise topic to judges.",             icon: "flag"            },
+            { name: "Introduction to Public Speaking",desc:"Develop foundational speaking skills in a lower-stakes format.",         icon: "mic_none"        }
+        ],
+        "Role Play": [
+            { name: "Business Management",           desc: "Analyze a management challenge and present your solution on the spot.",  icon: "business_center" },
+            { name: "Business Ethics",               desc: "Navigate ethical dilemmas in a timed role-play setting.",               icon: "balance"         },
+            { name: "Client Service",                desc: "Demonstrate customer relations skills through a live scenario.",         icon: "support_agent"   },
+            { name: "Emerging Business Issues",      desc: "Address a current business trend or challenge in a judge-led role play.",icon: "trending_up"     },
+            { name: "Hospitality & Event Management",desc: "Plan and pitch an event solution to a panel in real time.",              icon: "event"           },
+            { name: "Insurance & Risk Management",   desc: "Solve an insurance or risk scenario under exam+role-play format.",       icon: "shield"          },
+            { name: "Management Information Systems",desc: "Tackle an IT-based business case with minimal prep time.",               icon: "dns"             },
+            { name: "Securities & Investments",      desc: "Apply investment knowledge in a judge-led scenario.",                    icon: "monitoring"      }
+        ],
+        "Production": [
+            { name: "Mobile Application Development",desc: "Design and code a functional mobile app judged on usability and code.", icon: "phone_android"   },
+            { name: "Website Design",                desc: "Build a complete website on a given theme for evaluation.",              icon: "web"             },
+            { name: "Video Production",              desc: "Script, film, and edit a short business-focused video.",                 icon: "videocam"        },
+            { name: "Graphic Design",                desc: "Create original visual materials meeting a given design brief.",         icon: "palette"         },
+            { name: "Computer Game & Simulation Programming", desc: "Develop a fully playable game or simulation from scratch.",    icon: "sports_esports"  },
+            { name: "Desktop Application Programming",desc:"Build a functional desktop application evaluated by judges.",            icon: "laptop_windows"  },
+            { name: "Digital Animation",             desc: "Produce an animated sequence for a business or creative brief.",        icon: "animation"       },
+            { name: "E-business",                    desc: "Design an e-commerce strategy and present supporting materials.",        icon: "shopping_cart"   }
+        ]
+    };
+
+    const CAT_COLORS = {
+        "Objective Test": { bg: "bg-blue-50",   border: "border-blue-300",   badge: "bg-blue-100 text-blue-800",   icon: "text-blue-600"   },
+        "Presentation":   { bg: "bg-orange-50", border: "border-orange-300", badge: "bg-orange-100 text-orange-800",icon: "text-orange-600" },
+        "Role Play":      { bg: "bg-purple-50", border: "border-purple-300", badge: "bg-purple-100 text-purple-800",icon: "text-purple-600" },
+        "Production":     { bg: "bg-green-50",  border: "border-green-300",  badge: "bg-green-100 text-green-800",  icon: "text-green-600"  }
+    };
+
+    // ─── Quiz State ───────────────────────────────────────────────────────────────
+    let currentQ  = 0;
+    let answers   = new Array(QUIZ_QUESTIONS.length).fill(null);
+
+    // ─── Compute top-3 recommended events ────────────────────────────────────────
+    function computeResults() {
+        const tally = { "Objective Test": 0, "Presentation": 0, "Role Play": 0, "Production": 0 };
+        answers.forEach(a => { if (a) tally[a]++; });
+
+        // Sort categories by score descending
+        const ranked = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+
+        const results = [];
+        for (const [cat, score] of ranked) {
+            const events = EVENTS[cat];
+            // Pick a pseudo-random event from this category (seeded by answer pattern)
+            const seed  = answers.filter(a => a === cat).length;
+            const pick  = events[seed % events.length];
+            results.push({ cat, score, event: pick });
+            if (results.length === 3) break;
+        }
+        return results;
+    }
+
+    // ─── Render helpers ───────────────────────────────────────────────────────────
+    function renderQuestion() {
+        const total   = QUIZ_QUESTIONS.length;
+        const qData   = QUIZ_QUESTIONS[currentQ];
+        const pct     = Math.round((currentQ / total) * 100);
+
+        document.getElementById('quiz-progress').style.width = pct + '%';
+        document.getElementById('quiz-counter').textContent  = `Question ${currentQ + 1} of ${total}`;
+        document.getElementById('quiz-question').textContent  = qData.q;
+
+        const restartBtn = document.getElementById('quiz-restart-btn');
+        restartBtn.style.opacity = currentQ > 0 ? '1' : '0';
+
+        const prevBtn = document.getElementById('quiz-prev-btn');
+        prevBtn.disabled = currentQ === 0;
+        prevBtn.style.opacity = currentQ === 0 ? '0.3' : '1';
+
+        const nextBtn = document.getElementById('quiz-next-btn');
+        const chosen  = answers[currentQ];
+        const isLast  = currentQ === total - 1;
+
+        nextBtn.textContent = isLast ? 'See My Results ' : 'Next ';
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined text-sm align-middle';
+        icon.textContent = isLast ? 'done_all' : 'arrow_forward';
+        nextBtn.appendChild(icon);
+
+        if (chosen) {
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'pointer-events-none');
+        } else {
+            nextBtn.disabled = true;
+            nextBtn.classList.add('opacity-50', 'pointer-events-none');
+        }
+
+        // Render options
+        const container = document.getElementById('quiz-options');
+        container.innerHTML = '';
+        qData.options.forEach((opt, i) => {
+            const isSelected = chosen === opt.cat;
+            const btn = document.createElement('button');
+            btn.className = [
+                'w-full text-left px-5 py-4 rounded-lg border-2 transition-all duration-150 font-medium text-sm',
+                isSelected
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-surface-container-high bg-white hover:border-primary/40 hover:bg-primary/5 text-on-surface'
+            ].join(' ');
+            btn.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
+                        ${isSelected ? 'border-primary bg-primary' : 'border-outline-variant'}">
+                        ${isSelected ? '<span class="material-symbols-outlined text-white text-xs" style="font-size:14px;line-height:1">check</span>' : ''}
+                    </div>
+                    <span>${opt.text}</span>
+                </div>`;
+            btn.addEventListener('click', () => selectAnswer(opt.cat));
+            container.appendChild(btn);
+        });
+    }
+
+    function renderResults() {
+        document.getElementById('quiz-panel').classList.add('hidden');
+        document.getElementById('quiz-results').classList.remove('hidden');
+        document.getElementById('quiz-progress').style.width = '100%';
+
+        const results = computeResults();
+        const list    = document.getElementById('quiz-result-list');
+        list.innerHTML = '';
+
+        const medals = ['🥇', '🥈', '🥉'];
+        results.forEach((r, idx) => {
+            const c = CAT_COLORS[r.cat];
+            const div = document.createElement('div');
+            div.className = `flex items-start gap-5 p-5 rounded-xl border-2 ${c.bg} ${c.border}`;
+            div.innerHTML = `
+                <div class="text-3xl leading-none mt-1 flex-shrink-0">${medals[idx]}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <span class="font-bold font-headline text-primary text-lg">${r.event.name}</span>
+                        <span class="text-xs font-bold px-2 py-0.5 rounded-full ${c.badge}">${r.cat}</span>
+                    </div>
+                    <p class="text-sm text-on-surface-variant leading-relaxed">${r.event.desc}</p>
+                </div>
+                <span class="material-symbols-outlined text-3xl flex-shrink-0 ${c.icon}">${r.event.icon}</span>`;
+            list.appendChild(div);
+        });
+    }
+
+    // ─── Quiz Controls ────────────────────────────────────────────────────────────
+    function selectAnswer(cat) {
+        answers[currentQ] = cat;
+        renderQuestion();
+    }
+
+    function quizNext() {
+        if (!answers[currentQ]) return;
+        if (currentQ === QUIZ_QUESTIONS.length - 1) {
+            renderResults();
+        } else {
+            currentQ++;
+            renderQuestion();
+        }
+    }
+
+    function quizPrev() {
+        if (currentQ > 0) { currentQ--; renderQuestion(); }
+    }
+
+    function quizReset() {
+        currentQ = 0;
+        answers  = new Array(QUIZ_QUESTIONS.length).fill(null);
+        document.getElementById('quiz-panel').classList.remove('hidden');
+        document.getElementById('quiz-results').classList.add('hidden');
+        renderQuestion();
+    }
+
+    // ─── Boot ─────────────────────────────────────────────────────────────────────
+    renderQuestion();
+    </script>
 </main>
 
 <!-- Footer -->

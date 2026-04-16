@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Points Leaderboard | Bear Link</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdbcc",
+                        "inverse-on-surface": "#eef1f4",
+                        "tertiary": "#0f1e2a",
+                        "on-tertiary-fixed-variant": "#3a4856",
+                        "surface-variant": "#e0e3e6",
+                        "surface-tint": "#3d5ca2",
+                        "surface-container-high": "#e5e8eb",
+                        "on-secondary-fixed-variant": "#7a3000",
+                        "outline-variant": "#c4c6d2",
+                        "secondary-container": "#fe6b00",
+                        "background": "#f7fafd",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-surface": "#181c1e",
+                        "on-tertiary-fixed": "#0e1d29",
+                        "tertiary-fixed": "#d5e4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "outline": "#747782",
+                        "tertiary-fixed-dim": "#b9c8d9",
+                        "secondary-fixed-dim": "#ffb693",
+                        "on-tertiary-container": "#8c9bab",
+                        "tertiary-container": "#243340",
+                        "primary-container": "#002d72",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#001946",
+                        "surface-dim": "#d7dadd",
+                        "on-primary": "#ffffff",
+                        "primary": "#001a48",
+                        "surface": "#f7fafd",
+                        "surface-bright": "#f7fafd",
+                        "surface-container": "#ebeef1",
+                        "surface-container-low": "#f1f4f7",
+                        "secondary": "#a04100",
+                        "on-primary-container": "#7a97e2",
+                        "inverse-primary": "#b1c5ff",
+                        "on-secondary-fixed": "#351000",
+                        "on-secondary-container": "#572000",
+                        "on-surface-variant": "#444651",
+                        "on-primary-fixed-variant": "#224489",
+                        "on-background": "#181c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TopNavBar -->
+<nav class="docked full-width top-0 sticky z-50 glass-nav shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold tracking-tighter text-[#002D72] dark:text-blue-400">Bear Link</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors duration-200 text-sm font-medium font-inter" href="#">Home</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors duration-200 text-sm font-medium font-inter" href="#">Competitive Events</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors duration-200 text-sm font-medium font-inter" href="#">Resources</a>
+<a class="text-[#002D72] dark:text-blue-400 font-bold border-b-2 border-[#a04100] pb-1 text-sm font-inter" href="#">Points</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-sm font-medium text-slate-600 hover:bg-slate-100/50 px-4 py-2 rounded-lg transition-all">Admin Login</button>
+<div class="h-10 w-10 rounded-full bg-surface-container-high overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="close-up portrait of a professional student with a friendly expression and academic attire" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_9abb0PRxEnLAl4OE0cQgHFShVIFb8sHp-y9NtgyJuJzJUftyP9JhU3qbSEw7G4Dr6rbNc1YxDahKL0eBAAmFVJA39hzFktfqBrywf4vzxQLpdgNRG4im6-5vYZ_WR18Cc7vpGYoAGYYqPDWPV6gZ7b8DqqhRxiVobf8CLhjqqvo_5fjNe4pLUBAYinH25NMwxmo2CXQ3DMK94XHzCHi5lBXNPB-_yZH-b6tNJERVmSjugAmedc1y1xb4l5lZ23eyFsjAS8o37YES"/>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-8 py-12">
+<!-- Hero Section -->
+<section class="mb-16">
+<div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#001a48] to-[#002d72] p-12 text-white shadow-xl">
+<div class="relative z-10 max-w-2xl">
+<span class="inline-block px-3 py-1 bg-secondary rounded-full text-xs font-bold tracking-widest uppercase mb-4">Live Standings</span>
+<h1 class="text-5xl md:text-6xl font-extrabold font-headline tracking-tight mb-6 leading-none">Points Leaderboard</h1>
+<p class="text-on-primary-container text-lg leading-relaxed font-medium opacity-90 mb-8">Tracking excellence, leadership, and service. Every action brings you closer to the Nationals. Check your rank and see how you stack up against the best.</p>
+<a class="inline-flex items-center gap-2 bg-secondary text-white px-6 py-3 rounded-md font-bold hover:opacity-90 transition-all shadow-lg" href="https://forms.google.com" target="_blank">
+<span class="material-symbols-outlined text-sm">flag</span>
+                    Report a Discrepancy
+                </a>
+</div>
+<!-- Decorative Abstract Element -->
+<div class="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[300px] absolute -right-20 -top-20">trending_up</span>
+</div>
+</div>
+</section>
+<!-- Podium / Top 3 Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+<!-- Rank 2 -->
+<div class="order-2 md:order-1 bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm border-l-4 border-slate-300">
+<div class="mb-6 relative">
+<div class="w-24 h-24 rounded-full border-4 border-slate-200 overflow-hidden">
+<img alt="Rank 2" class="w-full h-full object-cover" data-alt="professional profile photo of a smiling young man in a collared shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBWKq_p1-zJ9tBJJsrpPEBp3ZNeN3f5l_gK5NcD4RSttTiv-cS26IZf1_8GA-DjH1ax0MqWxB9FinylJ4mnmT5jT64nuQYy0c8Y51qyvUedkpkiT0IgoDslrGBq0LMw05WgHIrWkzP5MCTQw7c4JDC8TSdw2d0gg-ABStYjmtQftLCZTx6EsIJRP1GoABJjIFsbSHMRwj1w1RcIXOT4huIktaoXVpd3tjbfVxbpSes9WkQ8FPeBrzrDP5SiVNmjKfHx2dVfR1x-mjO"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-slate-400 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">2</div>
+</div>
+<h3 class="text-xl font-bold font-headline text-primary mb-1">Ethan Rivers</h3>
+<span class="text-secondary font-bold text-2xl">1,450 pts</span>
+<span class="text-xs text-slate-500 uppercase tracking-widest mt-4">Silver Milestone</span>
+</div>
+<!-- Rank 1 -->
+<div class="order-1 md:order-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform scale-105 z-10">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2">
+<span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<div class="mb-6 relative">
+<div class="w-32 h-32 rounded-full border-4 border-secondary overflow-hidden">
+<img alt="Rank 1" class="w-full h-full object-cover" data-alt="headshot of a confident young woman with a friendly smile, studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOWj2TIu8dEtl69qbFt8nnXUmC79qZkjg2lV-lhrYNCfk2Nk5ELEaDtNIefK64XsqN9W88151gwYY2Qx-BkKZh6OBkWdi3a20Y11E0lXyHRlH5DARebFliTu-NU2kDxH4-i0xzfOgTV58eryCKJY36ySm5ug8Bjz7eelOY_aIVGznR7tzIjXFMJFlBTnccM4nzpVdTpbUhVlQVOtcpNnqJbWGtlrAbNvh41OrlOludjc3cib_DBtgne4nA8N9Agtzxoq24sIezSdBa"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-secondary text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">1</div>
+</div>
+<h3 class="text-2xl font-bold font-headline text-primary mb-1">Sarah Jenkins</h3>
+<span class="text-secondary font-bold text-3xl">1,820 pts</span>
+<span class="text-xs text-secondary/80 font-bold uppercase tracking-widest mt-4">Current Champion</span>
+</div>
+<!-- Rank 3 -->
+<div class="order-3 md:order-3 bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm border-r-4 border-orange-200">
+<div class="mb-6 relative">
+<div class="w-24 h-24 rounded-full border-4 border-orange-100 overflow-hidden">
+<img alt="Rank 3" class="w-full h-full object-cover" data-alt="professional profile photo of a young man with glasses, neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYRRNyjMdUcfgb2dAFZZu4y_PP-qVRC2bKBZiM-VZYdciaBQoiq7_sqMr3T6YUhcoWMPkqjQjVItKwjXg5SQrbbRF16ZVvwPuMjPqovdcGTAUgQrbx6P1iH0Zo-bG0F7aGiDb7rnPAvoYqV5bAcQxz5talqAIhunCZTpndwEpLA2lVGKObaPwXQxTxo0b87wS3-egpAoo1lBL7REAhM5ZRygZn963SXZiwNvw_vAZ1lvvex5Zr7CmwJJ7m8FtOq3A1tKh3X80nqSU0"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-orange-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">3</div>
+</div>
+<h3 class="text-xl font-bold font-headline text-primary mb-1">Marcus Thorne</h3>
+<span class="text-secondary font-bold text-2xl">1,210 pts</span>
+<span class="text-xs text-slate-500 uppercase tracking-widest mt-4">Rising Star</span>
+</div>
+</div>
+<!-- Leaderboard Table -->
+<div class="bg-surface-container-low rounded-xl overflow-hidden mb-12">
+<div class="p-8 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+<h2 class="text-2xl font-bold font-headline text-primary">Member Standings</h2>
+<div class="flex flex-wrap gap-4 w-full md:w-auto">
+<div class="relative flex-grow md:flex-grow-0">
+<select class="appearance-none bg-white border-none rounded-lg pl-4 pr-10 py-2 text-sm focus:ring-2 focus:ring-primary/20 w-full cursor-pointer">
+<option>All Grades</option>
+<option>9th Grade</option>
+<option>10th Grade</option>
+<option>11th Grade</option>
+<option>12th Grade</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+</div>
+<div class="relative flex-grow md:flex-grow-0">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+<input class="bg-white border-none rounded-lg pl-10 text-sm focus:ring-2 focus:ring-primary/20 w-full md:w-64" placeholder="Find member..." type="text"/>
+</div>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant">
+<th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Rank</th>
+<th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Member Name</th>
+<th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Grade</th>
+<th class="px-8 py-4 text-xs font-bold uppercase tracking-widest text-right">Total Points</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<!-- Table Row 1 -->
+<tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-bold text-primary">#4</span>
+</td>
+<td class="px-8 py-6">
+<a class="flex items-center gap-4 group-hover:text-secondary transition-colors" href="#">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden">
+<img alt="Aria Vance" class="w-full h-full object-cover" data-alt="blurred profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYS2jeudNbNRlndyOyjwGnKNOMdnAl_6ErkMcA2bYZFfrgmVFzxDjBcF5K_ygw4M4v9JyFEQLkcD9_ay6xnQKLWVKw2qY_GNkqyYkiCa9BZTPMxuYBWuQOoo-2nt57UDeAco_guxHZ_AUFXH-SEZuCnUaEeRx30KDylsVi5GxURPOEojExU9rzIluVJzoq20hNQs5cy2v0NbsaBxJMpEJZZboeGC_CvTSBOGpXjZ5PUYMSqzJLezZuRVMA7AsA_HC90EePdQ_vE9E8"/>
+</div>
+<span class="font-bold">Aria Vance</span>
+</a>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-tighter rounded-full">12th Grade</span>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="font-bold text-lg text-primary">1,150</span>
+</td>
+</tr>
+<!-- Table Row 2 -->
+<tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-bold text-primary">#5</span>
+</td>
+<td class="px-8 py-6">
+<a class="flex items-center gap-4 group-hover:text-secondary transition-colors" href="#">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden">
+<img alt="Leo Zheng" class="w-full h-full object-cover" data-alt="blurred profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5aYZpWaqX2tAShN_6_KjD7DQ3qnn3620MAeXn9TbZwsp-Oes20UxyQM1u7I3BG8gXaO9Q7Q61Z6u2HUqBYgIIY3fYYtiH7yd7YHWwlQNF0OpaQdZOfwqGvFF18Wm4EcOqwLRKTvYeYpPzK3kBgMxiWAZHZkOzd7Nt4oaVZ8D6Yra7uypB-63uTojqggEzqHrtMsXw51I4lXpDREpeEgdElUlL0wTGLkvUk7v6qeR6Yyw7M1DcjyX_RjtT8uQ2HcsSpa2pEO7E9dBr"/>
+</div>
+<span class="font-bold">Leo Zheng</span>
+</a>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-tighter rounded-full">11th Grade</span>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="font-bold text-lg text-primary">980</span>
+</td>
+</tr>
+<!-- Table Row 3 -->
+<tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-bold text-primary">#6</span>
+</td>
+<td class="px-8 py-6">
+<a class="flex items-center gap-4 group-hover:text-secondary transition-colors" href="#">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden">
+<img alt="Chloë Dupont" class="w-full h-full object-cover" data-alt="blurred profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJ9X9astWPyG0AnPxRjuPwm3NLQWpTj8CVW6uiNXjeKKfeSEuh9Nz2ngdUyqSe31mtFM37jcaNrc2lrmFiiSVDo7aDzpeiDz15ovStZ_WIjZDSyDMdzGAx7FTag3yDHkSe-NGaxoHJjltIbk3lp5PlW33ENpLue-qGiwhlBhntnAD2amzHLg8cZ7pYO0xzBTt9UNTb0RicyJaGyVSH5VIzZb11vhsPCBoJugx2YtuizBZmpXwHnnQvRMNfQ9XeD_l62j3opkt-6B9y"/>
+</div>
+<span class="font-bold">Chloë Dupont</span>
+</a>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-fixed text-on-secondary-fixed-variant text-[10px] font-bold uppercase tracking-tighter rounded-full">9th Grade</span>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="font-bold text-lg text-primary">845</span>
+</td>
+</tr>
+<!-- Table Row 4 -->
+<tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
+<td class="px-8 py-6">
+<span class="font-bold text-primary">#7</span>
+</td>
+<td class="px-8 py-6">
+<a class="flex items-center gap-4 group-hover:text-secondary transition-colors" href="#">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 overflow-hidden">
+<img alt="Julian Brooks" class="w-full h-full object-cover" data-alt="blurred profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBA4gbwxzmzOBVNIYlFiF43Yd7gc7q4l51LksIVp6ig9riW4_psHwRSEspwFHI0z0tsuOW4XcOSJxq7QnW1tJOkEov6YCeJLuwnYSRaZMaTMpaJPz4n5aQq9iVPZ3lFFH-GmyhJJierJG_6dbdeib2MlZEgmJgoMYNHefQna3kHIx6F2w3aDraeWs95xF7zJy2LZT9mqlAxt-FU34oYKuRdvg9nR112wSXXse4iBT1EXB6JXuKzJ6TSd8kGQIwWxihIB-dflLEQHapo"/>
+</div>
+<span class="font-bold">Julian Brooks</span>
+</a>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-primary-fixed text-on-primary-fixed-variant text-[10px] font-bold uppercase tracking-tighter rounded-full">10th Grade</span>
+</td>
+<td class="px-8 py-6 text-right">
+<span class="font-bold text-lg text-primary">720</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-8 bg-surface-container-low flex justify-between items-center text-sm">
+<p class="text-slate-500">Showing 7 of 142 members</p>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white text-primary border border-outline-variant/10 disabled:opacity-50" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white border border-primary">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white text-slate-600 border border-outline-variant/10 hover:bg-slate-50">2</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white text-slate-600 border border-outline-variant/10 hover:bg-slate-50">3</button>
+<button class="w-8 h-8 flex items-center justify-center rounded bg-white text-primary border border-outline-variant/10 hover:bg-slate-50">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Connection Node Section (Special Component) -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
+<div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden border-l-4 border-secondary">
+<h4 class="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-4">Latest Achievement</h4>
+<div class="flex gap-6 items-start">
+<div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-secondary shadow-sm">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<div>
+<p class="text-lg font-bold text-primary mb-2">Team Participation Peak</p>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-4">Bridgeland High School reached a record 85% participation in regional qualifiers last week. Well done, Bears!</p>
+<span class="text-[10px] font-bold text-slate-400">2 HOURS AGO • SYSTEM UPDATE</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden border-l-4 border-primary">
+<h4 class="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-4">Point System Note</h4>
+<div class="flex gap-6 items-start">
+<div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined text-3xl" style="font-variation-settings: 'FILL' 1;">info</span>
+</div>
+<div>
+<p class="text-lg font-bold text-primary mb-2">Points for Service Hours</p>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-4">Don't forget to log your volunteer hours for the local community service drive. Each hour equals 15 competitive points.</p>
+<span class="text-[10px] font-bold text-slate-400">YESTERDAY • ADMIN</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-900">
+<span class="text-lg font-bold text-[#002D72] dark:text-blue-400">Bear Link</span>
+<div class="flex gap-8">
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#a04100] transition-colors text-sm font-inter" href="#">Contact</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#a04100] transition-colors text-sm font-inter" href="#">Privacy Policy</a>
+<a class="text-slate-500 dark:text-slate-400 hover:text-[#a04100] transition-colors text-sm font-inter" href="#">Terms of Service</a>
+</div>
+<p class="text-xs uppercase tracking-widest font-inter text-slate-400 mt-4">© 2024 Bridgeland High School FBLA. All rights reserved.</p>
+</footer>
+</body></html>

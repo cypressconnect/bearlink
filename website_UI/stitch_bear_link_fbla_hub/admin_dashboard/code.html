@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard | Bear Link</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Manrope:wght@700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdbcc",
+                        "inverse-on-surface": "#eef1f4",
+                        "tertiary": "#0f1e2a",
+                        "on-tertiary-fixed-variant": "#3a4856",
+                        "surface-variant": "#e0e3e6",
+                        "surface-tint": "#3d5ca2",
+                        "surface-container-high": "#e5e8eb",
+                        "on-secondary-fixed-variant": "#7a3000",
+                        "outline-variant": "#c4c6d2",
+                        "secondary-container": "#fe6b00",
+                        "background": "#f7fafd",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-surface": "#181c1e",
+                        "on-tertiary-fixed": "#0e1d29",
+                        "tertiary-fixed": "#d5e4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "outline": "#747782",
+                        "tertiary-fixed-dim": "#b9c8d9",
+                        "secondary-fixed-dim": "#ffb693",
+                        "on-tertiary-container": "#8c9bab",
+                        "tertiary-container": "#243340",
+                        "primary-container": "#002d72",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#001946",
+                        "surface-dim": "#d7dadd",
+                        "on-primary": "#ffffff",
+                        "primary": "#001a48",
+                        "surface": "#f7fafd",
+                        "surface-bright": "#f7fafd",
+                        "surface-container": "#ebeef1",
+                        "surface-container-low": "#f1f4f7",
+                        "secondary": "#a04100",
+                        "on-primary-container": "#7a97e2",
+                        "inverse-primary": "#b1c5ff",
+                        "on-secondary-fixed": "#351000",
+                        "on-secondary-container": "#572000",
+                        "on-surface-variant": "#444651",
+                        "on-primary-fixed-variant": "#224489",
+                        "on-background": "#181c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- TopNavBar -->
+<nav class="docked full-width top-0 sticky z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-xl font-extrabold tracking-tighter text-[#002D72] dark:text-blue-400">Bear Link</span>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors" href="#">Home</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors" href="#">Competitive Events</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors" href="#">Resources</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] transition-colors" href="#">Points</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-sm font-medium font-inter text-[#002D72] dark:text-blue-400 font-bold border-b-2 border-[#a04100] pb-1">Admin Login</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="professional headshot of a male administrator in a collared shirt with soft office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUI-BEsk1vSFna47Hur72uPuA9CmLJe9nIBaUHZHdOmNMjlyMRQuXvTqLFAq3S5lC6wLOgUklEovHrvLX9urV83VbsoYlg9TU5QhpOXlzeRI37Uo2CwqycXYhyKtJjiHWw-0lIr5ayUzxNy-w1woFQisRJcAfEN-8MkZy_L1XYSxCSIBSd0FpukB-f-JJ7W0Lm3xlB1EXaBs6lCJifRLS92TvHqX0-LsqzKZWewPMsMiSMqP4qbEn_uV3zPdgR-_4rMjM-6knoX0pT"/>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-8 py-12">
+<!-- Header Section -->
+<header class="mb-12">
+<div class="flex items-end justify-between">
+<div>
+<span class="text-xs uppercase tracking-widest font-label font-bold text-secondary mb-2 block">Administrative Portal</span>
+<h1 class="text-4xl font-extrabold tracking-tight font-headline text-primary">System Management</h1>
+</div>
+<div class="flex gap-3">
+<div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm">group</span>
+<span class="text-sm font-medium text-on-surface-variant">412 Members</span>
+</div>
+<div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-sm">event</span>
+<span class="text-sm font-medium text-on-surface-variant">24 Active Events</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-8">
+<!-- Management Navigation / Tabs -->
+<div class="col-span-12 flex gap-4 mb-4">
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm">
+<span class="material-symbols-outlined text-sm">leaderboard</span> Member Points
+                </button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">calendar_month</span> Manage Events
+                </button>
+<button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm">settings</span> System Logs
+                </button>
+</div>
+<!-- Member Management (Main Data Table) -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
+<div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
+<input class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Table Headers -->
+<div class="grid grid-cols-12 px-4 py-2 text-xs uppercase tracking-widest font-label font-bold text-outline">
+<div class="col-span-1">Rank</div>
+<div class="col-span-5">Member Name</div>
+<div class="col-span-2">Points</div>
+<div class="col-span-4 text-right">Actions</div>
+</div>
+<!-- Member Row 1 -->
+<div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low group">
+<div class="col-span-1 font-bold text-primary">01</div>
+<div class="col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">JD</div>
+<div>
+<p class="font-bold text-on-surface">Jane Doe</p>
+<p class="text-xs text-on-surface-variant">jane.d@bridgeland.fbla</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">1,250</span>
+</div>
+<div class="col-span-4 flex justify-end gap-2">
+<button class="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors" title="Edit Points">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete User">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+<button class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity">
+                                    Modify
+                                </button>
+</div>
+</div>
+<!-- Member Row 2 -->
+<div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low">
+<div class="col-span-1 font-bold text-primary">02</div>
+<div class="col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-bold">JS</div>
+<div>
+<p class="font-bold text-on-surface">John Smith</p>
+<p class="text-xs text-on-surface-variant">j.smith@bridgeland.fbla</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">1,180</span>
+</div>
+<div class="col-span-4 flex justify-end gap-2">
+<button class="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+<button class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity">
+                                    Modify
+                                </button>
+</div>
+</div>
+<!-- Member Row 3 -->
+<div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low">
+<div class="col-span-1 font-bold text-primary">03</div>
+<div class="col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">AC</div>
+<div>
+<p class="font-bold text-on-surface">Alice Cooper</p>
+<p class="text-xs text-on-surface-variant">a.cooper@bridgeland.fbla</p>
+</div>
+</div>
+<div class="col-span-2">
+<span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">940</span>
+</div>
+<div class="col-span-4 flex justify-end gap-2">
+<button class="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+<button class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+<button class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity">
+                                    Modify
+                                </button>
+</div>
+</div>
+</div>
+<div class="mt-8 flex justify-center">
+<button class="text-sm font-bold text-primary flex items-center gap-2 hover:underline">
+                            Load More Members <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Manage Events & Quick Tools -->
+<div class="col-span-12 lg:col-span-4 space-y-8">
+<!-- Add New Event Card -->
+<div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
+<h2 class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add New Event</h2>
+<form class="space-y-4 relative z-10">
+<div>
+<label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Event Name</label>
+<input class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="e.g. Regional Leadership Conference" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Point Value</label>
+<input class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="100" type="number"/>
+</div>
+<div>
+<label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Category</label>
+<select class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary">
+<option>Competition</option>
+<option>Social</option>
+<option>Meeting</option>
+</select>
+</div>
+</div>
+<button class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold shadow-md hover:scale-[0.98] transition-all">Create Event</button>
+</form>
+</div>
+<!-- Event List Card -->
+<div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+<h2 class="text-xl font-bold font-headline text-primary mb-6">Active Events</h2>
+<div class="space-y-6">
+<!-- Event Item -->
+<div class="flex items-start justify-between group">
+<div class="flex items-start gap-4">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">March General Meeting</h3>
+<p class="text-xs text-on-surface-variant font-medium">50 Points • 84 Participants</p>
+</div>
+</div>
+<button class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Event Item -->
+<div class="flex items-start justify-between group">
+<div class="flex items-start gap-4">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">FBLA State Conference</h3>
+<p class="text-xs text-on-surface-variant font-medium">500 Points • 12 Participants</p>
+</div>
+</div>
+<button class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+<!-- Event Item -->
+<div class="flex items-start justify-between group">
+<div class="flex items-start gap-4">
+<div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
+<div>
+<h3 class="font-bold text-on-surface text-sm">Community Cleanup</h3>
+<p class="text-xs text-on-surface-variant font-medium">150 Points • 32 Participants</p>
+</div>
+</div>
+<button class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+</div>
+<button class="w-full mt-8 border border-outline-variant/30 py-2.5 rounded-lg text-xs font-bold text-outline hover:bg-surface-container-low transition-colors">View All Events</button>
+</div>
+<!-- Connection Node Signature Component -->
+<div class="bg-surface-container-low rounded-xl p-6 border-l-4 border-secondary">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Admin Action</span>
+</div>
+<p class="text-sm font-medium text-on-surface">System backup completed successfully. All point logs are synchronized with the primary database.</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-900 mt-20">
+<span class="text-lg font-bold text-[#002D72] dark:text-blue-400">Bear Link</span>
+<div class="flex gap-8">
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] transition-colors" href="#">Contact</a>
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] transition-colors" href="#">Terms of Service</a>
+</div>
+<p class="text-xs uppercase tracking-widest font-inter text-slate-500 dark:text-slate-400">© 2024 Bridgeland High School FBLA. All rights reserved.</p>
+</footer>
+</body></html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin - Assign Event Points | Bear Link</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#ffdbcc",
+                    "inverse-on-surface": "#eef1f4",
+                    "tertiary": "#0f1e2a",
+                    "on-tertiary-fixed-variant": "#3a4856",
+                    "surface-variant": "#e0e3e6",
+                    "surface-tint": "#3d5ca2",
+                    "surface-container-high": "#e5e8eb",
+                    "on-secondary-fixed-variant": "#7a3000",
+                    "outline-variant": "#c4c6d2",
+                    "secondary-container": "#fe6b00",
+                    "background": "#f7fafd",
+                    "inverse-surface": "#2d3133",
+                    "primary-fixed-dim": "#b1c5ff",
+                    "on-surface": "#181c1e",
+                    "on-tertiary-fixed": "#0e1d29",
+                    "tertiary-fixed": "#d5e4f6",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "outline": "#747782",
+                    "tertiary-fixed-dim": "#b9c8d9",
+                    "secondary-fixed-dim": "#ffb693",
+                    "on-tertiary-container": "#8c9bab",
+                    "tertiary-container": "#243340",
+                    "primary-container": "#002d72",
+                    "on-error": "#ffffff",
+                    "primary-fixed": "#dae2ff",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e0e3e6",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#001946",
+                    "surface-dim": "#d7dadd",
+                    "on-primary": "#ffffff",
+                    "primary": "#001a48",
+                    "surface": "#f7fafd",
+                    "surface-bright": "#f7fafd",
+                    "surface-container": "#ebeef1",
+                    "surface-container-low": "#f1f4f7",
+                    "secondary": "#a04100",
+                    "on-primary-container": "#7a97e2",
+                    "inverse-primary": "#b1c5ff",
+                    "on-secondary-fixed": "#351000",
+                    "on-secondary-container": "#572000",
+                    "on-surface-variant": "#444651",
+                    "on-primary-fixed-variant": "#224489",
+                    "on-background": "#181c1e"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+
+    <!-- TopNavBar -->
+    <nav class="docked full-width top-0 sticky z-50 glass-nav shadow-sm dark:shadow-none bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
+        <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+            <div class="text-xl font-extrabold tracking-tighter text-[#002D72] dark:text-blue-400">
+                Bear Link
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#" class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 text-sm font-medium font-inter transition-colors duration-200">Home</a>
+                <a href="#" class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 text-sm font-medium font-inter transition-colors duration-200">Competitive Events</a>
+                <a href="#" class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 text-sm font-medium font-inter transition-colors duration-200">Resources</a>
+                <a href="#" class="text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 text-sm font-medium font-inter transition-colors duration-200">Points</a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button class="text-[#002D72] dark:text-blue-400 font-bold border-b-2 border-[#a04100] pb-1 text-sm font-medium font-inter">Admin Login</button>
+                <div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden">
+                    <img src="image-user-profile.jpg" alt="User profile" class="w-full h-full object-cover" data-alt="professional portrait of a high school administrator in a bright office environment with a friendly smile">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-8 py-12">
+        
+        <!-- Header Section with Tonal Depth -->
+        <header class="mb-12 relative">
+            <div class="inline-flex items-center gap-2 mb-4">
+                <span class="px-3 py-1 bg-secondary text-on-secondary rounded-full text-xs font-bold tracking-widest uppercase">Admin Panel</span>
+                <span class="text-on-surface-variant text-sm font-medium">• Event ID: #BHS-2024-089</span>
+            </div>
+            <h1 class="text-5xl font-bold tracking-tight text-primary mb-4 leading-tight">Assign Points</h1>
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div class="max-w-2xl">
+                    <p class="text-lg text-on-surface-variant font-medium leading-relaxed">
+                        Distributing 50 Innovation Points for <span class="text-primary font-bold">Annual Spring Business Leadership Workshop</span>. Select all members who participated to update their standings.
+                    </p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="bg-surface-container-low px-6 py-4 rounded-xl text-center">
+                        <p class="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-1">Total Points</p>
+                        <p class="text-3xl font-extrabold text-secondary">50</p>
+                    </div>
+                    <div class="bg-surface-container-low px-6 py-4 rounded-xl text-center">
+                        <p class="text-xs uppercase tracking-widest font-bold text-on-surface-variant mb-1">Selected</p>
+                        <p class="text-3xl font-extrabold text-primary">12</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search & Filter Controls -->
+        <div class="bg-surface-container-low rounded-xl p-4 mb-8 flex flex-col md:flex-row gap-4">
+            <div class="relative flex-grow">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <input type="text" placeholder="Search by member name, grade, or student ID..." class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm font-medium text-on-surface">
+            </div>
+            <div class="flex gap-2">
+                <button class="bg-surface-container-lowest text-on-surface-variant px-5 py-3 rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">filter_list</span>
+                    Grade 12
+                </button>
+                <button class="bg-surface-container-lowest text-on-surface-variant px-5 py-3 rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">group</span>
+                    All Teams
+                </button>
+            </div>
+        </div>
+
+        <!-- Member Bento Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            
+            <!-- Connection Node (Active Selection) -->
+            <div class="relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container transition-all">
+                <div class="absolute left-0 top-6 bottom-6 w-1 bg-secondary rounded-r"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="image-member-1.jpg" alt="Member Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="headshot of a smiling male high school student in a blue blazer">
+                        <div>
+                            <h3 class="font-bold text-primary">Marcus Thornton</h3>
+                            <p class="text-xs text-on-surface-variant font-medium">Grade 11 • #22940</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-secondary bg-secondary">
+                        <span class="material-symbols-outlined text-white text-[18px]" style="font-variation-settings: 'wght' 700;">check</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">420</span></span>
+                    <span class="text-secondary font-bold">+50 Pts</span>
+                </div>
+            </div>
+
+            <!-- Connection Node (Unselected) -->
+            <div class="relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="image-member-2.jpg" alt="Member Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a female high school student with glasses looking professional">
+                        <div>
+                            <h3 class="font-bold text-primary">Sophia Chen</h3>
+                            <p class="text-xs text-on-surface-variant font-medium">Grade 12 • #22815</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant group-hover:border-primary transition-colors"></div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">850</span></span>
+                    <span class="text-outline-variant font-bold">Pending</span>
+                </div>
+            </div>
+
+            <!-- Connection Node (Unselected) -->
+            <div class="relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-bold text-lg">JS</div>
+                        <div>
+                            <h3 class="font-bold text-primary">Jackson Smith</h3>
+                            <p class="text-xs text-on-surface-variant font-medium">Grade 10 • #23102</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant group-hover:border-primary transition-colors"></div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">150</span></span>
+                    <span class="text-outline-variant font-bold">Pending</span>
+                </div>
+            </div>
+
+            <!-- More nodes for visual richness -->
+            <div class="relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container transition-all">
+                <div class="absolute left-0 top-6 bottom-6 w-1 bg-secondary rounded-r"></div>
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="image-member-4.jpg" alt="Member Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="candid shot of a high school student laughing during a business presentation">
+                        <div>
+                            <h3 class="font-bold text-primary">Leila Vance</h3>
+                            <p class="text-xs text-on-surface-variant font-medium">Grade 12 • #22550</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-secondary bg-secondary">
+                        <span class="material-symbols-outlined text-white text-[18px]" style="font-variation-settings: 'wght' 700;">check</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">1,120</span></span>
+                    <span class="text-secondary font-bold">+50 Pts</span>
+                </div>
+            </div>
+
+             <div class="relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="image-member-5.jpg" alt="Member Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a focused teenage boy in a white collared shirt">
+                        <div>
+                            <h3 class="font-bold text-primary">David Okoro</h3>
+                            <p class="text-xs text-on-surface-variant font-medium">Grade 11 • #22998</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant group-hover:border-primary transition-colors"></div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">245</span></span>
+                    <span class="text-outline-variant font-bold">Pending</span>
+                </div>
+            </div>
+
+            <div class="relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container transition-all">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <img src="image-member-6.jpg" alt="Member Avatar" class="w-12 h-12 rounded-full object-cover" data-alt="portrait of a confident high school girl with braided hair and a professional suit jacket">
+                        <div>
+                            <h3 class="font-bold text-primary">Aria Patel</h3>
+                            <p class="text-xs text-on-surface-variant font-medium">Grade 12 • #22412</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant group-hover:border-primary transition-colors"></div>
+                </div>
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">980</span></span>
+                    <span class="text-outline-variant font-bold">Pending</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Pagination & Bulk Actions Shell -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-8 pt-12 border-t border-outline-variant/15">
+            <div class="flex items-center gap-4 text-sm font-medium text-on-surface-variant">
+                <span>Showing 1-12 of 156 members</span>
+                <div class="flex gap-1">
+                    <button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-high text-primary"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded bg-primary text-white">1</button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest hover:bg-surface-container-high transition-colors">2</button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-lowest hover:bg-surface-container-high transition-colors">3</button>
+                    <button class="w-8 h-8 flex items-center justify-center rounded bg-surface-container-high text-primary"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button class="px-8 py-4 bg-surface-container-high text-primary font-bold rounded-lg hover:bg-surface-container-highest transition-all">
+                    Cancel & Discard
+                </button>
+                <button class="px-12 py-4 bg-secondary text-white font-bold rounded-lg shadow-lg shadow-secondary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3">
+                    <span class="material-symbols-outlined">verified</span>
+                    Submit 50 Points
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full py-12 px-8 flex flex-col items-center gap-6 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-900 mt-auto">
+        <div class="text-lg font-bold text-[#002D72] dark:text-blue-400">
+            Bear Link
+        </div>
+        <div class="flex gap-8">
+            <a href="#" class="text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors text-sm font-inter">Contact</a>
+            <a href="#" class="text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors text-sm font-inter">Privacy Policy</a>
+            <a href="#" class="text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors text-sm font-inter">Terms of Service</a>
+        </div>
+        <p class="text-slate-500 dark:text-slate-400 text-sm font-inter">
+            © 2024 Bridgeland High School FBLA. All rights reserved.
+        </p>
+    </footer>
+
+</body>
+</html></style></head><body></body></html>

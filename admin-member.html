@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Edit Member | Bear Link</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                "error":"#ba1a1a","secondary-fixed":"#ffdbcc","inverse-on-surface":"#eef1f4","tertiary":"#0f1e2a",
+                "on-tertiary-fixed-variant":"#3a4856","surface-variant":"#e0e3e6","surface-tint":"#3d5ca2",
+                "surface-container-high":"#e5e8eb","on-secondary-fixed-variant":"#7a3000","outline-variant":"#c4c6d2",
+                "secondary-container":"#fe6b00","background":"#f7fafd","inverse-surface":"#2d3133","primary-fixed-dim":"#b1c5ff",
+                "on-surface":"#181c1e","on-tertiary-fixed":"#0e1d29","tertiary-fixed":"#d5e4f6","surface-container-lowest":"#ffffff",
+                "error-container":"#ffdad6","outline":"#747782","tertiary-fixed-dim":"#b9c8d9","secondary-fixed-dim":"#ffb693",
+                "on-tertiary-container":"#8c9bab","tertiary-container":"#243340","primary-container":"#002d72","on-error":"#ffffff",
+                "primary-fixed":"#dae2ff","on-error-container":"#93000a","surface-container-highest":"#e0e3e6","on-secondary":"#ffffff",
+                "on-tertiary":"#ffffff","on-primary-fixed":"#001946","surface-dim":"#d7dadd","on-primary":"#ffffff","primary":"#001a48",
+                "surface":"#f7fafd","surface-bright":"#f7fafd","surface-container":"#ebeef1","surface-container-low":"#f1f4f7",
+                "secondary":"#a04100","on-primary-container":"#7a97e2","inverse-primary":"#b1c5ff","on-secondary-fixed":"#351000",
+                "on-secondary-container":"#572000","on-surface-variant":"#444651","on-primary-fixed-variant":"#224489","on-background":"#181c1e"
+            },
+            borderRadius: { "DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem" },
+            fontFamily: { "headline":["Manrope"],"body":["Inter"],"label":["Inter"] }
+        }
+    }
+}
+</script>
+<style>
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.bg-hero-gradient { background: linear-gradient(135deg, #001a48 0%, #002d72 100%); }
+</style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<!-- Nav -->
+<nav class="top-0 sticky z-50 bg-white/80 backdrop-blur-md shadow-sm">
+    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+        <div class="flex items-center gap-8">
+            <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="index.html"              class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Home</a>
+                <a href="admin.html"              class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+                <a href="points.html"             class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Points</a>
+            </div>
+        </div>
+        <button data-signout class="text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
+    </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-8 py-12">
+
+    <!-- Back -->
+    <div class="mb-8">
+        <a href="admin.html" class="inline-flex items-center gap-2 text-primary font-medium hover:text-secondary transition-colors group">
+            <span class="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">arrow_back</span>
+            <span class="text-sm">Back to Dashboard</span>
+        </a>
+    </div>
+
+    <!-- Error banner (hidden by default) -->
+    <div id="errorBanner" class="hidden mb-6 p-4 bg-error-container rounded-xl">
+        <p class="text-xs font-bold text-error uppercase tracking-widest mb-2">Error</p>
+        <pre id="errorText" class="text-sm text-error font-mono whitespace-pre-wrap break-all select-all"></pre>
+    </div>
+
+    <!-- Profile header -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+
+        <!-- Name card -->
+        <div class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm relative overflow-hidden flex items-center gap-8">
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+            <div class="w-20 h-20 rounded-xl bg-surface-container flex items-center justify-center">
+                <span id="memberInitials" class="text-3xl font-extrabold text-primary font-headline">?</span>
+            </div>
+            <div>
+                <span class="text-xs uppercase tracking-widest font-bold text-secondary mb-1 block">Admin Edit</span>
+                <h1 id="memberName" class="text-3xl font-extrabold tracking-tight font-headline text-primary">Loading…</h1>
+                <p id="memberMeta" class="text-on-surface-variant text-sm mt-1"></p>
+            </div>
+        </div>
+
+        <!-- Total points card -->
+        <div class="lg:col-span-4 bg-hero-gradient rounded-xl p-8 flex flex-col justify-center items-center text-center text-white">
+            <span class="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-1">Total Points</span>
+            <div id="totalPoints" class="text-5xl font-extrabold font-headline">—</div>
+        </div>
+    </section>
+
+    <!-- Event history -->
+    <section>
+        <div class="flex items-end justify-between mb-8">
+            <div>
+                <h2 class="text-2xl font-bold font-headline text-primary">Event Assignments</h2>
+                <p class="text-on-surface-variant text-sm mt-1">Edit points or remove individual event assignments.</p>
+            </div>
+            <span id="eventCount" class="text-xs font-bold uppercase tracking-widest text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full"></span>
+        </div>
+        <div id="eventList" class="space-y-4">
+            <div class="py-12 text-center text-on-surface-variant">
+                <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
+                Loading…
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script type="module">
+import { requireAdmin, signOut } from './js/auth.js'
+import { fetchMember, updatePointsAwarded, removeAssignment, recalcMemberTotal, triggerSheetSync, triggerSheetTotalSync } from './js/data.js'
+
+await requireAdmin()
+document.querySelectorAll('[data-signout]').forEach(el => el.addEventListener('click', () => signOut()))
+
+function showError(msg) {
+    const banner = document.getElementById('errorBanner')
+    document.getElementById('errorText').textContent = msg
+    banner.classList.remove('hidden')
+    banner.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const params   = new URLSearchParams(window.location.search)
+const memberId = params.get('id') || sessionStorage.getItem('editMemberId')
+
+let memberData = null   // cached after first load
+
+// ── Load / render ─────────────────────────────────────────────
+async function load() {
+    memberData = await fetchMember(memberId)
+    const m = memberData
+
+    document.title = `Edit ${m.name} | Bear Link`
+    document.getElementById('memberName').textContent = m.name ?? '—'
+    document.getElementById('memberMeta').textContent =
+        [m.grade ? `Grade ${m.grade}` : null, m.student_id ? `ID ${m.student_id}` : null]
+        .filter(Boolean).join(' • ')
+
+    const parts    = (m.name ?? '').trim().split(' ')
+    const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
+    document.getElementById('memberInitials').textContent = initials
+
+    document.getElementById('totalPoints').textContent = m.total_points.toLocaleString()
+    document.getElementById('eventCount').textContent = `${m.assignments.length} Events`
+
+    renderEvents(m)
+}
+
+function renderEvents(m) {
+    const ICONS = {
+        Competition: 'workspace_premium', Social: 'groups', Meeting: 'calendar_today',
+        Fundraiser: 'volunteer_activism', Education: 'school', Volunteer: 'volunteer_activism',
+        Attendance: 'how_to_reg', Conference: 'emoji_events', BAA: 'military_tech',
+        Service: 'handshake', Fundraising: 'savings',
+    }
+
+    const list = document.getElementById('eventList')
+    if (!m.assignments.length) {
+        list.innerHTML = `<p class="text-on-surface-variant py-8 text-center">No events assigned yet.</p>`
+        return
+    }
+
+    list.innerHTML = m.assignments.map(a => {
+        const ev   = a.events
+        const icon = ICONS[ev.category] ?? 'event'
+        const date = ev.event_date
+            ? new Date(ev.event_date).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })
+            : '—'
+        return `
+        <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-4 relative">
+            <div class="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-secondary rounded-r-full"></div>
+
+            <!-- icon -->
+            <div class="w-12 h-12 bg-surface-container rounded-xl flex items-center justify-center text-primary shrink-0">
+                <span class="material-symbols-outlined text-2xl">${icon}</span>
+            </div>
+
+            <!-- event info -->
+            <div class="flex-1 min-w-0">
+                <h3 class="font-bold text-on-surface text-sm leading-tight">${ev.name}</h3>
+                <p class="text-xs text-on-surface-variant mt-0.5">${date} · ${ev.category}</p>
+            </div>
+
+            <!-- points awarded — view/edit -->
+            <div class="shrink-0">
+                <!-- view mode -->
+                <div id="ev-view-${ev.id}" class="flex flex-col items-end gap-1">
+                    <button onclick="toggleEvEdit('${ev.id}', ${a.points_awarded})"
+                        class="text-xs font-semibold text-secondary hover:text-primary flex items-center gap-0.5 transition-colors">
+                        <span class="material-symbols-outlined" style="font-size:13px">edit</span> Edit
+                    </button>
+                    <div class="text-xl font-extrabold font-headline text-primary">+${a.points_awarded}</div>
+                    <div class="text-xs text-on-surface-variant font-medium">pts</div>
+                </div>
+                <!-- edit mode -->
+                <div id="ev-edit-${ev.id}" class="hidden flex-col items-end gap-1.5">
+                    <div class="flex items-center gap-1">
+                        <button onclick="adjustEv('${ev.id}', -1)" class="w-7 h-7 rounded-lg bg-surface-container-high font-bold text-sm flex items-center justify-center hover:bg-error/10 hover:text-error transition-colors">−</button>
+                        <input id="ev-input-${ev.id}" type="number" value="${a.points_awarded}" min="0"
+                            class="w-20 bg-surface-container-low border border-outline-variant rounded-lg px-2 py-1 text-sm font-bold text-on-surface text-center focus:outline-none focus:ring-1 focus:ring-secondary"
+                            onkeydown="if(event.key==='Enter') saveEv('${ev.id}', '${memberId}')" />
+                        <button onclick="adjustEv('${ev.id}', 1)" class="w-7 h-7 rounded-lg bg-surface-container-high font-bold text-sm flex items-center justify-center hover:bg-secondary/10 hover:text-secondary transition-colors">+</button>
+                    </div>
+                    <div class="flex gap-1">
+                        <button id="ev-save-${ev.id}" onclick="saveEv('${ev.id}', '${memberId}')"
+                            class="text-xs font-bold text-white bg-secondary px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity">Save</button>
+                        <button onclick="cancelEvEdit('${ev.id}')"
+                            class="text-xs font-medium text-on-surface-variant hover:text-error px-2 py-1 rounded-lg transition-colors">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- delete -->
+            <button onclick="deleteAssignment('${memberId}', '${ev.id}', '${ev.name.replace(/'/g,"&#39;")}')"
+                class="shrink-0 p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Remove assignment">
+                <span class="material-symbols-outlined text-sm">delete</span>
+            </button>
+        </div>`
+    }).join('')
+}
+
+// ── Per-event inline edit ─────────────────────────────────────
+window.toggleEvEdit = (eventId, current) => {
+    document.getElementById(`ev-view-${eventId}`).classList.add('hidden')
+    const el = document.getElementById(`ev-edit-${eventId}`)
+    el.classList.remove('hidden')
+    el.classList.add('flex')
+    const input = document.getElementById(`ev-input-${eventId}`)
+    input.value = current; input.focus(); input.select()
+}
+
+window.cancelEvEdit = (eventId) => {
+    document.getElementById(`ev-edit-${eventId}`).classList.add('hidden')
+    document.getElementById(`ev-edit-${eventId}`).classList.remove('flex')
+    document.getElementById(`ev-view-${eventId}`).classList.remove('hidden')
+}
+
+window.adjustEv = (eventId, delta) => {
+    const input = document.getElementById(`ev-input-${eventId}`)
+    input.value = Math.max(0, (parseInt(input.value) || 0) + delta)
+}
+
+window.saveEv = async (eventId, memberId) => {
+    const newPts = parseInt(document.getElementById(`ev-input-${eventId}`).value)
+    if (isNaN(newPts) || newPts < 0) return
+    const btn = document.getElementById(`ev-save-${eventId}`)
+    btn.textContent = '…'; btn.disabled = true
+    try {
+        await updatePointsAwarded(memberId, eventId, newPts)
+        const newTotal = await recalcMemberTotal(memberId)
+        const a = memberData.assignments.find(a => a.event_id === eventId)
+        if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, newPts)
+        try { await triggerSheetTotalSync(memberId, newTotal) } catch (e) { console.warn('Total sheet sync failed:', e) }
+        await load()
+    } catch (err) {
+        showError(err.message)
+        btn.textContent = 'Save'; btn.disabled = false
+    }
+}
+
+// ── Delete assignment ─────────────────────────────────────────
+window.deleteAssignment = async (memberId, eventId, eventName) => {
+    if (!confirm(`Remove "${eventName}" from this member? This cannot be undone.`)) return
+    try {
+        const a = memberData.assignments.find(a => a.event_id === eventId)
+        await removeAssignment(memberId, eventId)
+        const newTotal = await recalcMemberTotal(memberId)
+        if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, 0)
+        try { await triggerSheetTotalSync(memberId, newTotal) } catch (e) { console.warn('Total sheet sync failed:', e) }
+        await load()
+    } catch (err) {
+        showError(err.message)
+    }
+}
+
+// Initial load
+if (!memberId) {
+    document.getElementById('memberName').textContent = 'No member selected'
+    document.getElementById('eventList').innerHTML =
+        `<p class="text-on-surface-variant py-4">Return to <a href="admin.html" class="text-secondary underline">Dashboard</a> and click Modify on a member.</p>`
+} else {
+    load().catch(err => {
+        document.getElementById('memberName').textContent = 'Error loading member'
+        document.getElementById('eventList').innerHTML =
+            `<p class="text-error py-4 text-sm font-mono bg-error-container px-4 rounded-lg">${err?.message ?? JSON.stringify(err)}</p>`
+        console.error(err)
+    })
+}
+</script>
+
+<!-- Footer -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50 mt-20">
+    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
+    <p class="text-xs uppercase tracking-widest text-slate-500">© 2025 Bridgeland High School FBLA. All rights reserved.</p>
+</footer>
+</body>
+</html>

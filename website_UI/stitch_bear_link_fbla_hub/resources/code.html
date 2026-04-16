@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdbcc",
+                        "inverse-on-surface": "#eef1f4",
+                        "tertiary": "#0f1e2a",
+                        "on-tertiary-fixed-variant": "#3a4856",
+                        "surface-variant": "#e0e3e6",
+                        "surface-tint": "#3d5ca2",
+                        "surface-container-high": "#e5e8eb",
+                        "on-secondary-fixed-variant": "#7a3000",
+                        "outline-variant": "#c4c6d2",
+                        "secondary-container": "#fe6b00",
+                        "background": "#f7fafd",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-surface": "#181c1e",
+                        "on-tertiary-fixed": "#0e1d29",
+                        "tertiary-fixed": "#d5e4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "outline": "#747782",
+                        "tertiary-fixed-dim": "#b9c8d9",
+                        "secondary-fixed-dim": "#ffb693",
+                        "on-tertiary-container": "#8c9bab",
+                        "tertiary-container": "#243340",
+                        "primary-container": "#002d72",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#001946",
+                        "surface-dim": "#d7dadd",
+                        "on-primary": "#ffffff",
+                        "primary": "#001a48",
+                        "surface": "#f7fafd",
+                        "surface-bright": "#f7fafd",
+                        "surface-container": "#ebeef1",
+                        "surface-container-low": "#f1f4f7",
+                        "secondary": "#a04100",
+                        "on-primary-container": "#7a97e2",
+                        "inverse-primary": "#b1c5ff",
+                        "on-secondary-fixed": "#351000",
+                        "on-secondary-container": "#572000",
+                        "on-surface-variant": "#444651",
+                        "on-primary-fixed-variant": "#224489",
+                        "on-background": "#181c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-secondary-fixed">
+<!-- TopNavBar (JSON Managed) -->
+<nav class="docked full-width top-0 sticky z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="text-xl font-extrabold tracking-tighter text-[#002D72] dark:text-blue-400">
+                Bear Link
+            </div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 transition-colors duration-200" href="#">Home</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 transition-colors duration-200" href="#">Competitive Events</a>
+<a class="text-sm font-medium font-inter text-[#002D72] dark:text-blue-400 font-bold border-b-2 border-[#a04100] pb-1" href="#">Resources</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 transition-colors duration-200" href="#">Points</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300">Admin Login</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="Close up portrait of a young professional smiling in a bright modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMRoaypeGd2vaSWOkHgLltoNz816uOP4DQ4qOFEglL3ywt2_-lWg6kpVYpvKxQGLVU9eEqE1XW5MU0CBHrobneGq1Q68WvGH56Ip3GWqkOAu9Z2fkwzWJyLP1RQl5WAxqNkWDTIpE5fl79GMcCCp-B-gWZMMrhE5vSP6pzmh7coJ-KvqA1QK7bjQOPtw5w8x93plKN8AiYRExXHDpCoaWdzq1Yz3vLbdg2nMaOmjnrESq6C4Xg-Vw_kI5hJSSCjtqE5qfv5GPejAFk"/>
+</div>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-8 py-16 min-h-screen">
+<!-- Hero / Header Section -->
+<header class="mb-16">
+<span class="label-md uppercase tracking-widest text-secondary font-semibold text-xs mb-4 block">Centralized Hub</span>
+<h1 class="text-5xl md:text-6xl font-extrabold text-primary tracking-tight mb-6 max-w-2xl">
+                Elevate Your <span class="text-secondary">FBLA Journey</span> with Bear Link Resources.
+            </h1>
+<p class="text-lg text-on-surface-variant max-w-xl leading-relaxed">
+                Everything you need to succeed in Bridgeland FBLA, from academic portals to our vibrant social community, all in one place.
+            </p>
+</header>
+<!-- Bento Grid Resources Section -->
+<div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
+<!-- Academic Core: Schoology -->
+<div class="md:col-span-2 lg:col-span-3 bg-surface-container-lowest p-8 rounded-xl flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 group cursor-pointer border border-transparent hover:border-primary/10">
+<div>
+<div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-white" data-icon="school">school</span>
+</div>
+<h3 class="text-2xl font-bold text-primary mb-2">Schoology</h3>
+<p class="text-on-surface-variant text-sm">Access coursework, submit assignments, and stay updated with teacher announcements.</p>
+</div>
+<div class="mt-8 flex items-center text-primary font-semibold text-sm group-hover:translate-x-1 transition-transform">
+                    Log in to Portal <span class="material-symbols-outlined ml-2 text-xs" data-icon="arrow_forward">arrow_forward</span>
+</div>
+</div>
+<!-- FBLA Connect -->
+<div class="md:col-span-2 lg:col-span-3 bg-primary text-on-primary p-8 rounded-xl flex flex-col justify-between relative overflow-hidden group cursor-pointer">
+<div class="absolute top-0 right-0 p-8 opacity-10">
+<span class="material-symbols-outlined text-8xl" data-icon="hub">hub</span>
+</div>
+<div class="z-10">
+<div class="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mb-6 shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined text-on-secondary" data-icon="connect_without_contact">connect_without_contact</span>
+</div>
+<h3 class="text-2xl font-bold mb-2">FBLA Connect</h3>
+<p class="text-on-primary-container text-sm max-w-xs">Manage your national membership, register for conferences, and explore competitive events.</p>
+</div>
+<div class="mt-8 z-10">
+<button class="bg-on-primary text-primary px-6 py-2 rounded-lg font-bold text-sm hover:bg-secondary-fixed transition-colors">Access National Hub</button>
+</div>
+</div>
+<!-- Remind Communication -->
+<div class="md:col-span-2 lg:col-span-2 bg-surface-container-low p-8 rounded-xl flex flex-col gap-4 border-l-4 border-secondary">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="chat">chat</span>
+</div>
+<h3 class="text-xl font-bold text-primary">Remind</h3>
+</div>
+<p class="text-on-surface-variant text-sm">Get instant mobile notifications for meetings, deadlines, and urgent club updates.</p>
+<div class="mt-auto">
+<span class="text-xs font-bold text-secondary tracking-widest uppercase">Code: @bhfbla24</span>
+</div>
+</div>
+<!-- Social Media - Instagram -->
+<div class="md:col-span-1 lg:col-span-2 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group flex items-center gap-6 cursor-pointer">
+<div class="w-16 h-16 rounded-xl bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="photo_camera">photo_camera</span>
+</div>
+<div>
+<h4 class="font-bold text-primary">Instagram</h4>
+<p class="text-xs text-on-surface-variant">@BridgelandFBLA</p>
+</div>
+</div>
+<!-- Social Media - X / Twitter -->
+<div class="md:col-span-1 lg:col-span-2 bg-slate-900 text-white p-6 rounded-xl group flex items-center gap-6 cursor-pointer hover:bg-black transition-colors">
+<div class="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="close">close</span>
+</div>
+<div>
+<h4 class="font-bold">X (Twitter)</h4>
+<p class="text-xs text-slate-400">@BHLandFBLA</p>
+</div>
+</div>
+<!-- Additional Resources Section -->
+<div class="md:col-span-4 lg:col-span-6 mt-12">
+<div class="flex items-center justify-between mb-8">
+<h2 class="text-3xl font-bold text-primary tracking-tight">Essential Documents</h2>
+<div class="h-px flex-grow mx-8 bg-surface-container-high hidden md:block"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Resource Card 1 -->
+<div class="flex items-start gap-4 p-4 hover:bg-surface-container-low rounded-xl transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="description">description</span>
+<div>
+<h5 class="font-bold text-primary mb-1">Club Constitution</h5>
+<p class="text-xs text-on-surface-variant mb-3">Understand the governing rules of our chapter.</p>
+<a class="text-xs font-bold text-primary hover:underline" href="#">Download PDF</a>
+</div>
+</div>
+<!-- Resource Card 2 -->
+<div class="flex items-start gap-4 p-4 hover:bg-surface-container-low rounded-xl transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="event_available">event_available</span>
+<div>
+<h5 class="font-bold text-primary mb-1">2024-25 Calendar</h5>
+<p class="text-xs text-on-surface-variant mb-3">Sync all meeting dates and event deadlines.</p>
+<a class="text-xs font-bold text-primary hover:underline" href="#">Add to Google</a>
+</div>
+</div>
+<!-- Resource Card 3 -->
+<div class="flex items-start gap-4 p-4 hover:bg-surface-container-low rounded-xl transition-colors">
+<span class="material-symbols-outlined text-secondary" data-icon="account_balance_wallet">account_balance_wallet</span>
+<div>
+<h5 class="font-bold text-primary mb-1">Fee Payment Portal</h5>
+<p class="text-xs text-on-surface-variant mb-3">Securely pay dues and competition fees.</p>
+<a class="text-xs font-bold text-primary hover:underline" href="#">Pay Now</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Featured Resource Image/Callout -->
+</main>
+<!-- Footer (JSON Managed) -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-900">
+<div class="text-lg font-bold text-[#002D72] dark:text-blue-400">
+            Bear Link
+        </div>
+<div class="flex gap-8">
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors" href="#">Contact</a>
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors" href="#">Terms of Service</a>
+</div>
+<div class="text-xs uppercase tracking-widest font-inter text-slate-500 dark:text-slate-400 mt-4">
+            © 2024 Bridgeland High School FBLA. All rights reserved.
+        </div>
+</footer>
+</body></html>

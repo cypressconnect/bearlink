@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#ffdbcc",
+                        "inverse-on-surface": "#eef1f4",
+                        "tertiary": "#0f1e2a",
+                        "on-tertiary-fixed-variant": "#3a4856",
+                        "surface-variant": "#e0e3e6",
+                        "surface-tint": "#3d5ca2",
+                        "surface-container-high": "#e5e8eb",
+                        "on-secondary-fixed-variant": "#7a3000",
+                        "outline-variant": "#c4c6d2",
+                        "secondary-container": "#fe6b00",
+                        "background": "#f7fafd",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-surface": "#181c1e",
+                        "on-tertiary-fixed": "#0e1d29",
+                        "tertiary-fixed": "#d5e4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "outline": "#747782",
+                        "tertiary-fixed-dim": "#b9c8d9",
+                        "secondary-fixed-dim": "#ffb693",
+                        "on-tertiary-container": "#8c9bab",
+                        "tertiary-container": "#243340",
+                        "primary-container": "#002d72",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dae2ff",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e0e3e6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#001946",
+                        "surface-dim": "#d7dadd",
+                        "on-primary": "#ffffff",
+                        "primary": "#001a48",
+                        "surface": "#f7fafd",
+                        "surface-bright": "#f7fafd",
+                        "surface-container": "#ebeef1",
+                        "surface-container-low": "#f1f4f7",
+                        "secondary": "#a04100",
+                        "on-primary-container": "#7a97e2",
+                        "inverse-primary": "#b1c5ff",
+                        "on-secondary-fixed": "#351000",
+                        "on-secondary-container": "#572000",
+                        "on-surface-variant": "#444651",
+                        "on-primary-fixed-variant": "#224489",
+                        "on-background": "#181c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #001a48 0%, #002d72 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopNavBar -->
+<header class="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md dock-full-width top-0 sticky z-50 shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+<div class="text-xl font-extrabold tracking-tighter text-[#002D72] dark:text-blue-400 font-headline">
+                Bear Link
+            </div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 transition-colors duration-200" href="#">Home</a>
+<a class="text-sm font-medium font-inter text-[#002D72] dark:text-blue-400 font-bold border-b-2 border-[#a04100] pb-1" href="#">Competitive Events</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 transition-colors duration-200" href="#">Resources</a>
+<a class="text-sm font-medium font-inter text-slate-600 dark:text-slate-400 hover:text-[#002D72] dark:hover:text-blue-300 transition-colors duration-200" href="#">Points</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-sm font-medium font-inter text-slate-600 hover:text-[#002D72] transition-colors">Admin Login</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/10">
+<img alt="User profile" data-alt="Close up professional headshot of a student leader with soft natural lighting and a clean blurred office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBup6diWwiZaVPsOJ9pwV3qREEfONLVVxCWT7mLQFkcHC5OOXyj8Zhryw4BgqS23WpB2uPjD_b-lBadxPSuqkaYon0GUO-FsvfxsTPCxAuT8Y6y4SUejlBff2CFyqsuqK8VfpGB2IC3zB_uQd6J_TEaBExxmHHATNL2eLWYu2GV34RsyJxE3YZUg8tP5nwl3ZcRpGCoNAU-RpOIzPWWhM71k9_IdIMBGgaKhdoh-29r1Kpf7uPZgyT7Do0MSdj0nKKw7yrLViEJUfEe"/>
+</div>
+</div>
+</div>
+</header>
+<main>
+<!-- Hero Section -->
+<section class="hero-gradient py-24 relative overflow-hidden">
+<div class="absolute inset-0 opacity-10 pointer-events-none">
+<div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent"></div>
+</div>
+<div class="max-w-7xl mx-auto px-8 relative z-10">
+<div class="max-w-3xl">
+<span class="inline-block px-3 py-1 rounded-full bg-secondary text-on-secondary text-xs font-bold tracking-widest uppercase mb-6">FBLA Excellence</span>
+<h1 class="text-5xl md:text-7xl font-extrabold font-headline text-white tracking-tight leading-tight mb-6">
+                        Compete at the <span class="text-secondary-fixed">Highest Level.</span>
+</h1>
+<p class="text-xl text-on-primary-container leading-relaxed mb-10 font-light">
+                        Discover your strengths through various competitive categories. From analytical testing to persuasive presentations, find the event that defines your professional future.
+                    </p>
+<div class="flex flex-wrap gap-4">
+<a class="px-8 py-4 bg-secondary text-on-secondary rounded-md font-semibold text-sm transition-transform hover:scale-[1.02] active:scale-95 shadow-lg flex items-center gap-2" href="https://www.fbla-pbl.org/competitive-events/" target="_blank">
+                            Official FBLA Event List
+                            <span class="material-symbols-outlined text-sm">open_in_new</span>
+</a>
+<a class="px-8 py-4 bg-white/10 text-white backdrop-blur-md rounded-md font-semibold text-sm hover:bg-white/20 transition-colors" href="#categories">Explore Categories</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats / Quick Info -->
+<section class="bg-surface-container-low py-12 px-8">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="flex items-center gap-6 p-6 bg-surface-container-lowest rounded-xl">
+<div class="w-12 h-12 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">trophy</span>
+</div>
+<div>
+<div class="text-2xl font-bold font-headline text-primary">70+</div>
+<div class="text-xs font-medium text-outline uppercase tracking-wider">Unique Events</div>
+</div>
+</div>
+<div class="flex items-center gap-6 p-6 bg-surface-container-lowest rounded-xl">
+<div class="w-12 h-12 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">groups</span>
+</div>
+<div>
+<div class="text-2xl font-bold font-headline text-primary">3,000+</div>
+<div class="text-xs font-medium text-outline uppercase tracking-wider">Competitors Yearly</div>
+</div>
+</div>
+<div class="flex items-center gap-6 p-6 bg-surface-container-lowest rounded-xl">
+<div class="w-12 h-12 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<div>
+<div class="text-2xl font-bold font-headline text-primary">State &amp; Nat</div>
+<div class="text-xs font-medium text-outline uppercase tracking-wider">Recognition Tiers</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Competitive Types Bento Grid -->
+<section class="py-24 px-8 max-w-7xl mx-auto" id="categories">
+<div class="mb-16">
+<h2 class="text-4xl font-bold font-headline text-primary tracking-tight mb-4">Master Your Category</h2>
+<p class="text-on-surface-variant max-w-2xl">FBLA events are structured into three distinct formats. Understanding these formats is the first step toward your victory at states.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+<!-- Test-based events -->
+<div class="md:col-span-8 bg-surface-container-lowest rounded-xl p-8 flex flex-col justify-between border-l-4 border-secondary shadow-sm">
+<div class="max-w-lg">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">quiz</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-secondary">Knowledge Primary</span>
+</div>
+<h3 class="text-3xl font-bold font-headline mb-4">Test-based Events</h3>
+<p class="text-on-surface-variant leading-relaxed mb-6">
+                            Objective tests measure your technical knowledge in specific business domains. These are 100-question exams taken online or at conferences, focusing on subjects like Business Law, Economics, and Information Technology.
+                        </p>
+<ul class="space-y-3 mb-8">
+<li class="flex items-center gap-3 text-sm font-medium text-primary">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                                60-minute timed exams
+                            </li>
+<li class="flex items-center gap-3 text-sm font-medium text-primary">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                                Multiple choice format
+                            </li>
+<li class="flex items-center gap-3 text-sm font-medium text-primary">
+<span class="material-symbols-outlined text-secondary text-sm">check_circle</span>
+                                High precision and speed required
+                            </li>
+</ul>
+</div>
+<div class="mt-auto">
+<a class="inline-flex items-center gap-2 text-primary font-bold text-sm hover:underline" href="#">
+                            View all Test Events
+                            <span class="material-symbols-outlined text-xs">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Roleplay events card -->
+<div class="md:col-span-4 bg-primary text-white rounded-xl p-8 flex flex-col justify-between overflow-hidden relative group shadow-lg">
+<div class="absolute -right-10 -bottom-10 opacity-10 scale-150 group-hover:scale-110 transition-transform duration-700">
+<span class="material-symbols-outlined text-[120px]">person_celebrate</span>
+</div>
+<div class="relative z-10">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-secondary-fixed">
+<span class="material-symbols-outlined">psychology</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-secondary-fixed">Quick Thinking</span>
+</div>
+<h3 class="text-2xl font-bold font-headline mb-4">Roleplay Events</h3>
+<p class="text-blue-100 text-sm leading-relaxed mb-6">
+                            Combine a 100-question test with an on-the-spot scenario. You're given 10-20 minutes to analyze a business problem and present your solution to a panel of judges.
+                        </p>
+</div>
+<div class="relative z-10">
+<button class="w-full py-3 bg-secondary text-white rounded-md font-bold text-xs uppercase tracking-widest hover:bg-[#c04d00] transition-colors">Learn More</button>
+</div>
+</div>
+<!-- Presentation events -->
+<div class="md:col-span-12 bg-surface-container-low rounded-xl p-10 flex flex-col md:flex-row items-center gap-12 overflow-hidden border-l-4 border-primary">
+<div class="flex-1">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">present_to_all</span>
+</div>
+<span class="text-xs font-bold uppercase tracking-widest text-primary">Performance &amp; Creation</span>
+</div>
+<h3 class="text-3xl font-bold font-headline mb-4">Presentation Events</h3>
+<p class="text-on-surface-variant leading-relaxed mb-8">
+                            Develop projects over months or prepare a speech to present before judges. From creating a mobile app to delivering a Public Service Announcement, these events showcase your creativity and formal communication skills.
+                        </p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-4 rounded-lg">
+<div class="text-primary font-bold mb-1">Pre-judged</div>
+<div class="text-xs text-on-surface-variant">Submit reports or code before the actual conference for initial scoring.</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg">
+<div class="text-primary font-bold mb-1">Live Presentation</div>
+<div class="text-xs text-on-surface-variant">Deliver a 7-minute presentation followed by Q&amp;A with industry experts.</div>
+</div>
+</div>
+</div>
+<div class="flex-1 w-full h-64 rounded-xl overflow-hidden shadow-xl">
+<img alt="Student giving presentation" class="w-full h-full object-cover" data-alt="Young professional student in a business suit giving a confident presentation with a modern minimalist slide deck in background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACmPwrIQZUJMra-0g6VHIGJx4WvldAo1CLDwi2N6vEf0n8piAtzAOFZGmmMPycckAQKqDNptgAUgP7QeYJmCOiw9V1CK-BwVK890FwDmZhwahgOWxESjI7AsLilZVz4nglLrzQg7YU8_VBju8DODZlH0LRXr7naWUTkGDa51Z5vjZLOZ3bS18bl8c36Q-8oobprOoOEM-VwJcFTV_i60Jwa1z1IE_wu_agn4qrnw8ooIpnRTlZ2AVk-gi__6VNc-5x3QuvS0DBswm6"/>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-20 bg-surface-container-highest">
+<div class="max-w-5xl mx-auto px-8 text-center">
+<h2 class="text-3xl font-bold font-headline text-primary mb-6">Not sure where you fit in?</h2>
+<p class="text-lg text-on-surface-variant mb-10 font-light">
+                    Our "Bear Link" competition advisors are here to help you match your academic strengths to the perfect event. Let's find your gold medal path today.
+                </p>
+<div class="flex justify-center gap-4">
+<button class="px-10 py-4 bg-primary text-white rounded-md font-bold transition-all hover:shadow-xl active:scale-95">Speak to an Advisor</button>
+<button class="px-10 py-4 border-2 border-primary text-primary rounded-md font-bold hover:bg-primary/5 transition-colors">View Past Winners</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 border-t border-slate-200/10 bg-slate-50 dark:bg-slate-900">
+<div class="text-lg font-bold text-[#002D72] dark:text-blue-400 font-headline">
+            Bear Link
+        </div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors" href="#">Contact</a>
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors" href="#">Privacy Policy</a>
+<a class="text-sm font-inter text-slate-500 dark:text-slate-400 hover:text-[#a04100] dark:hover:text-orange-400 transition-colors" href="#">Terms of Service</a>
+</div>
+<div class="text-xs uppercase tracking-widest font-inter text-slate-400 mt-4">
+            © 2024 Bridgeland High School FBLA. All rights reserved.
+        </div>
+</footer>
+</body></html>

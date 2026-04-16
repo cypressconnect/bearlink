@@ -1,0 +1,28 @@
+# Environment & secrets
+.env
+.env.*
+*.env
+supabase/.env
+supabase/functions/.env
+
+# Supabase local dev
+supabase/.temp/
+supabase/functions/.cache/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log

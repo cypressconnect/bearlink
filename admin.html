@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Dashboard | Bear Link</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                "error":"#ba1a1a","secondary-fixed":"#ffdbcc","inverse-on-surface":"#eef1f4","tertiary":"#0f1e2a",
+                "on-tertiary-fixed-variant":"#3a4856","surface-variant":"#e0e3e6","surface-tint":"#3d5ca2",
+                "surface-container-high":"#e5e8eb","on-secondary-fixed-variant":"#7a3000","outline-variant":"#c4c6d2",
+                "secondary-container":"#fe6b00","background":"#f7fafd","inverse-surface":"#2d3133","primary-fixed-dim":"#b1c5ff",
+                "on-surface":"#181c1e","on-tertiary-fixed":"#0e1d29","tertiary-fixed":"#d5e4f6","surface-container-lowest":"#ffffff",
+                "error-container":"#ffdad6","outline":"#747782","tertiary-fixed-dim":"#b9c8d9","secondary-fixed-dim":"#ffb693",
+                "on-tertiary-container":"#8c9bab","tertiary-container":"#243340","primary-container":"#002d72","on-error":"#ffffff",
+                "primary-fixed":"#dae2ff","on-error-container":"#93000a","surface-container-highest":"#e0e3e6","on-secondary":"#ffffff",
+                "on-tertiary":"#ffffff","on-primary-fixed":"#001946","surface-dim":"#d7dadd","on-primary":"#ffffff","primary":"#001a48",
+                "surface":"#f7fafd","surface-bright":"#f7fafd","surface-container":"#ebeef1","surface-container-low":"#f1f4f7",
+                "secondary":"#a04100","on-primary-container":"#7a97e2","inverse-primary":"#b1c5ff","on-secondary-fixed":"#351000",
+                "on-secondary-container":"#572000","on-surface-variant":"#444651","on-primary-fixed-variant":"#224489","on-background":"#181c1e"
+            },
+            borderRadius: { "DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem" },
+            fontFamily: { "headline":["Manrope"],"body":["Inter"],"label":["Inter"] }
+        }
+    }
+}
+</script>
+<style>
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.glass-nav { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
+</style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+
+<!-- Nav -->
+<nav class="top-0 sticky z-50 bg-white/80 backdrop-blur-md shadow-sm">
+    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+        <div class="flex items-center gap-8">
+            <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="index.html"              class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Home</a>
+                <a href="competitive-events.html" class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Competitive Events</a>
+                <a href="resources.html"          class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Resources</a>
+                <a href="points.html"             class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Points</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button data-signout class="text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
+            <div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-surface-variant text-xl">account_circle</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-8 py-12">
+    <!-- Header -->
+    <header class="mb-12">
+        <div class="flex items-end justify-between">
+            <div>
+                <span class="text-xs uppercase tracking-widest font-label font-bold text-secondary mb-2 block">Administrative Portal</span>
+                <h1 class="text-4xl font-extrabold tracking-tight font-headline text-primary">System Management</h1>
+            </div>
+            <div class="flex gap-3">
+                <div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-sm">group</span>
+                    <span id="memberCountBadge" class="text-sm font-medium text-on-surface-variant">— Members</span>
+                </div>
+                <div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-sm">event</span>
+                    <span id="eventCountBadge" class="text-sm font-medium text-on-surface-variant">— Active Events</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Bento Grid -->
+    <div class="grid grid-cols-12 gap-8">
+        <!-- Tabs -->
+        <div class="col-span-12 flex gap-4 mb-4">
+            <button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm">
+                <span class="material-symbols-outlined text-sm">leaderboard</span> Member Points
+            </button>
+            <button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined text-sm">calendar_month</span> Manage Events
+            </button>
+            <button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined text-sm">settings</span> System Logs
+            </button>
+        </div>
+
+        <!-- Member Table -->
+        <div class="col-span-12 lg:col-span-8">
+            <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
+                    <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
+                        <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
+                        <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+                    </div>
+                </div>
+                <div id="memberTableBody" class="space-y-4">
+                    <div class="py-8 text-center text-on-surface-variant">
+                        <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
+                        Loading members…
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-span-12 lg:col-span-4 space-y-8">
+            <!-- Add Event Card -->
+            <div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
+                <h2 class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add New Event</h2>
+                <form id="createEventForm" class="space-y-4 relative z-10">
+                    <div>
+                        <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Event Name</label>
+                        <input name="eventName" required class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="e.g. Regional Leadership Conference" type="text"/>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Point Value</label>
+                            <input name="pointValue" required min="1" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="100" type="number"/>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Category</label>
+                            <select name="category" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary">
+                                <option>Attendance - General</option>
+                                <option>Attendance - Officer</option>
+                                <option>Conference</option>
+                                <option>Social</option>
+                                <option>Service</option>
+                                <option>Fundraising</option>
+                                <option>BAA</option>
+                                <option>Miscellaneous</option>
+                                <option>Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold shadow-md hover:scale-[0.98] transition-all">Create Event</button>
+                </form>
+            </div>
+
+            <!-- Active Events -->
+            <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                <h2 class="text-xl font-bold font-headline text-primary mb-6">Active Events</h2>
+                <div id="eventList" class="space-y-6">
+                    <div class="py-4 text-center text-on-surface-variant text-sm">Loading…</div>
+                </div>
+                <a href="admin-assign.html" class="block w-full mt-8 border border-outline-variant/30 py-2.5 rounded-lg text-xs font-bold text-outline hover:bg-surface-container-low transition-colors text-center">
+                    Assign Event Points
+                </a>
+            </div>
+
+            <!-- Connection Node -->
+            <div class="bg-surface-container-low rounded-xl p-6 border-l-4 border-secondary">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">bolt</span>
+                    <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Admin Action</span>
+                </div>
+                <p class="text-sm font-medium text-on-surface">System backup completed successfully. All point logs are synchronized with the primary database.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+import { requireAdmin, signOut } from './js/auth.js'
+import { fetchEvents, createEvent, deleteEvent, deleteMember } from './js/data.js'
+
+// Redirect if not admin
+await requireAdmin()
+
+// Wire sign-out
+document.querySelectorAll('[data-signout]').forEach(el =>
+    el.addEventListener('click', () => signOut()))
+
+// ── Load members ─────────────────────────────────────────────
+async function loadMembers(filter = '') {
+    const { supabase } = await import('./js/supabase-client.js')
+    let q = supabase.from('members').select('id, name, total_points').order('total_points', { ascending: false })
+    if (filter) q = q.ilike('name', `%${filter}%`)
+    const { data, error } = await q
+    if (error) { console.error(error); return }
+
+    const body = document.getElementById('memberTableBody')
+    body.innerHTML = data.map((m, i) => {
+        const parts = (m.name ?? '').trim().split(' ')
+        const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
+        return `
+        <div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low">
+            <div class="col-span-1 font-bold text-primary">${String(i+1).padStart(2,'0')}</div>
+            <div class="col-span-4 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold text-sm">
+                    ${initials}
+                </div>
+                <p class="font-bold text-on-surface">${m.name ?? ''}</p>
+            </div>
+            <div class="col-span-3">
+                <span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${m.total_points.toLocaleString()}</span>
+            </div>
+            <div class="col-span-4 flex justify-end gap-2">
+                <button onclick="deleteMemberRow('${m.id}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+                <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center">Modify</a>
+            </div>
+        </div>
+    `}).join('')
+
+    document.getElementById('memberCountBadge').textContent = `${data.length} Members`
+}
+
+window.deleteMemberRow = async (id) => {
+    if (!confirm('Delete this member? This cannot be undone.')) return
+    const { deleteMember } = await import('./js/data.js')
+    await deleteMember(id)
+    loadMembers()
+}
+
+// ── Load events ──────────────────────────────────────────────
+async function loadEvents() {
+    const { supabase } = await import('./js/supabase-client.js')
+    const { data, error } = await supabase.from('events').select('*').order('event_date', { ascending: false }).limit(10)
+    if (error) return
+    const list = document.getElementById('eventList')
+    list.innerHTML = data.map(ev => `
+        <div class="flex items-start justify-between group">
+            <div class="flex items-start gap-4">
+                <div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
+                <div>
+                    <h3 class="font-bold text-on-surface text-sm">${ev.name}</h3>
+                    <p class="text-xs text-on-surface-variant font-medium">${ev.point_value} Points • ${ev.category}</p>
+                </div>
+            </div>
+            <button onclick="removeEvent('${ev.id}')" class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+    `).join('')
+    document.getElementById('eventCountBadge').textContent = `${data.length} Active Events`
+}
+
+window.removeEvent = async (id) => {
+    if (!confirm('Remove this event?')) return
+    const { deleteEvent } = await import('./js/data.js')
+    await deleteEvent(id)
+    loadEvents()
+}
+
+// ── Create event form ────────────────────────────────────────
+document.getElementById('createEventForm').addEventListener('submit', async e => {
+    e.preventDefault()
+    const fd     = new FormData(e.target)
+    const btn    = e.target.querySelector('button[type="submit"]')
+    const origTxt = btn.textContent
+    btn.textContent = 'Creating…'
+    btn.disabled = true
+
+    try {
+        const { createEvent, triggerSheetAddEventColumn } = await import('./js/data.js')
+        const name     = fd.get('eventName')
+        const category = fd.get('category')
+        const newEvent = await createEvent({
+            name,
+            point_value: parseInt(fd.get('pointValue')),
+            category,
+            event_date:  null,
+        })
+
+        // Fire sheet column sync in background — don't block the redirect
+        triggerSheetAddEventColumn(category, name).catch(err =>
+            console.warn('Sheet column sync failed:', err)
+        )
+
+        sessionStorage.setItem('assignEventId', newEvent.id)
+        window.location.href = `admin-assign.html?event=${newEvent.id}`
+    } catch (err) {
+        console.error(err)
+        alert('Failed to create event: ' + err.message)
+        btn.textContent = origTxt
+        btn.disabled    = false
+    }
+})
+
+// ── Search ───────────────────────────────────────────────────
+document.getElementById('memberSearchInput').addEventListener('input', e =>
+    loadMembers(e.target.value))
+
+// Initial load
+loadMembers()
+loadEvents()
+</script>
+
+<!-- Footer -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50 mt-20">
+    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
+    <div class="flex gap-8">
+        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Contact</a>
+        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Privacy Policy</a>
+        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Terms of Service</a>
+    </div>
+    <p class="text-xs uppercase tracking-widest text-slate-500">© 2025 Bridgeland High School FBLA. All rights reserved.</p>
+</footer>
+</body>
+</html>

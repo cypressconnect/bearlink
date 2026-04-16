@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Points Leaderboard | Bear Link</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+            colors: {
+                "error":"#ba1a1a","secondary-fixed":"#ffdbcc","inverse-on-surface":"#eef1f4","tertiary":"#0f1e2a",
+                "on-tertiary-fixed-variant":"#3a4856","surface-variant":"#e0e3e6","surface-tint":"#3d5ca2",
+                "surface-container-high":"#e5e8eb","on-secondary-fixed-variant":"#7a3000","outline-variant":"#c4c6d2",
+                "secondary-container":"#fe6b00","background":"#f7fafd","inverse-surface":"#2d3133","primary-fixed-dim":"#b1c5ff",
+                "on-surface":"#181c1e","on-tertiary-fixed":"#0e1d29","tertiary-fixed":"#d5e4f6","surface-container-lowest":"#ffffff",
+                "error-container":"#ffdad6","outline":"#747782","tertiary-fixed-dim":"#b9c8d9","secondary-fixed-dim":"#ffb693",
+                "on-tertiary-container":"#8c9bab","tertiary-container":"#243340","primary-container":"#002d72","on-error":"#ffffff",
+                "primary-fixed":"#dae2ff","on-error-container":"#93000a","surface-container-highest":"#e0e3e6","on-secondary":"#ffffff",
+                "on-tertiary":"#ffffff","on-primary-fixed":"#001946","surface-dim":"#d7dadd","on-primary":"#ffffff","primary":"#001a48",
+                "surface":"#f7fafd","surface-bright":"#f7fafd","surface-container":"#ebeef1","surface-container-low":"#f1f4f7",
+                "secondary":"#a04100","on-primary-container":"#7a97e2","inverse-primary":"#b1c5ff","on-secondary-fixed":"#351000",
+                "on-secondary-container":"#572000","on-surface-variant":"#444651","on-primary-fixed-variant":"#224489","on-background":"#181c1e"
+            },
+            borderRadius: { "DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem" },
+            fontFamily: { "headline":["Manrope"],"body":["Inter"],"label":["Inter"] }
+        }
+    }
+}
+</script>
+<style>
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+.glass-nav { background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); }
+</style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+
+<!-- Nav -->
+<nav class="top-0 sticky z-50 glass-nav shadow-sm">
+    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+        <div class="flex items-center gap-8">
+            <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
+            <div class="hidden md:flex items-center gap-6">
+                <a href="index.html"              class="text-slate-600 hover:text-[#002D72] transition-colors duration-200 text-sm font-medium">Home</a>
+                <a href="competitive-events.html" class="text-slate-600 hover:text-[#002D72] transition-colors duration-200 text-sm font-medium">Competitive Events</a>
+                <a href="resources.html"          class="text-slate-600 hover:text-[#002D72] transition-colors duration-200 text-sm font-medium">Resources</a>
+                <a href="points.html"             class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 text-sm">Points</a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="login.html" class="text-sm font-medium text-slate-600 hover:bg-slate-100/50 px-4 py-2 rounded-lg transition-all">Admin Login</a>
+            <div class="h-10 w-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
+                <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-8 py-12">
+
+    <!-- Hero -->
+    <section class="mb-16">
+        <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#001a48] to-[#002d72] p-12 text-white shadow-xl">
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block px-3 py-1 bg-secondary rounded-full text-xs font-bold tracking-widest uppercase mb-4">Live Standings</span>
+                <h1 class="text-5xl md:text-6xl font-extrabold font-headline tracking-tight mb-6 leading-none">Points Leaderboard</h1>
+                <p class="text-on-primary-container text-lg leading-relaxed font-medium opacity-90 mb-8">
+                    Tracking excellence, leadership, and service. Every action brings you closer to the Nationals. Check your rank and see how you stack up against the best.
+                </p>
+                <a href="#" class="inline-flex items-center gap-2 bg-secondary text-white px-6 py-3 rounded-md font-bold hover:opacity-90 transition-all shadow-lg">
+                    <span class="material-symbols-outlined text-sm">flag</span>
+                    Report a Discrepancy
+                </a>
+            </div>
+            <div class="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none">
+                <span class="material-symbols-outlined text-[300px] absolute -right-20 -top-20">trending_up</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Podium Top 3 (populated by JS) -->
+    <div id="podium" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <!-- Placeholder while loading -->
+        <div class="md:col-span-3 py-12 text-center text-on-surface-variant">
+            <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
+        </div>
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div class="bg-surface-container-low rounded-xl overflow-hidden mb-12">
+        <div class="p-8 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h2 class="text-2xl font-bold font-headline text-primary">Member Standings</h2>
+            <div class="flex flex-wrap gap-4 w-full md:w-auto">
+                <div class="relative flex-grow md:flex-grow-0">
+                    <select id="gradeFilter" class="appearance-none bg-white border-none rounded-lg pl-4 pr-10 py-2 text-sm focus:ring-2 focus:ring-primary/20 w-full cursor-pointer">
+                        <option value="">All Grades</option>
+                        <option value="9">9th Grade</option>
+                        <option value="10">10th Grade</option>
+                        <option value="11">11th Grade</option>
+                        <option value="12">12th Grade</option>
+                    </select>
+                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">expand_more</span>
+                </div>
+                <div class="relative flex-grow md:flex-grow-0">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                    <input id="memberSearch" class="bg-white border-none rounded-lg pl-10 text-sm focus:ring-2 focus:ring-primary/20 w-full md:w-64 py-2" placeholder="Find member..." type="text"/>
+                </div>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="bg-surface-container-low text-on-surface-variant">
+                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Rank</th>
+                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Member Name</th>
+                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Grade</th>
+                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest text-right">Total Points</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody" class="divide-y divide-outline-variant/5">
+                    <!-- Populated by JS -->
+                    <tr id="loadingRow">
+                        <td colspan="4" class="px-8 py-12 text-center text-on-surface-variant">
+                            <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
+                            Loading standings…
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="p-8 bg-surface-container-low flex justify-between items-center text-sm">
+            <p id="memberCount" class="text-slate-500">Loading…</p>
+        </div>
+    </div>
+
+    <!-- Connection Nodes -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
+        <div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden border-l-4 border-secondary">
+            <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-4">Latest Achievement</h4>
+            <div class="flex gap-6 items-start">
+                <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-secondary shadow-sm">
+                    <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">groups</span>
+                </div>
+                <div>
+                    <p class="text-lg font-bold text-primary mb-2">Team Participation Peak</p>
+                    <p class="text-on-surface-variant text-sm leading-relaxed mb-4">Bridgeland High School reached a record 85% participation in regional qualifiers last week. Well done, Bears!</p>
+                    <span class="text-[10px] font-bold text-slate-400">2 HOURS AGO • SYSTEM UPDATE</span>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden border-l-4 border-primary">
+            <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-4">Point System Note</h4>
+            <div class="flex gap-6 items-start">
+                <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
+                    <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">info</span>
+                </div>
+                <div>
+                    <p class="text-lg font-bold text-primary mb-2">Points for Service Hours</p>
+                    <p class="text-on-surface-variant text-sm leading-relaxed mb-4">Don't forget to log your volunteer hours for the local community service drive. Each hour equals 15 competitive points.</p>
+                    <span class="text-[10px] font-bold text-slate-400">YESTERDAY • ADMIN</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script type="module">
+import { fetchLeaderboard } from './js/data.js'
+
+const GRADE_LABELS = { 9:'9th Grade', 10:'10th Grade', 11:'11th Grade', 12:'12th Grade' }
+const PODIUM_LABELS = { 0:'Current Champion', 1:'Silver Milestone', 2:'Rising Star' }
+
+let allMembers = []
+
+function gradeChip(grade, rank) {
+    const bg = (rank === 1 || rank === 3) ? 'bg-primary-fixed text-on-primary-fixed-variant'
+                                          : 'bg-secondary-fixed text-on-secondary-fixed-variant'
+    return `<span class="px-3 py-1 ${bg} text-[10px] font-bold uppercase tracking-tighter rounded-full">${GRADE_LABELS[grade] ?? `Grade ${grade}`}</span>`
+}
+
+function renderPodium(members) {
+    if (members.length < 1) { document.getElementById('podium').innerHTML = ''; return }
+    const top = members.slice(0, 3)
+    // Reorder: 2nd, 1st, 3rd for visual podium
+    const order = [top[1], top[0], top[2]].filter(Boolean)
+    const html = order.map((m, i) => {
+        const rank = order.indexOf(m) === 1 ? 1 : (order.indexOf(m) === 0 ? 2 : 3)
+        const actualRank = top.indexOf(m) + 1
+        const isFirst = actualRank === 1
+        return `
+        <a href="member?id=${m.id}" class="${isFirst ? 'order-1 md:order-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform scale-105 z-10 hover:shadow-lg transition-shadow'
+                               : 'bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm hover:shadow-md transition-shadow ' + (actualRank===2?'order-2 md:order-1 border-l-4 border-slate-300':'order-3 border-r-4 border-orange-200')}">
+            ${isFirst ? `<div class="absolute -top-6 left-1/2 -translate-x-1/2">
+                <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings:'FILL' 1">workspace_premium</span>
+            </div>` : ''}
+            <div class="mb-6 relative">
+                <div class="${isFirst ? 'w-32 h-32 rounded-full border-4 border-secondary' : 'w-24 h-24 rounded-full border-4 border-slate-200'} overflow-hidden bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined ${isFirst ? 'text-5xl' : 'text-4xl'} text-on-surface-variant">account_circle</span>
+                </div>
+                <div class="absolute -bottom-2 -right-2 ${isFirst ? 'bg-secondary w-10 h-10 text-lg shadow-lg' : actualRank===2 ? 'bg-slate-400 w-8 h-8 text-sm' : 'bg-orange-700 w-8 h-8 text-sm'} text-white rounded-full flex items-center justify-center font-bold">
+                    ${actualRank}
+                </div>
+            </div>
+            <h3 class="${isFirst ? 'text-2xl' : 'text-xl'} font-bold font-headline text-primary mb-1 hover:text-secondary transition-colors">${m.name}</h3>
+            <span class="text-secondary font-bold ${isFirst ? 'text-3xl' : 'text-2xl'}">${m.total_points.toLocaleString()} pts</span>
+            <span class="text-xs text-slate-500 uppercase tracking-widest mt-4">${PODIUM_LABELS[top.indexOf(m)]}</span>
+        </a>`
+    }).join('')
+    document.getElementById('podium').innerHTML = html
+}
+
+function renderTable(members, startRank = 1) {
+    const body = document.getElementById('leaderboardBody')
+    if (members.length === 0) {
+        body.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-on-surface-variant">No members found.</td></tr>`
+        document.getElementById('memberCount').textContent = '0 members'
+        return
+    }
+    body.innerHTML = members.map((m, i) => `
+        <tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
+            <td class="px-8 py-6"><span class="font-bold text-primary">#${startRank + i}</span></td>
+            <td class="px-8 py-6">
+                <a href="member?id=${m.id}" class="flex items-center gap-4 group-hover:text-secondary transition-colors">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-slate-400">account_circle</span>
+                    </div>
+                    <span class="font-bold">${m.name}</span>
+                </a>
+            </td>
+            <td class="px-8 py-6">${gradeChip(m.grade, i + 1)}</td>
+            <td class="px-8 py-6 text-right"><span class="font-bold text-lg text-primary">${m.total_points.toLocaleString()}</span></td>
+        </tr>
+    `).join('')
+    document.getElementById('memberCount').textContent = `${members.length} members`
+}
+
+function applyFilters() {
+    const grade  = document.getElementById('gradeFilter').value
+    const search = document.getElementById('memberSearch').value.toLowerCase()
+    let filtered = allMembers
+    if (grade)  filtered = filtered.filter(m => String(m.grade) === grade)
+    if (search) filtered = filtered.filter(m => m.name.toLowerCase().includes(search))
+    renderTable(filtered)
+}
+
+// Load data
+fetchLeaderboard().then(members => {
+    allMembers = members
+    renderPodium(members)
+    renderTable(members.slice(3), 4) // table shows rank 4+, podium has top 3
+    document.getElementById('memberCount').textContent = `${members.length} total members`
+}).catch(err => {
+    document.getElementById('leaderboardBody').innerHTML =
+        `<tr><td colspan="4" class="px-8 py-8 text-center text-error">Failed to load: ${err.message}</td></tr>`
+})
+
+document.getElementById('gradeFilter').addEventListener('change', applyFilters)
+document.getElementById('memberSearch').addEventListener('input',  applyFilters)
+</script>
+
+<!-- Footer -->
+<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50">
+    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
+    <div class="flex gap-8">
+        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Contact</a>
+        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Privacy Policy</a>
+        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Terms of Service</a>
+    </div>
+    <p class="text-xs uppercase tracking-widest text-slate-400 mt-4">© 2025 Bridgeland High School FBLA. All rights reserved.</p>
+</footer>
+</body>
+</html>

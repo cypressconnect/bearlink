@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script id="tailwind-config">
 tailwind.config = {
     darkMode: "class",
@@ -85,91 +87,179 @@ tailwind.config = {
     <div class="grid grid-cols-12 gap-8">
         <!-- Tabs -->
         <div class="col-span-12 flex gap-4 mb-4">
-            <button class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm">
+            <button id="tab-members" onclick="switchTab('members')"
+                class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors">
                 <span class="material-symbols-outlined text-sm">leaderboard</span> Member Points
             </button>
-            <button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
-                <span class="material-symbols-outlined text-sm">calendar_month</span> Manage Events
-            </button>
-            <button class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
-                <span class="material-symbols-outlined text-sm">settings</span> System Logs
+            <button id="tab-report" onclick="switchTab('report')"
+                class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined text-sm">analytics</span> Chapter Report
             </button>
         </div>
 
-        <!-- Member Table -->
-        <div class="col-span-12 lg:col-span-8">
-            <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
-                    <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
-                        <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
-                        <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+        <!-- ── MEMBER POINTS PANEL ─────────────────────────────── -->
+        <div id="panel-members" class="contents">
+            <!-- Member Table -->
+            <div class="col-span-12 lg:col-span-8">
+                <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
+                        <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
+                            <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
+                            <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+                        </div>
                     </div>
-                </div>
-                <div id="memberTableBody" class="space-y-4">
-                    <div class="py-8 text-center text-on-surface-variant">
-                        <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
-                        Loading members…
+                    <div id="memberTableBody" class="space-y-4">
+                        <div class="py-8 text-center text-on-surface-variant">
+                            <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
+                            Loading members…
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Sidebar -->
-        <div class="col-span-12 lg:col-span-4 space-y-8">
-            <!-- Add Event Card -->
-            <div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
-                <h2 class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add New Event</h2>
-                <form id="createEventForm" class="space-y-4 relative z-10">
+            <!-- Sidebar -->
+            <div class="col-span-12 lg:col-span-4 space-y-8">
+                <!-- Add Event Card -->
+                <div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
+                    <h2 class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add New Event</h2>
+                    <form id="createEventForm" class="space-y-4 relative z-10">
+                        <div>
+                            <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Event Name</label>
+                            <input name="eventName" required class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="e.g. Regional Leadership Conference" type="text"/>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Point Value</label>
+                                <input name="pointValue" required min="1" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="100" type="number"/>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Category</label>
+                                <select name="category" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary">
+                                    <option>Attendance - General</option>
+                                    <option>Attendance - Officer</option>
+                                    <option>Conference</option>
+                                    <option>Social</option>
+                                    <option>Service</option>
+                                    <option>Fundraising</option>
+                                    <option>BAA</option>
+                                    <option>Miscellaneous</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold shadow-md hover:scale-[0.98] transition-all">Create Event</button>
+                    </form>
+                </div>
+
+                <!-- Active Events -->
+                <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                    <h2 class="text-xl font-bold font-headline text-primary mb-6">Active Events</h2>
+                    <div id="eventList" class="space-y-6">
+                        <div class="py-4 text-center text-on-surface-variant text-sm">Loading…</div>
+                    </div>
+                    <a href="admin-assign.html" class="block w-full mt-8 border border-outline-variant/30 py-2.5 rounded-lg text-xs font-bold text-outline hover:bg-surface-container-low transition-colors text-center">
+                        Assign Event Points
+                    </a>
+                </div>
+
+                <!-- Connection Node -->
+                <div class="bg-surface-container-low rounded-xl p-6 border-l-4 border-secondary">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">bolt</span>
+                        <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Admin Action</span>
+                    </div>
+                    <p class="text-sm font-medium text-on-surface">System backup completed successfully. All point logs are synchronized with the primary database.</p>
+                </div>
+            </div>
+        </div>
+        <!-- ── END MEMBER POINTS PANEL ────────────────────────── -->
+
+        <!-- ── CHAPTER REPORT PANEL ───────────────────────────── -->
+        <div id="panel-report" class="col-span-12 hidden">
+            <div class="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_rgba(24,28,30,0.04)] overflow-hidden">
+                <!-- Report Header -->
+                <div class="px-8 pt-8 pb-6 border-b border-surface-container-high flex items-center justify-between">
                     <div>
-                        <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Event Name</label>
-                        <input name="eventName" required class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="e.g. Regional Leadership Conference" type="text"/>
+                        <h2 class="text-2xl font-bold font-headline text-primary">Chapter Activity Report</h2>
+                        <p class="text-sm text-on-surface-variant mt-1" id="report-subtitle">Bridgeland High School FBLA · <span id="report-date"></span></p>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Point Value</label>
-                            <input name="pointValue" required min="1" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="100" type="number"/>
+                    <button onclick="exportReportPDF()"
+                        class="flex items-center gap-2 bg-secondary text-white px-5 py-2.5 rounded-lg font-bold text-sm hover:opacity-90 active:scale-95 transition-all shadow-sm">
+                        <span class="material-symbols-outlined text-sm">download</span> Export PDF
+                    </button>
+                </div>
+
+                <!-- Loading -->
+                <div id="report-loading" class="py-16 text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined animate-spin text-3xl block mx-auto mb-3">progress_activity</span>
+                    Loading chapter data…
+                </div>
+
+                <!-- Content -->
+                <div id="report-content" class="hidden divide-y divide-surface-container-high">
+                    <!-- Service Projects -->
+                    <div class="p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-emerald-700">volunteer_activism</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold font-headline text-primary">Service Projects</h3>
+                                <p class="text-xs text-on-surface-variant font-medium" id="service-meta"></p>
+                            </div>
                         </div>
-                        <div>
-                            <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Category</label>
-                            <select name="category" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary">
-                                <option>Attendance - General</option>
-                                <option>Attendance - Officer</option>
-                                <option>Conference</option>
-                                <option>Social</option>
-                                <option>Service</option>
-                                <option>Fundraising</option>
-                                <option>BAA</option>
-                                <option>Miscellaneous</option>
-                                <option>Other</option>
-                            </select>
+                        <div id="service-table" class="mb-6"></div>
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-5">
+                            <p class="text-sm text-emerald-900 leading-relaxed" id="service-summary"></p>
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold shadow-md hover:scale-[0.98] transition-all">Create Event</button>
-                </form>
-            </div>
 
-            <!-- Active Events -->
-            <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
-                <h2 class="text-xl font-bold font-headline text-primary mb-6">Active Events</h2>
-                <div id="eventList" class="space-y-6">
-                    <div class="py-4 text-center text-on-surface-variant text-sm">Loading…</div>
-                </div>
-                <a href="admin-assign.html" class="block w-full mt-8 border border-outline-variant/30 py-2.5 rounded-lg text-xs font-bold text-outline hover:bg-surface-container-low transition-colors text-center">
-                    Assign Event Points
-                </a>
-            </div>
+                    <!-- Socials -->
+                    <div class="p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-violet-700">celebration</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold font-headline text-primary">Social Events</h3>
+                                <p class="text-xs text-on-surface-variant font-medium" id="social-meta"></p>
+                            </div>
+                        </div>
+                        <div id="social-table" class="mb-6"></div>
+                        <div class="bg-violet-50 border-l-4 border-violet-500 rounded-lg p-5">
+                            <p class="text-sm text-violet-900 leading-relaxed" id="social-summary"></p>
+                        </div>
+                    </div>
 
-            <!-- Connection Node -->
-            <div class="bg-surface-container-low rounded-xl p-6 border-l-4 border-secondary">
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">bolt</span>
-                    <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Admin Action</span>
+                    <!-- Fundraisers -->
+                    <div class="p-8">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-amber-700">attach_money</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold font-headline text-primary">Fundraisers</h3>
+                                <p class="text-xs text-on-surface-variant font-medium" id="fundraising-meta"></p>
+                            </div>
+                        </div>
+                        <div id="fundraising-table" class="mb-6"></div>
+                        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-5">
+                            <p class="text-sm text-amber-900 leading-relaxed" id="fundraising-summary"></p>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-sm font-medium text-on-surface">System backup completed successfully. All point logs are synchronized with the primary database.</p>
+
+                <!-- Empty state -->
+                <div id="report-empty" class="hidden py-16 text-center text-on-surface-variant">
+                    <span class="material-symbols-outlined text-4xl block mx-auto mb-3 opacity-40">event_busy</span>
+                    <p class="text-sm font-medium">No service, social, or fundraising events found yet.</p>
+                    <p class="text-xs mt-1">Create events with those categories to see them here.</p>
+                </div>
             </div>
         </div>
+        <!-- ── END CHAPTER REPORT PANEL ──────────────────────── -->
     </div>
 </main>
 
@@ -177,12 +267,33 @@ tailwind.config = {
 import { requireAdmin, signOut } from './js/auth.js'
 import { fetchEvents, createEvent, deleteEvent, deleteMember } from './js/data.js'
 
-// Redirect if not admin
 await requireAdmin()
 
-// Wire sign-out
 document.querySelectorAll('[data-signout]').forEach(el =>
     el.addEventListener('click', () => signOut()))
+
+// ── Tab switching ─────────────────────────────────────────────
+window.switchTab = function(tab) {
+    const isReport = tab === 'report'
+
+    document.getElementById('panel-members').className = isReport ? 'hidden' : 'contents'
+    document.getElementById('panel-report').className  = isReport ? 'col-span-12' : 'col-span-12 hidden'
+
+    const activeClass   = ['bg-primary','text-on-primary','shadow-sm']
+    const inactiveClass = ['bg-surface-container-highest','text-on-surface-variant']
+
+    const tM = document.getElementById('tab-members')
+    const tR = document.getElementById('tab-report')
+
+    if (isReport) {
+        tM.classList.remove(...activeClass);  tM.classList.add(...inactiveClass)
+        tR.classList.remove(...inactiveClass); tR.classList.add(...activeClass)
+        loadReport()
+    } else {
+        tR.classList.remove(...activeClass);  tR.classList.add(...inactiveClass)
+        tM.classList.remove(...inactiveClass); tM.classList.add(...activeClass)
+    }
+}
 
 // ── Load members ─────────────────────────────────────────────
 async function loadMembers(filter = '') {
@@ -277,7 +388,6 @@ document.getElementById('createEventForm').addEventListener('submit', async e =>
             event_date:  null,
         })
 
-        // Fire sheet column sync in background — don't block the redirect
         triggerSheetAddEventColumn(category, name).catch(err =>
             console.warn('Sheet column sync failed:', err)
         )
@@ -296,7 +406,306 @@ document.getElementById('createEventForm').addEventListener('submit', async e =>
 document.getElementById('memberSearchInput').addEventListener('input', e =>
     loadMembers(e.target.value))
 
-// Initial load
+// ── Chapter Report ───────────────────────────────────────────
+let reportData = null   // cache so we don't refetch on every tab switch
+
+async function loadReport() {
+    if (reportData) { renderReport(reportData); return }
+
+    document.getElementById('report-loading').classList.remove('hidden')
+    document.getElementById('report-content').classList.add('hidden')
+    document.getElementById('report-empty').classList.add('hidden')
+
+    // Set date label
+    document.getElementById('report-date').textContent =
+        new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+
+    try {
+        const { supabase } = await import('./js/supabase-client.js')
+
+        // Fetch events in the three target categories
+        const { data: events, error: evErr } = await supabase
+            .from('events')
+            .select('id, name, category, event_date, point_value')
+            .in('category', ['Service', 'Social', 'Fundraising'])
+            .order('event_date', { ascending: false })
+        if (evErr) throw evErr
+
+        // Fetch all attendance records for these events
+        const eventIds = (events ?? []).map(e => e.id)
+        let attendanceMap = {}
+        if (eventIds.length > 0) {
+            const { data: assignments, error: aErr } = await supabase
+                .from('point_assignments')
+                .select('event_id')
+                .in('event_id', eventIds)
+            if (aErr) throw aErr
+            ;(assignments ?? []).forEach(a => {
+                attendanceMap[a.event_id] = (attendanceMap[a.event_id] || 0) + 1
+            })
+        }
+
+        // Attach attendance counts and group by category
+        const withCount = (events ?? []).map(ev => ({
+            ...ev,
+            attendees: attendanceMap[ev.id] || 0
+        }))
+
+        reportData = {
+            service:     withCount.filter(e => e.category === 'Service')
+                                  .sort((a, b) => b.attendees - a.attendees),
+            social:      withCount.filter(e => e.category === 'Social')
+                                  .sort((a, b) => b.attendees - a.attendees),
+            fundraising: withCount.filter(e => e.category === 'Fundraising')
+                                  .sort((a, b) => b.attendees - a.attendees),
+        }
+
+        renderReport(reportData)
+    } catch (err) {
+        console.error(err)
+        document.getElementById('report-loading').classList.add('hidden')
+        document.getElementById('report-empty').classList.remove('hidden')
+    }
+}
+
+function fmtDate(d) {
+    if (!d) return 'Date TBD'
+    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+function buildEventTable(events) {
+    if (!events.length) {
+        return `<p class="text-sm text-on-surface-variant italic">No events recorded yet.</p>`
+    }
+    const rows = events.map((ev, i) => `
+        <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-surface-container-low'}">
+            <td class="px-4 py-3 text-sm font-semibold text-on-surface">${ev.name}</td>
+            <td class="px-4 py-3 text-sm text-on-surface-variant">${fmtDate(ev.event_date)}</td>
+            <td class="px-4 py-3 text-sm text-center font-bold text-primary">${ev.attendees}</td>
+            <td class="px-4 py-3 text-sm text-center text-on-surface-variant">${ev.point_value} pts</td>
+        </tr>
+    `).join('')
+    return `
+        <div class="overflow-hidden rounded-lg border border-surface-container-high">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-surface-container text-xs font-bold uppercase tracking-widest text-on-surface-variant">
+                    <tr>
+                        <th class="px-4 py-3">Event Name</th>
+                        <th class="px-4 py-3">Date</th>
+                        <th class="px-4 py-3 text-center">Attendees</th>
+                        <th class="px-4 py-3 text-center">Points</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    `
+}
+
+function generateSummary(category, events) {
+    const count      = events.length
+    const total      = events.reduce((s, e) => s + e.attendees, 0)
+    const topEvent   = events[0]
+    const avgAtt     = count > 0 ? Math.round(total / count) : 0
+
+    if (count === 0) {
+        return `No ${category.toLowerCase()} events have been recorded for this chapter yet. ` +
+               `Once events are created and attendance is assigned, a full activity summary will appear here.`
+    }
+
+    const opening = {
+        Service:     `Bridgeland FBLA demonstrated a strong commitment to community impact this season through ${count} recorded service project${count > 1 ? 's' : ''}.`,
+        Social:      `The Bridgeland FBLA chapter fostered member engagement and community through ${count} social event${count > 1 ? 's' : ''} this season.`,
+        Fundraising: `Bridgeland FBLA showed impressive organizational effort through ${count} fundraising initiative${count > 1 ? 's' : ''} this season.`,
+    }[category]
+
+    const middle = topEvent
+        ? `The most attended ${category.toLowerCase()} event was "${topEvent.name}" with ${topEvent.attendees} member${topEvent.attendees !== 1 ? 's' : ''} participating.`
+        : ''
+
+    const closing = {
+        Service:     `Across all service activities, members logged a combined total of ${total} attendances, averaging ${avgAtt} members per event — reflecting the chapter's dedication to giving back to the Bridgeland community.`,
+        Social:      `With a combined total of ${total} attendances and an average of ${avgAtt} members per event, these socials played a vital role in building chapter culture, morale, and lasting professional relationships.`,
+        Fundraising: `These efforts generated strong member participation, with ${total} total attendances and an average turnout of ${avgAtt} members per fundraiser, underscoring the chapter's ability to mobilize and work toward shared financial goals.`,
+    }[category]
+
+    return [opening, middle, closing].filter(Boolean).join(' ')
+}
+
+function renderReport(data) {
+    document.getElementById('report-loading').classList.add('hidden')
+
+    const hasAny = data.service.length || data.social.length || data.fundraising.length
+    if (!hasAny) {
+        document.getElementById('report-empty').classList.remove('hidden')
+        return
+    }
+
+    // Service
+    document.getElementById('service-meta').textContent =
+        `${data.service.length} event${data.service.length !== 1 ? 's' : ''} · ${data.service.reduce((s,e)=>s+e.attendees,0)} total attendances`
+    document.getElementById('service-table').innerHTML   = buildEventTable(data.service)
+    document.getElementById('service-summary').textContent = generateSummary('Service', data.service)
+
+    // Social
+    document.getElementById('social-meta').textContent =
+        `${data.social.length} event${data.social.length !== 1 ? 's' : ''} · ${data.social.reduce((s,e)=>s+e.attendees,0)} total attendances`
+    document.getElementById('social-table').innerHTML   = buildEventTable(data.social)
+    document.getElementById('social-summary').textContent = generateSummary('Social', data.social)
+
+    // Fundraising
+    document.getElementById('fundraising-meta').textContent =
+        `${data.fundraising.length} event${data.fundraising.length !== 1 ? 's' : ''} · ${data.fundraising.reduce((s,e)=>s+e.attendees,0)} total attendances`
+    document.getElementById('fundraising-table').innerHTML   = buildEventTable(data.fundraising)
+    document.getElementById('fundraising-summary').textContent = generateSummary('Fundraising', data.fundraising)
+
+    document.getElementById('report-content').classList.remove('hidden')
+}
+
+// ── PDF Export ───────────────────────────────────────────────
+window.exportReportPDF = function() {
+    if (!reportData) { alert('Report data not loaded yet.'); return }
+
+    const { jsPDF } = window.jspdf
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const margin = 18
+    const contentW = pageW - margin * 2
+    let y = margin
+
+    // ── Color palette
+    const navy   = [0,  26,  72]
+    const orange = [160, 65,  0]
+    const gray   = [100,100,110]
+    const lightGray = [240,240,243]
+    const white  = [255,255,255]
+
+    // ── Header banner
+    doc.setFillColor(...navy)
+    doc.rect(0, 0, pageW, 36, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(18)
+    doc.setTextColor(...white)
+    doc.text('Bridgeland High School FBLA', margin, 14)
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Chapter Activity Report', margin, 22)
+    doc.setFontSize(9)
+    doc.setTextColor(180, 200, 255)
+    doc.text(
+        new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }),
+        margin, 30
+    )
+    y = 46
+
+    // ── Section renderer
+    function renderSection(label, color, events, summary) {
+        // Check page space
+        if (y + 12 > doc.internal.pageSize.getHeight() - margin) {
+            doc.addPage(); y = margin
+        }
+
+        // Section label pill
+        doc.setFillColor(...color)
+        doc.roundedRect(margin, y, contentW, 9, 2, 2, 'F')
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(10)
+        doc.setTextColor(...white)
+        doc.text(label.toUpperCase(), margin + 4, y + 6.2)
+        y += 14
+
+        // Stats line
+        const total  = events.reduce((s, e) => s + e.attendees, 0)
+        doc.setFontSize(8)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...gray)
+        doc.text(
+            `${events.length} event${events.length !== 1 ? 's' : ''}  ·  ${total} total attendances`,
+            margin, y
+        )
+        y += 6
+
+        // Table
+        if (events.length > 0) {
+            doc.autoTable({
+                startY: y,
+                margin: { left: margin, right: margin },
+                head: [['Event Name', 'Date', 'Attendees', 'Points']],
+                body: events.map(ev => [
+                    ev.name,
+                    fmtDate(ev.event_date),
+                    String(ev.attendees),
+                    `${ev.point_value} pts`
+                ]),
+                styles: { fontSize: 8, cellPadding: 3, font: 'helvetica' },
+                headStyles: {
+                    fillColor: color,
+                    textColor: white,
+                    fontStyle: 'bold',
+                    halign: 'left'
+                },
+                columnStyles: {
+                    2: { halign: 'center' },
+                    3: { halign: 'center' }
+                },
+                alternateRowStyles: { fillColor: lightGray },
+                tableLineColor: [220,220,224],
+                tableLineWidth: 0.2,
+                theme: 'grid'
+            })
+            y = doc.lastAutoTable.finalY + 5
+        } else {
+            doc.setFontSize(8)
+            doc.setTextColor(...gray)
+            doc.text('No events recorded.', margin, y)
+            y += 6
+        }
+
+        // Summary paragraph box
+        const summaryText = generateSummary(label, events)
+        const lines = doc.splitTextToSize(summaryText, contentW - 8)
+        const boxH  = lines.length * 4.5 + 8
+
+        if (y + boxH > doc.internal.pageSize.getHeight() - margin) {
+            doc.addPage(); y = margin
+        }
+
+        doc.setFillColor(248, 248, 252)
+        doc.setDrawColor(...color)
+        doc.setLineWidth(0.6)
+        // Left accent bar
+        doc.setFillColor(...color)
+        doc.rect(margin, y, 2.5, boxH, 'F')
+        doc.setFillColor(248, 248, 252)
+        doc.rect(margin + 2.5, y, contentW - 2.5, boxH, 'F')
+
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(50, 50, 60)
+        doc.text(lines, margin + 6, y + 5.5)
+        y += boxH + 10
+    }
+
+    renderSection('Service Projects', [16, 120, 80],   reportData.service,     'Service')
+    renderSection('Social Events',    [109, 40, 217],  reportData.social,      'Social')
+    renderSection('Fundraisers',      [180, 120, 0],   reportData.fundraising, 'Fundraising')
+
+    // ── Footer on each page
+    const pageCount = doc.internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i)
+        doc.setFillColor(...navy)
+        doc.rect(0, doc.internal.pageSize.getHeight() - 10, pageW, 10, 'F')
+        doc.setFontSize(7)
+        doc.setTextColor(180, 200, 255)
+        doc.text('Bridgeland FBLA · Bear Link', margin, doc.internal.pageSize.getHeight() - 3.5)
+        doc.text(`Page ${i} of ${pageCount}`, pageW - margin, doc.internal.pageSize.getHeight() - 3.5, { align: 'right' })
+    }
+
+    doc.save(`FBLA-Chapter-Report-${new Date().toISOString().slice(0,10)}.pdf`)
+}
+
+// ── Initial load
 loadMembers()
 loadEvents()
 </script>

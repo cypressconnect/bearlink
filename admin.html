@@ -211,8 +211,8 @@ tailwind.config = {
                             </div>
                         </div>
                         <div id="service-table" class="mb-6"></div>
-                        <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-5">
-                            <p class="text-sm text-emerald-900 leading-relaxed" id="service-summary"></p>
+                        <div class="bg-emerald-50 border-l-4 border-emerald-600 rounded-lg p-6">
+                            <p class="text-base text-emerald-950 leading-relaxed font-medium" id="service-summary"></p>
                         </div>
                     </div>
 
@@ -228,8 +228,8 @@ tailwind.config = {
                             </div>
                         </div>
                         <div id="social-table" class="mb-6"></div>
-                        <div class="bg-violet-50 border-l-4 border-violet-500 rounded-lg p-5">
-                            <p class="text-sm text-violet-900 leading-relaxed" id="social-summary"></p>
+                        <div class="bg-violet-50 border-l-4 border-violet-600 rounded-lg p-6">
+                            <p class="text-base text-violet-950 leading-relaxed font-medium" id="social-summary"></p>
                         </div>
                     </div>
 
@@ -245,8 +245,8 @@ tailwind.config = {
                             </div>
                         </div>
                         <div id="fundraising-table" class="mb-6"></div>
-                        <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-5">
-                            <p class="text-sm text-amber-900 leading-relaxed" id="fundraising-summary"></p>
+                        <div class="bg-amber-50 border-l-4 border-amber-600 rounded-lg p-6">
+                            <p class="text-base text-amber-950 leading-relaxed font-medium" id="fundraising-summary"></p>
                         </div>
                     </div>
                 </div>
@@ -474,15 +474,14 @@ function fmtDate(d) {
 }
 
 function buildEventTable(events) {
-    if (!events.length) {
+    const top = events.slice(0, 7)
+    if (!top.length) {
         return `<p class="text-sm text-on-surface-variant italic">No events recorded yet.</p>`
     }
-    const rows = events.map((ev, i) => `
+    const rows = top.map((ev, i) => `
         <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-surface-container-low'}">
             <td class="px-4 py-3 text-sm font-semibold text-on-surface">${ev.name}</td>
-            <td class="px-4 py-3 text-sm text-on-surface-variant">${fmtDate(ev.event_date)}</td>
             <td class="px-4 py-3 text-sm text-center font-bold text-primary">${ev.attendees}</td>
-            <td class="px-4 py-3 text-sm text-center text-on-surface-variant">${ev.point_value} pts</td>
         </tr>
     `).join('')
     return `
@@ -491,9 +490,7 @@ function buildEventTable(events) {
                 <thead class="bg-surface-container text-xs font-bold uppercase tracking-widest text-on-surface-variant">
                     <tr>
                         <th class="px-4 py-3">Event Name</th>
-                        <th class="px-4 py-3">Date</th>
                         <th class="px-4 py-3 text-center">Attendees</th>
-                        <th class="px-4 py-3 text-center">Points</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -503,33 +500,45 @@ function buildEventTable(events) {
 }
 
 function generateSummary(category, events) {
-    const count      = events.length
-    const total      = events.reduce((s, e) => s + e.attendees, 0)
-    const topEvent   = events[0]
-    const avgAtt     = count > 0 ? Math.round(total / count) : 0
+    const count    = events.length
+    const total    = events.reduce((s, e) => s + e.attendees, 0)
+    const avgAtt   = count > 0 ? Math.round(total / count) : 0
 
     if (count === 0) {
-        return `No ${category.toLowerCase()} events have been recorded for this chapter yet. ` +
-               `Once events are created and attendance is assigned, a full activity summary will appear here.`
+        return `No ${category.toLowerCase()} events have been recorded for this chapter yet. Once events are created and attendance is assigned, a full activity summary will appear here.`
     }
 
-    const opening = {
-        Service:     `Bridgeland FBLA demonstrated a strong commitment to community impact this season through ${count} recorded service project${count > 1 ? 's' : ''}.`,
-        Social:      `The Bridgeland FBLA chapter fostered member engagement and community through ${count} social event${count > 1 ? 's' : ''} this season.`,
-        Fundraising: `Bridgeland FBLA showed impressive organizational effort through ${count} fundraising initiative${count > 1 ? 's' : ''} this season.`,
-    }[category]
+    if (category === 'Service') {
+        const scEvents = events.filter(e => e.name.trim().toLowerCase() === 'silvercrest')
+        const otherEvents = events.filter(e => e.name.trim().toLowerCase() !== 'silvercrest')
+        const scTotal  = scEvents.reduce((s, e) => s + e.attendees, 0)
+        const topOther = otherEvents[0]
 
-    const middle = topEvent
-        ? `The most attended ${category.toLowerCase()} event was "${topEvent.name}" with ${topEvent.attendees} member${topEvent.attendees !== 1 ? 's' : ''} participating.`
-        : ''
+        let text = `Bridgeland FBLA demonstrated a strong and consistent commitment to community service this season, organizing and participating in ${count} service event${count !== 1 ? 's' : ''} with a combined total of ${total} member attendances across all activities. `
 
-    const closing = {
-        Service:     `Across all service activities, members logged a combined total of ${total} attendances, averaging ${avgAtt} members per event — reflecting the chapter's dedication to giving back to the Bridgeland community.`,
-        Social:      `With a combined total of ${total} attendances and an average of ${avgAtt} members per event, these socials played a vital role in building chapter culture, morale, and lasting professional relationships.`,
-        Fundraising: `These efforts generated strong member participation, with ${total} total attendances and an average turnout of ${avgAtt} members per fundraiser, underscoring the chapter's ability to mobilize and work toward shared financial goals.`,
-    }[category]
+        if (scEvents.length > 0) {
+            text += `A signature highlight of the chapter's service calendar was the SilverCrest program — a recurring volunteer initiative in which Bridgeland FBLA members visit SilverCrest, a local elderly care home, to spend meaningful time with residents. During these visits, members lead games, engage in conversation, and provide entertainment that brightens the residents' day and creates genuine human connection. The SilverCrest program recorded ${scTotal} member attendance${scTotal !== 1 ? 's' : ''} across ${scEvents.length} visit${scEvents.length !== 1 ? 's' : ''} this season, making it one of the chapter's most impactful and emotionally rewarding service commitments. `
+        }
 
-    return [opening, middle, closing].filter(Boolean).join(' ')
+        if (topOther) {
+            text += `Beyond the SilverCrest program, "${topOther.name}" was the chapter's most attended service event with ${topOther.attendees} member${topOther.attendees !== 1 ? 's' : ''} participating. `
+        }
+
+        text += `Averaging ${avgAtt} members per service event, the chapter demonstrated that community involvement is a core part of its identity — not just a line item on a resume. Service activities like these reflect FBLA's broader mission: developing future business leaders who are grounded in civic responsibility, empathy, and an understanding that true leadership means lifting others up. The sustained energy members have brought to service work this year is a testament to a chapter culture that values people as much as it values performance.`
+        return text
+    }
+
+    if (category === 'Social') {
+        const topEvent = events[0]
+        return `The Bridgeland FBLA chapter invested meaningfully in its members' sense of belonging and community this season, hosting ${count} social event${count !== 1 ? 's' : ''} that collectively drew ${total} member attendances — an average of ${avgAtt} members per event. ${topEvent ? `The most attended social was "${topEvent.name}" with ${topEvent.attendees} member${topEvent.attendees !== 1 ? 's' : ''} in attendance. ` : ''}Social events are far more than casual gatherings — they are the foundation on which chapter culture is built. When members form friendships and trust outside of formal meeting settings, they collaborate more effectively at competitions, support each other through the pressures of conference season, and recruit their peers with genuine enthusiasm. The chapter's social programming this year struck a consistent balance between fun and purpose, creating spaces where both new and veteran members felt welcomed and valued. High turnout across these events signals that Bridgeland FBLA is a place where people genuinely want to be — and that kind of culture is one of the hardest things to build and one of the most powerful assets a chapter can have.`
+    }
+
+    if (category === 'Fundraising') {
+        const topEvent = events[0]
+        return `Bridgeland FBLA showcased exceptional organizational capability and member dedication through ${count} fundraising initiative${count !== 1 ? 's' : ''} this season, generating a combined ${total} member attendances at an average of ${avgAtt} members per event. ${topEvent ? `The most participated fundraiser was "${topEvent.name}" with ${topEvent.attendees} member${topEvent.attendees !== 1 ? 's' : ''} actively involved. ` : ''}Fundraising is a critical and often underappreciated component of chapter sustainability. The resources raised through these efforts directly support conference registration fees, member scholarships, chapter supplies, and community outreach programs that would otherwise be out of reach for some members. High member participation in fundraising events goes beyond just generating revenue — it signals a chapter-wide understanding that collective investment in the organization pays dividends for everyone. The ability to mobilize a large, motivated group of students around a common financial goal also mirrors the kind of teamwork and project management skills that FBLA explicitly aims to develop. Bridgeland's fundraising performance this season reflects a chapter that takes its responsibilities seriously and shows up when it counts.`
+    }
+
+    return `${count} events recorded with ${total} total attendances.`
 }
 
 function renderReport(data) {
@@ -541,10 +550,11 @@ function renderReport(data) {
         return
     }
 
-    // Service
+    // Service — exclude exact "SilverCrest" entries from the table, but keep them for the summary
+    const serviceTableEvents = data.service.filter(e => e.name.trim().toLowerCase() !== 'silvercrest')
     document.getElementById('service-meta').textContent =
         `${data.service.length} event${data.service.length !== 1 ? 's' : ''} · ${data.service.reduce((s,e)=>s+e.attendees,0)} total attendances`
-    document.getElementById('service-table').innerHTML   = buildEventTable(data.service)
+    document.getElementById('service-table').innerHTML   = buildEventTable(serviceTableEvents)
     document.getElementById('service-summary').textContent = generateSummary('Service', data.service)
 
     // Social
@@ -599,7 +609,9 @@ window.exportReportPDF = function() {
     y = 46
 
     // ── Section renderer
-    function renderSection(label, color, events, summary) {
+    // tableEvents = filtered/limited events for the table
+    // fullEvents  = all events for the summary paragraph (may include SilverCrest etc.)
+    function renderSection(label, color, tableEvents, category, fullEvents) {
         // Check page space
         if (y + 12 > doc.internal.pageSize.getHeight() - margin) {
             doc.addPage(); y = margin
@@ -614,40 +626,29 @@ window.exportReportPDF = function() {
         doc.text(label.toUpperCase(), margin + 4, y + 6.2)
         y += 14
 
-        // Stats line
-        const total  = events.reduce((s, e) => s + e.attendees, 0)
+        // Stats line (from fullEvents for accuracy)
+        const allEvents = fullEvents || tableEvents
+        const total = allEvents.reduce((s, e) => s + e.attendees, 0)
         doc.setFontSize(8)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(...gray)
         doc.text(
-            `${events.length} event${events.length !== 1 ? 's' : ''}  ·  ${total} total attendances`,
+            `${allEvents.length} event${allEvents.length !== 1 ? 's' : ''}  ·  ${total} total attendances`,
             margin, y
         )
         y += 6
 
-        // Table
-        if (events.length > 0) {
+        // Table (top 7, no date, no points)
+        const tableRows = tableEvents.slice(0, 7)
+        if (tableRows.length > 0) {
             doc.autoTable({
                 startY: y,
                 margin: { left: margin, right: margin },
-                head: [['Event Name', 'Date', 'Attendees', 'Points']],
-                body: events.map(ev => [
-                    ev.name,
-                    fmtDate(ev.event_date),
-                    String(ev.attendees),
-                    `${ev.point_value} pts`
-                ]),
+                head: [['Event Name', 'Attendees']],
+                body: tableRows.map(ev => [ev.name, String(ev.attendees)]),
                 styles: { fontSize: 8, cellPadding: 3, font: 'helvetica' },
-                headStyles: {
-                    fillColor: color,
-                    textColor: white,
-                    fontStyle: 'bold',
-                    halign: 'left'
-                },
-                columnStyles: {
-                    2: { halign: 'center' },
-                    3: { halign: 'center' }
-                },
+                headStyles: { fillColor: color, textColor: white, fontStyle: 'bold', halign: 'left' },
+                columnStyles: { 1: { halign: 'center', cellWidth: 30 } },
                 alternateRowStyles: { fillColor: lightGray },
                 tableLineColor: [220,220,224],
                 tableLineWidth: 0.2,
@@ -662,33 +663,30 @@ window.exportReportPDF = function() {
         }
 
         // Summary paragraph box
-        const summaryText = generateSummary(label, events)
-        const lines = doc.splitTextToSize(summaryText, contentW - 8)
-        const boxH  = lines.length * 4.5 + 8
+        const summaryText = generateSummary(category, allEvents)
+        const lines = doc.splitTextToSize(summaryText, contentW - 10)
+        const boxH  = lines.length * 4.8 + 10
 
         if (y + boxH > doc.internal.pageSize.getHeight() - margin) {
             doc.addPage(); y = margin
         }
 
-        doc.setFillColor(248, 248, 252)
-        doc.setDrawColor(...color)
-        doc.setLineWidth(0.6)
-        // Left accent bar
         doc.setFillColor(...color)
-        doc.rect(margin, y, 2.5, boxH, 'F')
+        doc.rect(margin, y, 3, boxH, 'F')
         doc.setFillColor(248, 248, 252)
-        doc.rect(margin + 2.5, y, contentW - 2.5, boxH, 'F')
+        doc.rect(margin + 3, y, contentW - 3, boxH, 'F')
 
         doc.setFont('helvetica', 'normal')
-        doc.setFontSize(8)
-        doc.setTextColor(50, 50, 60)
-        doc.text(lines, margin + 6, y + 5.5)
-        y += boxH + 10
+        doc.setFontSize(8.5)
+        doc.setTextColor(40, 40, 55)
+        doc.text(lines, margin + 7, y + 6)
+        y += boxH + 12
     }
 
-    renderSection('Service Projects', [16, 120, 80],   reportData.service,     'Service')
-    renderSection('Social Events',    [109, 40, 217],  reportData.social,      'Social')
-    renderSection('Fundraisers',      [180, 120, 0],   reportData.fundraising, 'Fundraising')
+    const serviceTablePdf = reportData.service.filter(e => e.name.trim().toLowerCase() !== 'silvercrest')
+    renderSection('Service Projects', [16, 120, 80],  serviceTablePdf,       'Service',     reportData.service)
+    renderSection('Social Events',    [109, 40, 217], reportData.social,     'Social')
+    renderSection('Fundraisers',      [180, 120, 0],  reportData.fundraising,'Fundraising')
 
     // ── Footer on each page
     const pageCount = doc.internal.getNumberOfPages()

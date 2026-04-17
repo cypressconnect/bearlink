@@ -86,6 +86,10 @@ tailwind.config = {
                         <span class="material-symbols-outlined text-sm">quiz</span>
                         Event Matchmaker
                     </a>
+                    <a href="#practice" class="px-8 py-4 bg-white/10 text-white backdrop-blur-md rounded-md font-semibold text-sm hover:bg-white/20 transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">school</span>
+                        Quick Practice
+                    </a>
                 </div>
             </div>
         </div>
@@ -562,6 +566,298 @@ tailwind.config = {
 
     // ─── Boot ─────────────────────────────────────────────────────────────────────
     renderQuestion();
+    </script>
+
+    <!-- Quick Practice -->
+    <section class="py-20 bg-surface-container-low" id="practice">
+        <div class="max-w-3xl mx-auto px-8">
+            <div class="text-center mb-12">
+                <span class="inline-block px-3 py-1 rounded-full bg-primary text-white text-xs font-bold tracking-widest uppercase mb-4">Train Smart</span>
+                <h2 class="text-4xl font-bold font-headline text-primary tracking-tight mb-4">Quick Practice</h2>
+                <p class="text-on-surface-variant text-lg font-light">10 national-level questions per event. Optional timer. Full explanations after each answer.</p>
+            </div>
+
+            <!-- Start Screen -->
+            <div id="pq-start" class="bg-surface-container-lowest rounded-xl shadow-sm p-8 md:p-12">
+                <div class="mb-8">
+                    <label for="pq-event-select" class="block text-sm font-semibold text-on-surface mb-3">Choose an Event</label>
+                    <select id="pq-event-select" onchange="pqOnSelectChange()"
+                        class="w-full border-2 border-surface-container-high rounded-lg px-4 py-3 text-sm font-medium text-on-surface bg-white focus:border-primary focus:outline-none transition-colors">
+                        <option value="">-- Select an event --</option>
+                    </select>
+                </div>
+                <div class="mb-10">
+                    <label class="block text-sm font-semibold text-on-surface mb-3">Timer</label>
+                    <div class="flex gap-6 flex-wrap">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="pq-timer" value="900" class="accent-[#001a48]">
+                            <span class="text-sm font-medium">15 min (Standard)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="pq-timer" value="600" class="accent-[#001a48]">
+                            <span class="text-sm font-medium">10 min (Fast)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input type="radio" name="pq-timer" value="0" checked class="accent-[#001a48]">
+                            <span class="text-sm font-medium">No Timer</span>
+                        </label>
+                    </div>
+                </div>
+                <button id="pq-start-btn" onclick="pqStart()" disabled
+                    class="w-full py-4 bg-primary text-white rounded-lg font-bold text-sm transition-all hover:shadow-lg active:scale-95 opacity-50 pointer-events-none flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">play_arrow</span> Start Practice
+                </button>
+                <p id="pq-soon-msg" class="hidden mt-4 text-center text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg py-3 px-4">
+                    This event's question bank is coming soon. Choose another event to practice now.
+                </p>
+            </div>
+
+            <!-- Quiz Screen -->
+            <div id="pq-quiz" class="hidden bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+                <div class="h-1.5 bg-surface-container-high">
+                    <div id="pq-prog-bar" class="h-full bg-primary transition-all duration-500" style="width:0%"></div>
+                </div>
+                <div class="flex items-center justify-between px-6 py-4 border-b border-surface-container-high">
+                    <span class="text-xs font-bold uppercase tracking-widest text-outline" id="pq-counter">Q 1 / 10</span>
+                    <div id="pq-timer-wrap" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-xs font-bold tabular-nums text-primary">
+                        <span class="material-symbols-outlined text-sm">timer</span>
+                        <span id="pq-timer-txt">15:00</span>
+                    </div>
+                </div>
+                <div class="p-8 md:p-12">
+                    <p class="text-xs font-bold uppercase tracking-widest text-secondary mb-4" id="pq-event-lbl"></p>
+                    <h3 class="text-xl font-bold font-headline text-primary mb-8 leading-snug" id="pq-q-text"></h3>
+                    <div id="pq-opts" class="space-y-3"></div>
+                    <div id="pq-explanation" class="hidden mt-6 p-5 rounded-lg bg-surface-container-low border-l-4 border-primary">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-primary text-sm">info</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-primary">Explanation</span>
+                        </div>
+                        <p class="text-sm text-on-surface-variant leading-relaxed" id="pq-expl-text"></p>
+                    </div>
+                    <div class="flex justify-end mt-8">
+                        <button id="pq-next-btn" onclick="pqNext()" disabled
+                            class="px-8 py-3 bg-primary text-white rounded-md font-bold text-sm opacity-50 pointer-events-none transition-all hover:shadow-lg active:scale-95 flex items-center gap-2">
+                            <span id="pq-next-lbl">Next</span>
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="pq-results" class="hidden bg-surface-container-lowest rounded-xl shadow-sm p-8 md:p-12">
+                <div class="text-center mb-10">
+                    <div class="w-28 h-28 rounded-full border-8 border-primary flex items-center justify-center mx-auto mb-6">
+                        <div>
+                            <div class="text-3xl font-extrabold font-headline text-primary" id="pq-score-frac"></div>
+                            <div class="text-xs text-outline font-medium">correct</div>
+                        </div>
+                    </div>
+                    <h3 class="text-2xl font-bold font-headline text-primary mb-2" id="pq-grade-msg"></h3>
+                    <p class="text-sm text-on-surface-variant" id="pq-grade-sub"></p>
+                </div>
+                <div id="pq-review" class="space-y-5"></div>
+                <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="pqRetake()"
+                        class="px-8 py-3 bg-primary text-white rounded-md font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2 justify-center">
+                        <span class="material-symbols-outlined text-sm">refresh</span> Retake
+                    </button>
+                    <button onclick="pqReset()"
+                        class="px-8 py-3 border-2 border-primary text-primary rounded-md font-bold text-sm hover:bg-primary/5 transition-colors flex items-center gap-2 justify-center">
+                        <span class="material-symbols-outlined text-sm">swap_horiz</span> New Event
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="js/quiz-data.js"></script>
+    <script>
+    // ─── Practice Quiz ────────────────────────────────────────────────────────────
+    const pq = { questions:[], currentQ:0, answers:[], event:'', eventName:'', timerSecs:0, timerInterval:null };
+
+    (function pqInit() {
+        const sel = document.getElementById('pq-event-select');
+        PRACTICE_EVENTS.groups.forEach(g => {
+            const og = document.createElement('optgroup');
+            og.label = g.name;
+            g.events.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.name + (e.available ? '' : ' (Coming Soon)');
+                opt.dataset.available = e.available ? '1' : '0';
+                og.appendChild(opt);
+            });
+            sel.appendChild(og);
+        });
+    })();
+
+    function pqOnSelectChange() {
+        const sel = document.getElementById('pq-event-select');
+        const opt = sel.options[sel.selectedIndex];
+        const avail = opt && opt.dataset.available === '1';
+        const btn = document.getElementById('pq-start-btn');
+        const msg = document.getElementById('pq-soon-msg');
+        if (!opt || !opt.value) {
+            btn.disabled = true; btn.classList.add('opacity-50','pointer-events-none'); msg.classList.add('hidden');
+        } else if (avail) {
+            btn.disabled = false; btn.classList.remove('opacity-50','pointer-events-none'); msg.classList.add('hidden');
+        } else {
+            btn.disabled = true; btn.classList.add('opacity-50','pointer-events-none'); msg.classList.remove('hidden');
+        }
+    }
+
+    function pqShuffle(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+        return a;
+    }
+
+    function pqStart() {
+        const sel = document.getElementById('pq-event-select');
+        const id  = sel.value;
+        if (!id || !PRACTICE_EVENTS.questions[id]) return;
+        const tv  = parseInt(document.querySelector('input[name="pq-timer"]:checked').value);
+        pq.questions  = pqShuffle(PRACTICE_EVENTS.questions[id]).slice(0,10);
+        pq.currentQ   = 0;
+        pq.answers    = new Array(pq.questions.length).fill(null);
+        pq.event      = id;
+        pq.eventName  = sel.options[sel.selectedIndex].text;
+        pq.timerSecs  = tv;
+        if (pq.timerInterval) clearInterval(pq.timerInterval);
+        document.getElementById('pq-start').classList.add('hidden');
+        document.getElementById('pq-results').classList.add('hidden');
+        document.getElementById('pq-quiz').classList.remove('hidden');
+        document.getElementById('pq-event-lbl').textContent = pq.eventName;
+        const tw = document.getElementById('pq-timer-wrap');
+        if (tv > 0) {
+            tw.classList.remove('hidden'); tw.classList.add('flex');
+            pqUpdateTimer(tv);
+            pq.timerInterval = setInterval(() => {
+                pq.timerSecs--; pqUpdateTimer(pq.timerSecs);
+                if (pq.timerSecs <= 0) { clearInterval(pq.timerInterval); pqShowResults(); }
+            }, 1000);
+        } else { tw.classList.add('hidden'); tw.classList.remove('flex'); }
+        pqRenderQ();
+    }
+
+    function pqUpdateTimer(s) {
+        const mm = Math.floor(Math.abs(s)/60).toString().padStart(2,'0');
+        const ss = (Math.abs(s)%60).toString().padStart(2,'0');
+        document.getElementById('pq-timer-txt').textContent = `${mm}:${ss}`;
+        const tw = document.getElementById('pq-timer-wrap');
+        if (s <= 120) { tw.classList.add('text-red-600'); tw.classList.remove('text-primary'); }
+        else { tw.classList.remove('text-red-600'); tw.classList.add('text-primary'); }
+    }
+
+    function pqRenderQ() {
+        const total = pq.questions.length;
+        const q     = pq.questions[pq.currentQ];
+        document.getElementById('pq-prog-bar').style.width = Math.round((pq.currentQ/total)*100)+'%';
+        document.getElementById('pq-counter').textContent  = `Q ${pq.currentQ+1} / ${total}`;
+        document.getElementById('pq-q-text').textContent   = q.q;
+        document.getElementById('pq-explanation').classList.add('hidden');
+        document.getElementById('pq-next-lbl').textContent = pq.currentQ === total-1 ? 'See Results' : 'Next';
+        const nb = document.getElementById('pq-next-btn');
+        nb.disabled = true; nb.classList.add('opacity-50','pointer-events-none');
+        const opts = document.getElementById('pq-opts');
+        opts.innerHTML = '';
+        ['A','B','C','D'].forEach((letter, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'w-full text-left px-5 py-4 rounded-lg border-2 border-surface-container-high bg-white hover:border-primary/40 hover:bg-primary/5 text-sm font-medium text-on-surface transition-all duration-150 flex items-center gap-4';
+            btn.innerHTML = `<span class="w-7 h-7 rounded-full border-2 border-outline-variant bg-surface-container flex-shrink-0 flex items-center justify-center text-xs font-bold text-outline">${letter}</span><span>${q.options[i]}</span>`;
+            btn.addEventListener('click', () => pqSelectAnswer(i));
+            opts.appendChild(btn);
+        });
+    }
+
+    function pqSelectAnswer(idx) {
+        if (pq.answers[pq.currentQ] !== null) return;
+        pq.answers[pq.currentQ] = idx;
+        const q = pq.questions[pq.currentQ];
+        document.querySelectorAll('#pq-opts button').forEach((btn, i) => {
+            btn.disabled = true;
+            const circle = btn.querySelector('span:first-child');
+            if (i === q.answer) {
+                btn.classList.add('border-green-500','bg-green-50');
+                circle.className = 'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold bg-green-500 text-white border-2 border-green-500';
+                circle.textContent = '✓';
+            } else if (i === idx) {
+                btn.classList.add('border-red-400','bg-red-50');
+                circle.className = 'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold bg-red-400 text-white border-2 border-red-400';
+                circle.textContent = '✕';
+            } else { btn.classList.add('opacity-40'); }
+        });
+        document.getElementById('pq-expl-text').textContent = q.explanation;
+        document.getElementById('pq-explanation').classList.remove('hidden');
+        const nb = document.getElementById('pq-next-btn');
+        nb.disabled = false; nb.classList.remove('opacity-50','pointer-events-none');
+    }
+
+    function pqNext() {
+        if (pq.currentQ < pq.questions.length - 1) { pq.currentQ++; pqRenderQ(); }
+        else { if (pq.timerInterval) clearInterval(pq.timerInterval); pqShowResults(); }
+    }
+
+    function pqShowResults() {
+        document.getElementById('pq-quiz').classList.add('hidden');
+        document.getElementById('pq-results').classList.remove('hidden');
+        const correct = pq.answers.filter((a,i) => a === pq.questions[i].answer).length;
+        const total   = pq.questions.length;
+        const pct     = Math.round((correct/total)*100);
+        document.getElementById('pq-score-frac').textContent = `${correct}/${total}`;
+        const [msg, sub] = pct >= 90 ? ["Outstanding!","National-level performance. You're ready to compete."]
+            : pct >= 70 ? ["Strong Work!","Good grasp. Review the missed questions below."]
+            : pct >= 50 ? ["Keep Practicing","Study the explanations and retake to improve."]
+            : ["Keep Going!","Review each explanation carefully. Every retake builds your score."];
+        document.getElementById('pq-grade-msg').textContent = msg;
+        document.getElementById('pq-grade-sub').textContent = sub;
+        const review = document.getElementById('pq-review');
+        review.innerHTML = '';
+        pq.questions.forEach((q, i) => {
+            const ua = pq.answers[i]; const ok = ua === q.answer;
+            const div = document.createElement('div');
+            div.className = `p-5 rounded-xl border-2 ${ok ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`;
+            div.innerHTML = `
+                <div class="flex items-start gap-3 mb-3">
+                    <span class="material-symbols-outlined text-xl flex-shrink-0 mt-0.5 ${ok?'text-green-600':'text-red-500'}">${ok?'check_circle':'cancel'}</span>
+                    <p class="text-sm font-semibold text-on-surface leading-snug">${i+1}. ${q.q}</p>
+                </div>
+                ${ua !== null && !ok ? `<p class="text-xs text-red-600 font-medium mb-1 ml-8">Your answer: ${'ABCD'[ua]}. ${q.options[ua]}</p>` : ''}
+                <p class="text-xs text-green-700 font-semibold mb-2 ml-8">Correct: ${'ABCD'[q.answer]}. ${q.options[q.answer]}</p>
+                <div class="ml-8 mt-2 p-3 bg-white/70 rounded-lg"><p class="text-xs text-on-surface-variant leading-relaxed">${q.explanation}</p></div>`;
+            review.appendChild(div);
+        });
+        document.getElementById('pq-prog-bar').style.width = '100%';
+    }
+
+    function pqRetake() {
+        if (pq.timerInterval) clearInterval(pq.timerInterval);
+        pq.questions = pqShuffle(PRACTICE_EVENTS.questions[pq.event]).slice(0,10);
+        pq.currentQ  = 0; pq.answers = new Array(pq.questions.length).fill(null);
+        const tv = parseInt(document.querySelector('input[name="pq-timer"]:checked').value);
+        pq.timerSecs = tv;
+        document.getElementById('pq-results').classList.add('hidden');
+        document.getElementById('pq-quiz').classList.remove('hidden');
+        const tw = document.getElementById('pq-timer-wrap');
+        if (tv > 0) {
+            tw.classList.remove('hidden'); tw.classList.add('flex');
+            pqUpdateTimer(tv);
+            pq.timerInterval = setInterval(() => {
+                pq.timerSecs--; pqUpdateTimer(pq.timerSecs);
+                if (pq.timerSecs <= 0) { clearInterval(pq.timerInterval); pqShowResults(); }
+            }, 1000);
+        } else { tw.classList.add('hidden'); tw.classList.remove('flex'); }
+        pqRenderQ();
+    }
+
+    function pqReset() {
+        if (pq.timerInterval) clearInterval(pq.timerInterval);
+        document.getElementById('pq-results').classList.add('hidden');
+        document.getElementById('pq-quiz').classList.add('hidden');
+        document.getElementById('pq-start').classList.remove('hidden');
+        document.getElementById('pq-prog-bar').style.width = '0%';
+    }
     </script>
 </main>
 

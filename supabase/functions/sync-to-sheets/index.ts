@@ -124,6 +124,13 @@ function colLetter(n: number): string {           // 1 -> A
   return s
 }
 
+/** "AD" -> 29 (0-based column index). */
+function colIndexOf(letters: string): number {
+  let n = 0
+  for (const ch of letters.toUpperCase()) n = n * 26 + (ch.charCodeAt(0) - 64)
+  return n - 1
+}
+
 /** Normalise a header/tab/name for tolerant comparison. */
 const norm = (s: unknown) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
 
@@ -462,63 +469,97 @@ Deno.serve(async (req) => {
           return json({ ok: true, existed: true, tab, col: colLetter(existing + 1) })
         }
 
-        // Insert before the first subtotal column so totals stay on the right.
-        const subtotalIdx = headers.findIndex((h, i) => i >= 2 && SUBTOTAL_RE.test(String(h).trim()))
+        /**
+         * Where to insert.
+         *
+         * A column inserted at the very END of a range like SUM(C2:R2) is not
+         * picked up -- Google only grows a range when the insert is INSIDE it.
+         * So find the range the tab's total actually sums, and insert within
+         * it; the formula then widens by itself and nothing has to be rewritten.
+         *
+         * "Points in General" is why this cannot just use the first subtotal:
+         * its rollups sit on the LEFT (Attendance (x2) in column E) while the
+         * total sums K:AD, so inserting before the first subtotal would put the
+         * new column outside the total entirely.
+         */
+        const headerAt = (i: number) => String(headers[i] ?? '').trim()
+        const subtotals: number[] = []
+        for (let c = 2; c < headers.length; c++) {
+          if (headerAt(c) && SUBTOTAL_RE.test(headerAt(c))) subtotals.push(c)
+        }
+        const totalIdx = subtotals.length ? subtotals[subtotals.length - 1] : -1
+        const totalFormula = totalIdx >= 0 ? String(grid.formulas[1]?.[totalIdx] ?? '') : ''
+        const range = totalFormula.match(/\$?([A-Z]+)\$?2\s*:\s*\$?([A-Z]+)\$?2/)
+
         let colIdx: number
-        if (subtotalIdx >= 0) {
-          await insertColumn(token, sheetId, subtotalIdx)
-          colIdx = subtotalIdx
+        let weighted = false
+
+        if (range) {
+          const lo = colIndexOf(range[1]), hi = colIndexOf(range[2])
+          // Sit next to the existing event columns, but never outside [lo, hi].
+          let preferred = lo
+          for (let c = lo; c <= hi && c < headers.length; c++) {
+            if (headerAt(c) && !SUBTOTAL_RE.test(headerAt(c)) && !computedColumn(grid, c)) preferred = c + 1
+          }
+          colIdx = Math.min(Math.max(preferred, lo), hi)
+        } else if (totalIdx >= 0) {
+          // Weighted total (BAA): no range to grow, so insert before it and
+          // add the new term to the formula afterwards.
+          colIdx = totalIdx
+          weighted = true
         } else {
           colIdx = headers.length
         }
 
+        await insertColumn(token, sheetId, colIdx)
+
         const letter = colLetter(colIdx + 1)
         await writeCell(token, tab, `${letter}1`, ev.name)
 
-        // Zero-fill the member rows (skip any that are formulas).
+        // Zero-fill the member rows.
         const memberRows = Math.max(0, grid.values.length - 1)
         if (memberRows > 0) {
           await writeRange(token, tab, `${letter}2:${letter}${memberRows + 1}`,
             Array.from({ length: memberRows }, () => [0]))
         }
 
-        /**
-         * Widen the subtotal to cover the new column.
-         *
-         * The column is inserted immediately before the subtotal, i.e. right
-         * at the end of a range like SUM(C2:R2). Google only grows a range
-         * when you insert INSIDE it, not at its edge -- so without this the
-         * new column is scored on the website and ignored by the sheet.
-         */
+        // Weighted totals have to be extended by hand.
         let subtotalFixed = 0
-        if (subtotalIdx >= 0 && memberRows > 0) {
-          const newSubIdx = subtotalIdx + 1                 // it shifted right
-          const template  = grid.formulas[1]?.[subtotalIdx] // formula before the insert
-          const lastEvent = colLetter(newSubIdx)            // the column just added
-
-          if (isFormula(template)) {
-            const body = String(template)
-            const data: { range: string; values: (string | number)[][] }[] = []
-            for (let r = 2; r <= memberRows + 1; r++) {
-              // Re-point the template at this row, then extend it.
-              const rowFormula = body.replace(/(?<=[A-Z]\$?)2\b/g, String(r))
-              const widened = /^=?\s*SUM\(/i.test(rowFormula)
-                // plain sum: stretch the end of the range to the new column
-                ? rowFormula.replace(/:\s*\$?[A-Z]+\$?\d+\s*\)/, `:${lastEvent}${r})`)
-                // weighted (BAA): add the new column at its own point value
-                : `${rowFormula} + ${lastEvent}${r}*${ev.point_value ?? 0}`
-              data.push({
-                range : `'${tab}'!${colLetter(newSubIdx + 1)}${r}`,
-                values: [[widened.startsWith('=') ? widened : `=${widened}`]],
-              })
-            }
-            await writeRanges(token, data, 'USER_ENTERED')
-            subtotalFixed = data.length
+        if (weighted && memberRows > 0 && isFormula(totalFormula)) {
+          const data: { range: string; values: (string | number)[][] }[] = []
+          for (let r = 2; r <= memberRows + 1; r++) {
+            const rowFormula = String(totalFormula).replace(/(?<=[A-Z]\$?)2\b/g, String(r))
+            const widened = `${rowFormula} + ${letter}${r}*${ev.point_value ?? 0}`
+            data.push({
+              range : `'${tab}'!${colLetter(totalIdx + 2)}${r}`,   // total shifted right
+              values: [[widened.startsWith('=') ? widened : `=${widened}`]],
+            })
           }
+          await writeRanges(token, data, 'USER_ENTERED')
+          subtotalFixed = data.length
+        }
+
+        // Confirm the total really does cover the new column now.
+        let countedByTotal: boolean | null = null
+        if (totalIdx >= 0) {
+          const after = await readTab(token, tab)
+          const newTotalIdx = totalIdx >= colIdx ? totalIdx + 1 : totalIdx
+          const f = String(after.formulas[1]?.[newTotalIdx] ?? '')
+          const rr = f.match(/\$?([A-Z]+)\$?2\s*:\s*\$?([A-Z]+)\$?2/)
+          countedByTotal = rr
+            ? colIdx >= colIndexOf(rr[1]) && colIdx <= colIndexOf(rr[2])
+            : f.includes(`${letter}2`)
         }
 
         await sb.from('events').update({ sheet_tab: tab, sheet_header: ev.name }).eq('id', ev.id)
-        return json({ ok: true, existed: false, tab, col: letter, subtotalRowsUpdated: subtotalFixed })
+        return json({
+          ok: true, existed: false, tab, col: letter,
+          countedByTotal, subtotalRowsUpdated: subtotalFixed,
+          warning: countedByTotal === false
+            ? `The column was created, but the "${tab}" total does not include it. ` +
+              `Run Bear Link -> Repair total formulas in the spreadsheet.`
+            : undefined,
+        })
       }
 
       /**

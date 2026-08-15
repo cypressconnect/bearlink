@@ -577,6 +577,10 @@ document.getElementById('createEventForm').addEventListener('submit', async e =>
                 `${sheet.detail}\n\nAssign points anyway? (You can add the column by hand later.)`
             )
             if (!goOn) { loadEvents(); btn.textContent = origTxt; btn.disabled = false; return }
+        } else if (sheet.detail?.warning) {
+            // The column exists but the tab's total does not reach it, so
+            // points would show on the site and not in the sheet.
+            alert(`"${event.name}" was created, but:\n\n${sheet.detail.warning}`)
         }
 
         sessionStorage.setItem('assignEventId', event.id)

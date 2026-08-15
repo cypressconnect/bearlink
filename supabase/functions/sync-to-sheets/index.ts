@@ -65,6 +65,12 @@ const POINTS_PER_MEETING = 2
 // A header that matches this is a computed subtotal -- never an event.
 const SUBTOTAL_RE = /^(total|sum|#|points\s+for)|formula$|\((x)?\d+x?\)$/i
 
+// Tabs whose cells hold 1/0 rather than a point value. The sheet applies
+// the multiplier itself (BAA does C*18 + D*6 ..., Points in General does
+// Conference*12), so writing the point total here would be counted twice
+// over -- a 12-point conference would read as 12 conferences attended.
+const BINARY_CATEGORIES = new Set(['Conference', 'BAA'])
+
 // ── base64url (for the service-account JWT) ───────────────────────────
 const b64url      = (s: string)      => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 const b64urlBytes = (b: ArrayBuffer) =>
@@ -332,7 +338,8 @@ async function writePoints(sb: any, token: string, tabs: any[], memberId: string
         `Create it from the dashboard (Add Event) or add the column by hand.`
       )
     }
-    cellValue = points
+    // Binary tabs record attendance as 1/0; the sheet applies the points.
+    cellValue = BINARY_CATEGORIES.has(ev.category) ? (points > 0 ? 1 : 0) : points
   }
 
   // Never clobber a formula.

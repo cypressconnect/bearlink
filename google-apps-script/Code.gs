@@ -81,6 +81,7 @@ function onOpen() {
     .addItem('Push one tab to website',   'pushActiveTab')
     .addSeparator()
     .addItem('Repair sheet headers',      'repairSheetHeaders')
+    .addItem('Repair total formulas',     'repairTotalFormulas')
     .addItem('Health check',              'healthCheck')
     .addSeparator()
     .addSubMenu(SpreadsheetApp.getUi().createMenu('Setup')
@@ -332,6 +333,105 @@ function repairSheetHeaders() {
   alert_('Bear Link — header repair',
     fixed.length ? 'Fixed ' + fixed.length + ' header cell(s):\n\n' + fixed.join('\n')
                  : 'All header cells already correct.')
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// REPAIR: rebuild the subtotal / total columns
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * Rewrites every tab's subtotal column so all member rows use one
+ * consistent formula.
+ *
+ * These columns had drifted badly: on BAA, 7 rows multiplied the Everfi
+ * award by 6 and 2 rows by 12 instead of 18; on Services, 21 rows had a
+ * hardcoded "+ 1" and 157 held a typed number with no formula at all;
+ * on "Points in General" 199 of 200 Total Points cells were typed
+ * numbers, so nothing recalculated when points changed.
+ */
+function repairTotalFormulas() {
+  var ui = SpreadsheetApp.getUi()
+  var go = ui.alert('Bear Link',
+    'Rebuild the subtotal and total columns on every tab?\n\n' +
+    'Individual point cells are not touched. Only the columns that add ' +
+    'them up are rewritten, so every row uses the same formula.',
+    ui.ButtonSet.OK_CANCEL)
+  if (go !== ui.Button.OK) return
+
+  var log = []
+  for (var cat in TAB_ALIASES) {
+    try { log.push(repairTabTotals_(cat)) }
+    catch (e) { log.push(cat + ': FAILED - ' + e) }
+  }
+  SpreadsheetApp.flush()
+  alert_('Bear Link - formula repair', log.join('\n'))
+}
+
+function repairTabTotals_(category) {
+  var sheet = findTab_(category)
+  if (!sheet) return category + ': tab not found'
+
+  var grid    = readTab_(sheet)
+  var headers = grid.values[0] || []
+  var roster  = rosterFromTab_(grid)
+  if (!roster.length) return category + ': no member rows'
+
+  var firstRow = roster[0].row + 1                     // 1-based sheet row
+  var lastRow  = roster[roster.length - 1].row + 1
+  var n        = lastRow - firstRow + 1
+
+  // The total column is the LAST subtotal-looking header on the tab.
+  var totalCol = -1
+  for (var c = 2; c < headers.length; c++) {
+    var h = String(headers[c] == null ? '' : headers[c]).trim()
+    if (h && SUBTOTAL_RE.test(h)) totalCol = c
+  }
+  if (totalCol < 0) return category + ' ("' + sheet.getName() + '"): no total column'
+
+  var formulas = []
+  var r, i
+
+  if (category === 'BAA') {
+    // Weighted: each award has its own point value.
+    var parts = []
+    for (i = 2; i < totalCol; i++) {
+      var name = String(headers[i] == null ? '' : headers[i]).trim()
+      if (!name) continue
+      parts.push({ col: colLetter_(i + 1), pts: pointsForBinary_(name, 'BAA') })
+    }
+    if (!parts.length) return category + ': no award columns'
+    for (r = firstRow; r <= lastRow; r++) {
+      var terms = []
+      for (i = 0; i < parts.length; i++) terms.push(parts[i].col + r + '*' + parts[i].pts)
+      formulas.push(['=' + terms.join(' + ')])
+    }
+
+  } else if (category === 'Miscellaneous') {
+    // Total Points spans from just after the "|" separator to the column
+    // before the total itself.
+    var start = 2
+    for (i = 2; i < totalCol; i++) {
+      var hv = String(headers[i] == null ? '' : headers[i]).trim()
+      if (hv === '|' || hv === '\\') start = i + 1
+    }
+    var a = colLetter_(start + 1), b = colLetter_(totalCol)
+    for (r = firstRow; r <= lastRow; r++) formulas.push(['=SUM(' + a + r + ':' + b + r + ')'])
+
+  } else {
+    // Plain sum of every event column up to the subtotal.
+    var s = colLetter_(3), e = colLetter_(totalCol)
+    for (r = firstRow; r <= lastRow; r++) formulas.push(['=SUM(' + s + r + ':' + e + r + ')'])
+  }
+
+  sheet.getRange(firstRow, totalCol + 1, n, 1).setFormulas(formulas)
+  return category + ' ("' + sheet.getName() + '"): ' + n + ' rows -> ' +
+         String(formulas[0][0]).replace(String(firstRow), 'N')
+}
+
+function colLetter_(n) {
+  var s = ''
+  while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26) }
+  return s
 }
 
 // ══════════════════════════════════════════════════════════════════════

@@ -17,11 +17,12 @@
  *                    the event's tab, headed with the event name, and
  *                    zero-fills every member row.
  *  add_member_row    { member_id }
- *                    Appends the member to every roster tab, zero-filling
- *                    the data columns and leaving formula columns alone.
- *  remove_member_row { last_name, first_name }
- *  rename_event      { event_id, old_header }
  *  rename_member_row { member_id, old_first, old_last }
+ *  remove_member_row { first_name, last_name }
+ *                    Roster edits. If the roster is formula-driven (it is
+ *                    here) these report where to make the change instead of
+ *                    writing, since a write would break the array.
+ *  rename_event      { event_id, old_header }
  *  resync_member     { member_id }        push all of one member's points
  *  health            {}                   report tab/roster/formula status
  *
@@ -164,25 +165,41 @@ function resolveTab(tabs: { title: string }[], category: string): string {
 }
 
 /**
- * Every tab that carries a Last Name / First Name roster, de-duplicated.
- * Several categories share a tab (Miscellaneous and Other both live on
- * "Points in General"), so this must not return the same tab twice.
- */
-function allRosterTabs(tabs: { title: string }[]): string[] {
-  const titles = new Set<string>()
-  for (const category of Object.keys(TAB_ALIASES)) {
-    try { titles.add(resolveTab(tabs, category)) } catch { /* tab absent */ }
-  }
-  return [...titles]
-}
-
-/**
  * Read a whole tab as raw cell content. Formulas come back as their
  * text ("=SUM(C2:R2)"), which is how we detect computed cells.
  */
-async function readTab(token: string, tab: string): Promise<string[][]> {
-  const data = await api(token, `/values/${encodeURIComponent(`'${tab}'`)}?valueRenderOption=FORMULA`)
-  return data.values ?? []
+/**
+ * Read a tab twice: once for the values, once for the formulas.
+ *
+ * FORMULA rendering alone is not enough. Every tab mirrors the roster with
+ * an array formula anchored in A2 ("=IF('Points In General'!A2:A1000<>\"\"...)"),
+ * and under FORMULA rendering an array's spill cells come back EMPTY -- only
+ * the anchor carries text. Matching members on that grid finds nobody.
+ *
+ * So: `values` is what is actually in the cells, `formulas` is only used to
+ * decide whether a cell may be written to.
+ */
+interface Grid { values: string[][]; formulas: string[][] }
+
+async function readTab(token: string, tab: string): Promise<Grid> {
+  const range = encodeURIComponent(`'${tab}'`)
+  const [v, f] = await Promise.all([
+    api(token, `/values/${range}?valueRenderOption=UNFORMATTED_VALUE`),
+    api(token, `/values/${range}?valueRenderOption=FORMULA`),
+  ])
+  return { values: v.values ?? [], formulas: f.values ?? [] }
+}
+
+/** Is this cell computed -- either itself a formula, or inside a spill? */
+function computedCell(grid: Grid, row: number, col: number): boolean {
+  if (isFormula(grid.formulas[row]?.[col])) return true
+  // Spill cells report nothing; the anchor in row 2 gives the column away.
+  return isFormula(grid.formulas[1]?.[col])
+}
+
+/** Is a whole column produced by a formula (so it must not be written to)? */
+function computedColumn(grid: Grid, col: number): boolean {
+  return isFormula(grid.formulas[1]?.[col])
 }
 
 async function writeCell(token: string, tab: string, a1: string, value: string | number) {
@@ -235,10 +252,11 @@ async function insertColumn(token: string, sheetId: number, colIndex: number) {
 const isFormula = (cell: unknown) => typeof cell === 'string' && cell.trim().startsWith('=')
 
 /** Row index (0-based, into the grid) of a member on a tab. */
-function findMemberRow(grid: string[][], firstName: string, lastName: string): number {
+function findMemberRow(grid: Grid, firstName: string, lastName: string): number {
   const f = norm(firstName), l = norm(lastName)
-  for (let r = 1; r < grid.length; r++) {
-    if (norm(grid[r]?.[0]) === l && norm(grid[r]?.[1]) === f) return r
+  const rows = grid.values
+  for (let r = 1; r < rows.length; r++) {
+    if (norm(rows[r]?.[0]) === l && norm(rows[r]?.[1]) === f) return r
   }
   return -1
 }
@@ -251,9 +269,9 @@ function findMemberRow(grid: string[][], firstName: string, lastName: string): n
  * "Silvercrest 9/5" column, which is exactly the kind of quiet mis-write
  * that put the sheet and the site out of step.
  */
-function findHeaderCol(grid: string[][], header: string): number {
+function findHeaderCol(grid: Grid, header: string): number {
   const want    = norm(header)
-  const headers = grid[0] ?? []
+  const headers = grid.values[0] ?? []
   if (!want) return -1
 
   for (let c = 2; c < headers.length; c++) if (norm(headers[c]) === want) return c
@@ -336,11 +354,11 @@ async function writePoints(sb: any, token: string, tabs: any[], memberId: string
         `Miscellaneous so it gets its own column.`
       )
     }
-    colIdx = (grid[0] ?? []).findIndex(h => officer ? /officer/i.test(String(h)) : /general/i.test(String(h)))
+    colIdx = (grid.values[0] ?? []).findIndex(h => officer ? /officer/i.test(String(h)) : /general/i.test(String(h)))
     if (colIdx < 0) {
       throw new Error(
         `No ${officer ? 'Officer' : 'General'} meetings column on the "${tab}" tab. ` +
-        `Headers: ${(grid[0] ?? []).join(' | ')}`
+        `Headers: ${(grid.values[0] ?? []).join(' | ')}`
       )
     }
     cellValue = Math.round(points / POINTS_PER_MEETING)
@@ -364,13 +382,12 @@ async function writePoints(sb: any, token: string, tabs: any[], memberId: string
   // a spill cell breaks the anchor with #REF! and wipes the column for every
   // member, which is exactly what "Area Conference (November 2025)" and
   // "# General Meetings Attended" would do.
-  const anchor = grid[1]?.[colIdx]
-  if (isFormula(grid[rowIdx]?.[colIdx]) || isFormula(anchor)) {
+  if (computedCell(grid, rowIdx, colIdx)) {
+    const src = grid.formulas[1]?.[colIdx] ?? grid.formulas[rowIdx]?.[colIdx]
     throw new Error(
-      `"${tab}" column ${colLetter(colIdx + 1)} ("${grid[0]?.[colIdx] ?? '?'}") is computed ` +
-      `by a formula (${String(isFormula(anchor) ? anchor : grid[rowIdx][colIdx]).slice(0, 80)}...) ` +
-      `-- refusing to write to it. Record this one in the spreadsheet, or at ` +
-      `whatever source feeds that formula.`
+      `"${tab}" column ${colLetter(colIdx + 1)} ("${grid.values[0]?.[colIdx] ?? '?'}") is ` +
+      `computed by a formula (${String(src).slice(0, 80)}...) -- refusing to write to it. ` +
+      `Record this one in the spreadsheet, or wherever that formula gets its data.`
     )
   }
 
@@ -436,7 +453,7 @@ Deno.serve(async (req) => {
         const tab     = resolveTab(tabs, ev.category)
         const sheetId = tabs.find(t => t.title === tab)!.sheetId
         const grid    = await readTab(token, tab)
-        const headers = grid[0] ?? []
+        const headers = grid.values[0] ?? []
 
         const existing = findHeaderCol(grid, ev.name)
         if (existing >= 0) {
@@ -459,7 +476,7 @@ Deno.serve(async (req) => {
         await writeCell(token, tab, `${letter}1`, ev.name)
 
         // Zero-fill the member rows (skip any that are formulas).
-        const memberRows = Math.max(0, grid.length - 1)
+        const memberRows = Math.max(0, grid.values.length - 1)
         if (memberRows > 0) {
           await writeRange(token, tab, `${letter}2:${letter}${memberRows + 1}`,
             Array.from({ length: memberRows }, () => [0]))
@@ -469,159 +486,102 @@ Deno.serve(async (req) => {
         return json({ ok: true, existed: false, tab, col: letter })
       }
 
-      // ── Append a new member to every roster tab ───────────────
-      case 'add_member_row': {
-        const { data: m, error } = await sb
-          .from('members').select('first_name, last_name, name, grade').eq('id', body.member_id).single()
-        if (error) throw new Error(`Member not found: ${error.message}`)
-
-        const firstName = (m.first_name ?? m.name?.split(' ')[0] ?? '').trim()
-        const lastName  = (m.last_name ?? m.name?.split(' ').slice(1).join(' ') ?? '').trim()
-
-        const rosterTabs = allRosterTabs(tabs)
-
-        const touched: any[] = []
-        for (const tab of rosterTabs) {
-          try {
-            const grid = await readTab(token, tab)
-            if (!grid.length) { touched.push({ tab, skipped: 'empty tab' }); continue }
-
-            if (findMemberRow(grid, firstName, lastName) >= 0) {
-              touched.push({ tab, skipped: 'already present' }); continue
-            }
-
-            const headers  = grid[0] ?? []
-            const newRow   = grid.length + 1                 // 1-based sheet row
-            const template = grid[grid.length - 1] ?? []     // last member row
-
-            /**
-             * Only write the cells that actually need a value.
-             *
-             * Several point columns are ARRAYFORMULA ranges anchored in row 2
-             * that spill down the whole column ("# General Meetings Attended",
-             * "Area Conference (November 2025)"). Writing anything into a spill
-             * cell -- even a 0 -- breaks the anchor with #REF! and wipes that
-             * column for every member. Blank cells are already treated as zero
-             * by the importer and by SUM, so there is nothing to gain from
-             * filling them in.
-             */
-            const data: { range: string; values: (string | number)[][] }[] = [
-              { range: `'${tab}'!A${newRow}:B${newRow}`, values: [[lastName, firstName]] },
-            ]
-
-            const gradeCol = headers.findIndex(h => /grade/i.test(String(h)))
-            if (gradeCol >= 0 && m.grade != null) {
-              data.push({ range: `'${tab}'!${colLetter(gradeCol + 1)}${newRow}`, values: [[m.grade]] })
-            }
-
-            // Carry down per-row formulas (the subtotal columns), re-pointed
-            // at the new row. Spill cells are not formulas here, so they are
-            // correctly left untouched.
-            for (let c = 2; c < headers.length; c++) {
-              const t = template[c]
-              if (!isFormula(t)) continue
-              const shifted = String(t).replace(
-                new RegExp(`(?<=[A-Z]\\$?)${grid.length}\\b`, 'g'), String(newRow))
-              data.push({ range: `'${tab}'!${colLetter(c + 1)}${newRow}`, values: [[shifted]] })
-            }
-
-            await writeRanges(token, data, 'USER_ENTERED')
-            touched.push({ tab, row: newRow, cells: data.length })
-          } catch (e) {
-            touched.push({ tab, error: String(e) })
-          }
-        }
-        return json({ ok: true, member: `${firstName} ${lastName}`, tabs: touched })
-      }
-
-      // ── Rename a member across every tab ─────────────────────
-      // Without this, renaming on the site orphans their sheet row: the
-      // next import no longer matches it to anyone and creates a duplicate.
-      case 'rename_member_row': {
-        const { old_first, old_last } = body
-        const { data: m, error } = await sb
-          .from('members').select('first_name, last_name').eq('id', body.member_id).single()
-        if (error) throw new Error(`Member not found: ${error.message}`)
-
-        const touched: any[] = []
-        for (const tab of allRosterTabs(tabs)) {
-          try {
-            const grid   = await readTab(token, tab)
-            const rowIdx = findMemberRow(grid, old_first, old_last)
-            if (rowIdx < 0) { touched.push({ tab, skipped: 'not found' }); continue }
-            await writeRanges(token, [{
-              range : `'${tab}'!A${rowIdx + 1}:B${rowIdx + 1}`,
-              values: [[m.last_name, m.first_name]],
-            }], 'RAW')
-            touched.push({ tab, row: rowIdx + 1 })
-          } catch (e) {
-            touched.push({ tab, error: String(e) })
-          }
-        }
-        return json({ ok: true, tabs: touched })
-      }
-
-      // ── Clear a member's row across all tabs ──────────────────
+      /**
+       * ── Member roster operations ──────────────────────────────
+       *
+       * The roster is not editable through this function. Every tab mirrors
+       * "Points In General" columns A/B with an array formula, and those in
+       * turn come from an ARRAYFORMULA + IMPORTRANGE against a separate
+       * spreadsheet. Writing a name anywhere would overwrite an array and
+       * break the roster on every tab at once.
+       *
+       * So these actions report what they found instead of writing, and the
+       * caller surfaces it. Members still get created/renamed/deleted in the
+       * database -- only the spreadsheet side is out of our hands.
+       */
+      case 'add_member_row':
+      case 'rename_member_row':
       case 'remove_member_row': {
-        const { first_name, last_name } = body
-        const rosterTabs = allRosterTabs(tabs)
+        const master = resolveTab(tabs, 'Miscellaneous')       // "Points In General"
+        const grid   = await readTab(token, master)
 
-        const touched: any[] = []
-        for (const tab of rosterTabs) {
-          try {
-            const grid   = await readTab(token, tab)
-            const rowIdx = findMemberRow(grid, first_name, last_name)
-            if (rowIdx < 0) { touched.push({ tab, skipped: 'not present' }); continue }
-            const sheetId = tabs.find(t => t.title === tab)!.sheetId
-            await api(token, ':batchUpdate', {
-              method: 'POST',
-              body  : JSON.stringify({
-                requests: [{ deleteDimension: {
-                  range: { sheetId, dimension: 'ROWS', startIndex: rowIdx, endIndex: rowIdx + 1 },
-                } }],
-              }),
-            })
-            touched.push({ tab, deletedRow: rowIdx + 1 })
-          } catch (e) {
-            touched.push({ tab, error: String(e) })
-          }
-        }
-        return json({ ok: true, tabs: touched })
-      }
-
-      // ── Delete an event's column from the sheet ──────────────
-      // Called when an event is deleted on the website. Without this the
-      // column survives and the next import recreates the event.
-      case 'delete_event_column': {
-        const { category, header } = body
-        if (category === 'Attendance') {
-          return json({ ok: true, skipped: true, reason: 'Attendance uses fixed columns' })
-        }
-        const tab     = body.sheet_tab && tabs.some(t => t.title === body.sheet_tab)
-          ? body.sheet_tab : resolveTab(tabs, category)
-        const grid    = await readTab(token, tab)
-        const colIdx  = findHeaderCol(grid, header)
-        if (colIdx < 0) return json({ ok: true, skipped: true, reason: 'column not found' })
-
-        // Refuse if the column is computed -- deleting it would break the
-        // formulas that depend on it.
-        if (isFormula(grid[1]?.[colIdx])) {
-          throw new Error(
-            `"${tab}" column "${header}" is computed by a formula. ` +
-            `Delete it in the spreadsheet by hand if you really mean to.`
-          )
+        if (computedColumn(grid, 0) || computedColumn(grid, 1)) {
+          const src = String(grid.formulas[1]?.[0] ?? '')
+          const m   = src.match(/IMPORTRANGE\(\s*"?([-\w]{20,})"?/i)
+                   ?? src.match(/["']([-\w]{30,})["']/)
+          return json({
+            ok       : false,
+            managed  : 'formula',
+            tab      : master,
+            sourceId : m?.[1] ?? null,
+            error    :
+              `The "${master}" roster is generated by a formula, and every other tab mirrors it, ` +
+              `so the roster cannot be edited from here.` +
+              (m?.[1]
+                ? ` It is imported from spreadsheet ${m[1]} — add, rename or remove the person there ` +
+                  `and the sheet will follow.`
+                : ` Edit it at whatever source that formula imports from.`),
+          }, 200)
         }
 
-        const sheetId = tabs.find(t => t.title === tab)!.sheetId
-        await api(token, ':batchUpdate', {
-          method: 'POST',
-          body  : JSON.stringify({
-            requests: [{ deleteDimension: {
-              range: { sheetId, dimension: 'COLUMNS', startIndex: colIdx, endIndex: colIdx + 1 },
-            } }],
-          }),
-        })
-        return json({ ok: true, tab, removed: colLetter(colIdx + 1) })
+        // Roster is plain values after all -- edit the master; mirrors follow.
+        const first = String(body.first_name ?? '').trim()
+        const last  = String(body.last_name ?? '').trim()
+
+        if (action === 'remove_member_row') {
+          const rowIdx = findMemberRow(grid, first, last)
+          if (rowIdx < 0) return json({ ok: true, skipped: 'not present' })
+          const sheetId = tabs.find(t => t.title === master)!.sheetId
+          await api(token, ':batchUpdate', {
+            method: 'POST',
+            body  : JSON.stringify({ requests: [{ deleteDimension: {
+              range: { sheetId, dimension: 'ROWS', startIndex: rowIdx, endIndex: rowIdx + 1 },
+            } }] }),
+          })
+          return json({ ok: true, tab: master, deletedRow: rowIdx + 1 })
+        }
+
+        const { data: m2, error: mErr } = await sb
+          .from('members').select('first_name, last_name, name, grade').eq('id', body.member_id).single()
+        if (mErr) throw new Error(`Member not found: ${mErr.message}`)
+        const fName = (m2.first_name ?? '').trim()
+        const lName = (m2.last_name ?? '').trim()
+
+        if (action === 'rename_member_row') {
+          const rowIdx = findMemberRow(grid, body.old_first, body.old_last)
+          if (rowIdx < 0) return json({ ok: true, skipped: 'not present' })
+          await writeRanges(token, [{
+            range: `'${master}'!A${rowIdx + 1}:B${rowIdx + 1}`, values: [[lName, fName]],
+          }], 'RAW')
+          return json({ ok: true, tab: master, row: rowIdx + 1 })
+        }
+
+        // add_member_row
+        if (findMemberRow(grid, fName, lName) >= 0) {
+          return json({ ok: true, skipped: 'already present', tab: master })
+        }
+        const newRow  = grid.values.length + 1
+        const headers = grid.values[0] ?? []
+        const data: { range: string; values: (string | number)[][] }[] = [
+          { range: `'${master}'!A${newRow}:B${newRow}`, values: [[lName, fName]] },
+        ]
+        const gradeCol = headers.findIndex(h => /grade/i.test(String(h)))
+        if (gradeCol >= 0 && m2.grade != null && !computedColumn(grid, gradeCol)) {
+          data.push({ range: `'${master}'!${colLetter(gradeCol + 1)}${newRow}`, values: [[m2.grade]] })
+        }
+        // Carry per-row formulas (subtotals) down, but never touch a spill column.
+        const template = grid.formulas[grid.values.length - 1] ?? []
+        for (let c = 2; c < headers.length; c++) {
+          if (computedColumn(grid, c)) continue
+          const t = template[c]
+          if (!isFormula(t)) continue
+          data.push({
+            range : `'${master}'!${colLetter(c + 1)}${newRow}`,
+            values: [[String(t).replace(new RegExp(`(?<=[A-Z]\\$?)${grid.values.length}\\b`, 'g'), String(newRow))]],
+          })
+        }
+        await writeRanges(token, data, 'USER_ENTERED')
+        return json({ ok: true, tab: master, row: newRow, cells: data.length })
       }
 
       // ── Rename an event's column header ──────────────────────
@@ -649,10 +609,10 @@ Deno.serve(async (req) => {
             const grid = await readTab(token, tab)
             report.categories[cat] = {
               tab,
-              rows          : Math.max(0, grid.length - 1),
-              headers       : (grid[0] ?? []).map(String),
-              formulaColumns: (grid[1] ?? [])
-                .map((c, i) => (isFormula(c) ? String((grid[0] ?? [])[i] ?? colLetter(i + 1)) : null))
+              rows          : Math.max(0, grid.values.length - 1),
+              headers       : (grid.values[0] ?? []).map(String),
+              formulaColumns: (grid.formulas[1] ?? [])
+                .map((c, i) => (isFormula(c) ? String((grid.values[0] ?? [])[i] ?? colLetter(i + 1)) : null))
                 .filter(Boolean),
             }
           } catch (e) {

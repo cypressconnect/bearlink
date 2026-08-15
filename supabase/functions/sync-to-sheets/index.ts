@@ -276,12 +276,17 @@ function findMemberRow(grid: Grid, firstName: string, lastName: string): number 
  * "Silvercrest 9/5" column, which is exactly the kind of quiet mis-write
  * that put the sheet and the site out of step.
  */
-function findHeaderCol(grid: Grid, header: string): number {
+function findHeaderCol(grid: Grid, header: string, exact = false): number {
   const want    = norm(header)
   const headers = grid.values[0] ?? []
   if (!want) return -1
 
   for (let c = 2; c < headers.length; c++) if (norm(headers[c]) === want) return c
+
+  // Creating and deleting columns must match exactly. A loose match there
+  // either refuses to act (an event named "Silvercrest" matches all fifteen
+  // "Silvercrest 9/5" columns) or, worse, removes the wrong column.
+  if (exact) return -1
 
   const loose: number[] = []
   for (let c = 2; c < headers.length; c++) {
@@ -462,7 +467,7 @@ Deno.serve(async (req) => {
         const grid    = await readTab(token, tab)
         const headers = grid.values[0] ?? []
 
-        const existing = findHeaderCol(grid, ev.name)
+        const existing = findHeaderCol(grid, ev.name, true)
         if (existing >= 0) {
           await sb.from('events')
             .update({ sheet_tab: tab, sheet_header: String(headers[existing]) }).eq('id', ev.id)
@@ -668,7 +673,7 @@ Deno.serve(async (req) => {
 
         const tab    = ev.sheet_tab && tabs.some(t => t.title === ev.sheet_tab) ? ev.sheet_tab : resolveTab(tabs, ev.category)
         const grid   = await readTab(token, tab)
-        const colIdx = findHeaderCol(grid, body.old_header ?? ev.name)
+        const colIdx = findHeaderCol(grid, body.old_header ?? ev.name, true)
         if (colIdx < 0) return json({ ok: true, skipped: true, reason: 'column not found' })
 
         await writeCell(token, tab, `${colLetter(colIdx + 1)}1`, ev.name)

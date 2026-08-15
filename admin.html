@@ -516,6 +516,7 @@ window.removeEvent = async (id, name, memberCount) => {
     if (!confirm(warning)) return
     try {
         const { sheet } = await deleteEvent(id)
+        // `skipped` means there was no column to remove -- nothing is stranded.
         if (!sheet.ok) {
             alert(
                 `"${name}" was deleted from the website, but its column is still in the Google Sheet:\n\n` +

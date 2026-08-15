@@ -242,7 +242,7 @@ export async function deleteEvent(eventId, { removeSheetColumn = true } = {}) {
         category: ev.category,
         header  : ev.sheet_header || ev.name,
         sheet_tab: ev.sheet_tab,
-    }).then(r => ({ ok: true, detail: r }))
+    }).then(r => ({ ok: true, skipped: !!r?.skipped, detail: r }))
       .catch(err => ({ ok: false, detail: err.message }))
 
     return { sheet }

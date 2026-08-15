@@ -82,6 +82,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Repair sheet headers',      'repairSheetHeaders')
     .addItem('Repair total formulas',     'repairTotalFormulas')
+    .addItem('Remove members missing from sheet', 'removeOrphanMembers')
     .addItem('Health check',              'healthCheck')
     .addSeparator()
     .addSubMenu(SpreadsheetApp.getUi().createMenu('Setup')
@@ -434,6 +435,42 @@ function colLetter_(n) {
   return s
 }
 
+/**
+ * Deletes members who exist on the website but not in this spreadsheet.
+ * Run after an import, which is what works out the list. Always confirms
+ * first, because this destroys every point those members earned.
+ */
+function removeOrphanMembers() {
+  var raw = PropertiesService.getScriptProperties().getProperty('ORPHAN_MEMBERS')
+  var extra = raw ? JSON.parse(raw) : null
+  if (!extra) {
+    alert_('Bear Link', 'Run "Import sheet into website" first — that is what works out who is missing.')
+    return
+  }
+  if (!extra.length) { alert_('Bear Link', 'Every member on the website is in this spreadsheet.'); return }
+
+  var names = extra.map(function (k) {
+    var p = k.split('|'); return p[1] + ', ' + p[0]
+  })
+  var ui = SpreadsheetApp.getUi()
+  var go = ui.alert('Bear Link',
+    'Delete these ' + extra.length + ' member(s) from the website?\n\n' +
+    names.slice(0, 25).join('\n') + (names.length > 25 ? '\n...' : '') +
+    '\n\nThis also deletes every point they have earned and cannot be undone.',
+    ui.ButtonSet.OK_CANCEL)
+  if (go !== ui.Button.OK) return
+
+  var removed = 0
+  for (var i = 0; i < extra.length; i++) {
+    var p = extra[i].split('|')
+    try { callProxy_('delete_member', { first_name: p[0], last_name: p[1] }); removed++ }
+    catch (e) { Logger.log('delete_member failed for ' + extra[i] + ': ' + e) }
+  }
+  PropertiesService.getScriptProperties().deleteProperty('ORPHAN_MEMBERS')
+  memberMap_(true)
+  alert_('Bear Link', removed + ' member(s) removed from the website.')
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // HEALTH CHECK
 // ══════════════════════════════════════════════════════════════════════
@@ -522,7 +559,27 @@ function importMembers_() {
     var res = callProxy_('create_members', { members: members.slice(i, i + 100) })
     created += res.created || 0
   }
-  return 'Members: ' + roster.length + ' in sheet, ' + created + ' new'
+
+  // Report anyone on the website who is no longer on the roster. This is NOT
+  // deleted automatically -- removing a member destroys all of their points,
+  // and a mistyped name in the sheet should not be able to trigger that.
+  var extra = membersNotInSheet_(roster)
+  PropertiesService.getScriptProperties()
+    .setProperty('ORPHAN_MEMBERS', JSON.stringify(extra))
+
+  return 'Members: ' + roster.length + ' in sheet, ' + created + ' new' +
+         (extra.length ? ', ' + extra.length + ' on the site but NOT in the sheet ' +
+                         '(use Bear Link -> Remove members missing from sheet)' : '')
+}
+
+/** Names present on the website but absent from the sheet roster. */
+function membersNotInSheet_(roster) {
+  var inSheet = {}
+  roster.forEach(function (p) { inSheet[p.key] = true })
+  var map = memberMap_(true)
+  var extra = []
+  for (var key in map) if (!inSheet[key]) extra.push(key)
+  return extra
 }
 
 function importCategory_(category, memberMap) {

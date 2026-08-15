@@ -96,9 +96,37 @@ export async function createMember({ first_name, last_name, grade, email, studen
     return { member: data, sheet }
 }
 
+/**
+ * Update a member. If the name changed, rename their spreadsheet row too --
+ * otherwise the row is orphaned and the next import recreates them under the
+ * old name as a second member.
+ */
 export async function updateMember(memberId, fields) {
+    const renaming = fields.first_name != null || fields.last_name != null
+    let before = null
+    if (renaming) {
+        const { data } = await supabase
+            .from('members').select('first_name, last_name').eq('id', memberId).maybeSingle()
+        before = data
+    }
+
     const { error } = await supabase.from('members').update(fields).eq('id', memberId)
     if (error) throw error
+
+    if (!renaming || !before) return { sheet: { ok: true, detail: 'no rename' } }
+    const changed = (fields.first_name ?? before.first_name) !== before.first_name
+                 || (fields.last_name ?? before.last_name) !== before.last_name
+    if (!changed) return { sheet: { ok: true, detail: 'no rename' } }
+
+    const sheet = await callSheetSync({
+        action   : 'rename_member_row',
+        member_id: memberId,
+        old_first: before.first_name,
+        old_last : before.last_name,
+    }).then(r => ({ ok: true, detail: r }))
+      .catch(err => ({ ok: false, detail: err.message }))
+
+    return { sheet }
 }
 
 export async function deleteMember(memberId) {

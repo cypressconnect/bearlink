@@ -364,14 +364,21 @@ document.getElementById('memberDetailsForm').addEventListener('submit', async e 
     btn.disabled = true
     setStatus('detailsStatus', 'work', 'Saving…')
     try {
-        await updateMember(memberId, {
+        const { sheet } = await updateMember(memberId, {
             first_name: first,
             last_name : last,
             name      : `${first} ${last}`.trim(),
             grade     : fd.get('grade') ? Number(fd.get('grade')) : null,
         })
-        setStatus('detailsStatus', 'good',
-            'Saved. Note: renaming here does not rename them in the Google Sheet — edit the sheet row to match, or the next sync will not find them.')
+        if (sheet.ok) {
+            const n = (sheet.detail?.tabs ?? []).filter(t => t.row).length
+            setStatus('detailsStatus', 'good',
+                n ? `Saved, and renamed on ${n} sheet tab${n === 1 ? '' : 's'}.` : 'Saved.')
+        } else {
+            setStatus('detailsStatus', 'warn',
+                `Saved on the website, but the Google Sheet was not renamed: ${sheet.detail}. ` +
+                `Rename their row by hand or the next import will recreate them under the old name.`)
+        }
         await load()
     } catch (err) {
         setStatus('detailsStatus', 'bad', err.message)

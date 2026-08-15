@@ -21,6 +21,7 @@
  *                    the data columns and leaving formula columns alone.
  *  remove_member_row { last_name, first_name }
  *  rename_event      { event_id, old_header }
+ *  rename_member_row { member_id, old_first, old_last }
  *  resync_member     { member_id }        push all of one member's points
  *  health            {}                   report tab/roster/formula status
  *
@@ -204,6 +205,19 @@ async function writeRange(
   })
 }
 
+/** Write several disjoint ranges at once, leaving every other cell alone. */
+async function writeRanges(
+  token: string,
+  data: { range: string; values: (string | number)[][] }[],
+  mode: 'RAW' | 'USER_ENTERED' = 'USER_ENTERED',
+) {
+  if (!data.length) return
+  await api(token, '/values:batchUpdate', {
+    method: 'POST',
+    body  : JSON.stringify({ valueInputOption: mode, data }),
+  })
+}
+
 async function insertColumn(token: string, sheetId: number, colIndex: number) {
   await api(token, ':batchUpdate', {
     method: 'POST',
@@ -342,12 +356,21 @@ async function writePoints(sb: any, token: string, tabs: any[], memberId: string
     cellValue = BINARY_CATEGORIES.has(ev.category) ? (points > 0 ? 1 : 0) : points
   }
 
-  // Never clobber a formula.
-  if (isFormula(grid[rowIdx]?.[colIdx])) {
+  // Never clobber a formula -- neither the target cell, nor a cell that is
+  // part of an ARRAYFORMULA spilling down from row 2.
+  //
+  // Only the anchor cell reports as a formula; every cell below it reads back
+  // as a plain value, so checking the target alone is not enough. Writing into
+  // a spill cell breaks the anchor with #REF! and wipes the column for every
+  // member, which is exactly what "Area Conference (November 2025)" and
+  // "# General Meetings Attended" would do.
+  const anchor = grid[1]?.[colIdx]
+  if (isFormula(grid[rowIdx]?.[colIdx]) || isFormula(anchor)) {
     throw new Error(
-      `"${tab}"!${colLetter(colIdx + 1)}${rowIdx + 1} contains a formula ` +
-      `(${grid[rowIdx][colIdx]}) -- refusing to overwrite it. ` +
-      `That column is computed by the sheet, so it should not be an event.`
+      `"${tab}" column ${colLetter(colIdx + 1)} ("${grid[0]?.[colIdx] ?? '?'}") is computed ` +
+      `by a formula (${String(isFormula(anchor) ? anchor : grid[rowIdx][colIdx]).slice(0, 80)}...) ` +
+      `-- refusing to write to it. Record this one in the spreadsheet, or at ` +
+      `whatever source feeds that formula.`
     )
   }
 
@@ -469,25 +492,73 @@ Deno.serve(async (req) => {
 
             const headers  = grid[0] ?? []
             const newRow   = grid.length + 1                 // 1-based sheet row
-            const template = grid[grid.length - 1] ?? []     // copy formulas from the last row
+            const template = grid[grid.length - 1] ?? []     // last member row
 
-            const values: (string | number)[] = headers.map((h, c) => {
-              if (c === 0) return lastName
-              if (c === 1) return firstName
-              if (/grade/i.test(String(h))) return m.grade ?? ''
-              // Re-point any formula in the template row at the new row.
+            /**
+             * Only write the cells that actually need a value.
+             *
+             * Several point columns are ARRAYFORMULA ranges anchored in row 2
+             * that spill down the whole column ("# General Meetings Attended",
+             * "Area Conference (November 2025)"). Writing anything into a spill
+             * cell -- even a 0 -- breaks the anchor with #REF! and wipes that
+             * column for every member. Blank cells are already treated as zero
+             * by the importer and by SUM, so there is nothing to gain from
+             * filling them in.
+             */
+            const data: { range: string; values: (string | number)[][] }[] = [
+              { range: `'${tab}'!A${newRow}:B${newRow}`, values: [[lastName, firstName]] },
+            ]
+
+            const gradeCol = headers.findIndex(h => /grade/i.test(String(h)))
+            if (gradeCol >= 0 && m.grade != null) {
+              data.push({ range: `'${tab}'!${colLetter(gradeCol + 1)}${newRow}`, values: [[m.grade]] })
+            }
+
+            // Carry down per-row formulas (the subtotal columns), re-pointed
+            // at the new row. Spill cells are not formulas here, so they are
+            // correctly left untouched.
+            for (let c = 2; c < headers.length; c++) {
               const t = template[c]
-              if (isFormula(t)) return String(t).replace(new RegExp(`(?<=[A-Z]\\$?)${grid.length}\\b`, 'g'), String(newRow))
-              return 0
-            })
+              if (!isFormula(t)) continue
+              const shifted = String(t).replace(
+                new RegExp(`(?<=[A-Z]\\$?)${grid.length}\\b`, 'g'), String(newRow))
+              data.push({ range: `'${tab}'!${colLetter(c + 1)}${newRow}`, values: [[shifted]] })
+            }
 
-            await writeRange(token, tab, `A${newRow}:${colLetter(values.length)}${newRow}`, [values], 'USER_ENTERED')
-            touched.push({ tab, row: newRow })
+            await writeRanges(token, data, 'USER_ENTERED')
+            touched.push({ tab, row: newRow, cells: data.length })
           } catch (e) {
             touched.push({ tab, error: String(e) })
           }
         }
         return json({ ok: true, member: `${firstName} ${lastName}`, tabs: touched })
+      }
+
+      // ── Rename a member across every tab ─────────────────────
+      // Without this, renaming on the site orphans their sheet row: the
+      // next import no longer matches it to anyone and creates a duplicate.
+      case 'rename_member_row': {
+        const { old_first, old_last } = body
+        const { data: m, error } = await sb
+          .from('members').select('first_name, last_name').eq('id', body.member_id).single()
+        if (error) throw new Error(`Member not found: ${error.message}`)
+
+        const touched: any[] = []
+        for (const tab of allRosterTabs(tabs)) {
+          try {
+            const grid   = await readTab(token, tab)
+            const rowIdx = findMemberRow(grid, old_first, old_last)
+            if (rowIdx < 0) { touched.push({ tab, skipped: 'not found' }); continue }
+            await writeRanges(token, [{
+              range : `'${tab}'!A${rowIdx + 1}:B${rowIdx + 1}`,
+              values: [[m.last_name, m.first_name]],
+            }], 'RAW')
+            touched.push({ tab, row: rowIdx + 1 })
+          } catch (e) {
+            touched.push({ tab, error: String(e) })
+          }
+        }
+        return json({ ok: true, tabs: touched })
       }
 
       // ── Clear a member's row across all tabs ──────────────────

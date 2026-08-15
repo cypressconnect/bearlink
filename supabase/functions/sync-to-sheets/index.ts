@@ -482,8 +482,43 @@ Deno.serve(async (req) => {
             Array.from({ length: memberRows }, () => [0]))
         }
 
+        /**
+         * Widen the subtotal to cover the new column.
+         *
+         * The column is inserted immediately before the subtotal, i.e. right
+         * at the end of a range like SUM(C2:R2). Google only grows a range
+         * when you insert INSIDE it, not at its edge -- so without this the
+         * new column is scored on the website and ignored by the sheet.
+         */
+        let subtotalFixed = 0
+        if (subtotalIdx >= 0 && memberRows > 0) {
+          const newSubIdx = subtotalIdx + 1                 // it shifted right
+          const template  = grid.formulas[1]?.[subtotalIdx] // formula before the insert
+          const lastEvent = colLetter(newSubIdx)            // the column just added
+
+          if (isFormula(template)) {
+            const body = String(template)
+            const data: { range: string; values: (string | number)[][] }[] = []
+            for (let r = 2; r <= memberRows + 1; r++) {
+              // Re-point the template at this row, then extend it.
+              const rowFormula = body.replace(/(?<=[A-Z]\$?)2\b/g, String(r))
+              const widened = /^=?\s*SUM\(/i.test(rowFormula)
+                // plain sum: stretch the end of the range to the new column
+                ? rowFormula.replace(/:\s*\$?[A-Z]+\$?\d+\s*\)/, `:${lastEvent}${r})`)
+                // weighted (BAA): add the new column at its own point value
+                : `${rowFormula} + ${lastEvent}${r}*${ev.point_value ?? 0}`
+              data.push({
+                range : `'${tab}'!${colLetter(newSubIdx + 1)}${r}`,
+                values: [[widened.startsWith('=') ? widened : `=${widened}`]],
+              })
+            }
+            await writeRanges(token, data, 'USER_ENTERED')
+            subtotalFixed = data.length
+          }
+        }
+
         await sb.from('events').update({ sheet_tab: tab, sheet_header: ev.name }).eq('id', ev.id)
-        return json({ ok: true, existed: false, tab, col: letter })
+        return json({ ok: true, existed: false, tab, col: letter, subtotalRowsUpdated: subtotalFixed })
       }
 
       /**

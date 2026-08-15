@@ -13,8 +13,8 @@ export const CATEGORIES = [
     { value: 'Fundraising',   label: 'Fundraiser',            sheet: 'Fundraising',       fixedPoints: null },
     { value: 'Conference',    label: 'Conference',            sheet: 'Conferences',       fixedPoints: 12 },
     { value: 'BAA',           label: 'Business Achievement Award', sheet: 'BAA',          fixedPoints: 6  },
-    { value: 'Committee',     label: 'Committee meeting',     sheet: 'Committee Meetings', fixedPoints: null },
-    { value: 'Miscellaneous', label: 'Miscellaneous points',  sheet: 'Points in General', fixedPoints: null },
+    { value: 'Committee',     label: 'Committee meeting',     sheet: 'Committees', fixedPoints: null },
+    { value: 'Miscellaneous', label: 'Miscellaneous points',  sheet: 'Points In General', fixedPoints: null },
 ]
 
 export const categoryInfo = (value) => CATEGORIES.find(c => c.value === value) ?? null
@@ -193,9 +193,29 @@ export async function updateEvent(eventId, fields) {
     }
 }
 
-export async function deleteEvent(eventId) {
+/**
+ * Delete an event, and remove its column from the spreadsheet.
+ * Leaving the column behind would make the next sheet import recreate the
+ * event, so a deletion on the site would silently undo itself.
+ */
+export async function deleteEvent(eventId, { removeSheetColumn = true } = {}) {
+    const { data: ev } = await supabase
+        .from('events').select('name, category, sheet_tab, sheet_header').eq('id', eventId).maybeSingle()
+
     const { error } = await supabase.from('events').delete().eq('id', eventId)
     if (error) throw error
+
+    if (!ev || !removeSheetColumn) return { sheet: { ok: true, detail: 'skipped' } }
+
+    const sheet = await callSheetSync({
+        action  : 'delete_event_column',
+        category: ev.category,
+        header  : ev.sheet_header || ev.name,
+        sheet_tab: ev.sheet_tab,
+    }).then(r => ({ ok: true, detail: r }))
+      .catch(err => ({ ok: false, detail: err.message }))
+
+    return { sheet }
 }
 
 // ── Point assignments ────────────────────────────────────────

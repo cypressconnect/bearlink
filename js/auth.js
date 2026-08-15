@@ -25,9 +25,14 @@ export async function isAdmin() {
  */
 export async function requireAdmin() {
     const admin = await isAdmin()
-    if (!admin) {
-        window.location.href = 'login.html'
-    }
+    if (admin) return
+
+    window.location.href = 'login.html'
+    // Setting location.href does not stop the current script. Without this,
+    // the rest of the page keeps running and briefly renders the admin UI
+    // to a signed-out visitor before the browser navigates away.
+    document.body?.style.setProperty('visibility', 'hidden')
+    await new Promise(() => {})
 }
 
 /** Sign in with email + password. Returns { error } on failure. */

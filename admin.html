@@ -512,7 +512,14 @@ window.removeEvent = async (id, name, memberCount) => {
         : `Delete "${name}"?`
     if (!confirm(warning)) return
     try {
-        await deleteEvent(id)
+        const { sheet } = await deleteEvent(id)
+        if (!sheet.ok) {
+            alert(
+                `"${name}" was deleted from the website, but its column is still in the Google Sheet:\n\n` +
+                `${sheet.detail}\n\n` +
+                `Delete the column by hand, otherwise the next sheet import will recreate the event.`
+            )
+        }
         loadEvents()
         loadMembers(document.getElementById('memberSearchInput').value)
     } catch (err) {
@@ -687,7 +694,7 @@ function buildEventTable(events) {
     }
     const rows = top.map((ev, i) => `
         <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-surface-container-low'}">
-            <td class="px-4 py-3 text-sm font-semibold text-on-surface">${ev.name}</td>
+            <td class="px-4 py-3 text-sm font-semibold text-on-surface">${esc(ev.name)}</td>
             <td class="px-4 py-3 text-sm text-center font-bold text-primary">${ev.attendees}</td>
         </tr>
     `).join('')

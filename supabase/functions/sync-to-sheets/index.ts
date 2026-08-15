@@ -518,6 +518,41 @@ Deno.serve(async (req) => {
         return json({ ok: true, tabs: touched })
       }
 
+      // ── Delete an event's column from the sheet ──────────────
+      // Called when an event is deleted on the website. Without this the
+      // column survives and the next import recreates the event.
+      case 'delete_event_column': {
+        const { category, header } = body
+        if (category === 'Attendance') {
+          return json({ ok: true, skipped: true, reason: 'Attendance uses fixed columns' })
+        }
+        const tab     = body.sheet_tab && tabs.some(t => t.title === body.sheet_tab)
+          ? body.sheet_tab : resolveTab(tabs, category)
+        const grid    = await readTab(token, tab)
+        const colIdx  = findHeaderCol(grid, header)
+        if (colIdx < 0) return json({ ok: true, skipped: true, reason: 'column not found' })
+
+        // Refuse if the column is computed -- deleting it would break the
+        // formulas that depend on it.
+        if (isFormula(grid[1]?.[colIdx])) {
+          throw new Error(
+            `"${tab}" column "${header}" is computed by a formula. ` +
+            `Delete it in the spreadsheet by hand if you really mean to.`
+          )
+        }
+
+        const sheetId = tabs.find(t => t.title === tab)!.sheetId
+        await api(token, ':batchUpdate', {
+          method: 'POST',
+          body  : JSON.stringify({
+            requests: [{ deleteDimension: {
+              range: { sheetId, dimension: 'COLUMNS', startIndex: colIdx, endIndex: colIdx + 1 },
+            } }],
+          }),
+        })
+        return json({ ok: true, tab, removed: colLetter(colIdx + 1) })
+      }
+
       // ── Rename an event's column header ──────────────────────
       case 'rename_event': {
         const { data: ev, error } = await sb

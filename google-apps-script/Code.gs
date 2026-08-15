@@ -574,8 +574,15 @@ function importCategory_(category, memberMap) {
     total += assignments.length
   }
 
+  // Columns removed from the sheet should take their event with them.
+  var names = cols.map(function (c) { return c.name })
+  var pruned = callProxy_('prune_events', { category: category, names: names })
+  var removed = (pruned && pruned.removed) ? pruned.removed : []
+
   return category + ' ("' + sheet.getName() + '"): ' + cols.length + ' columns, ' +
-         total + ' point rows' + (unknown ? ', ' + unknown + ' unmatched member cells' : '')
+         total + ' point rows' +
+         (unknown ? ', ' + unknown + ' unmatched member cells' : '') +
+         (removed.length ? ', removed ' + removed.length + ' deleted column(s): ' + removed.join(', ') : '')
 }
 
 function importAttendance_(memberMap) {

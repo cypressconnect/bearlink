@@ -27,6 +27,9 @@
  *        listed and deletes every other assignment for that event. This
  *        is what makes clearing a cell in the sheet actually remove the
  *        points.
+ *  prune_events               { category, names: [...] }
+ *        Deletes events in that category whose column is gone from the
+ *        sheet, so removing a column removes the event.
  *  recalc_totals              {}                        rebuild total_points
  */
 
@@ -269,6 +272,33 @@ Deno.serve(async (req) => {
         }
 
         return json({ ok: true, kept: rows.length, removed: stale.length })
+      }
+
+      /**
+       * Delete events in a category whose column has gone from the sheet.
+       * Without this, removing a column left the event (and everyone's
+       * points for it) alive on the website forever.
+       */
+      case 'prune_events': {
+        const category = String(payload.category ?? '')
+        const names: string[] = payload.names ?? []
+        if (!VALID_CATEGORIES.has(category)) return json({ error: `Invalid category: ${category}` }, 400)
+        // A category with no columns almost certainly means a failed read,
+        // not a genuinely empty tab. Refuse rather than wipe everything.
+        if (!names.length) return json({ ok: true, skipped: true, reason: 'no columns supplied' })
+
+        const keep = new Set(names.map(n => n.trim().toLowerCase()))
+        const { data: existing, error } = await sb
+          .from('events').select('id, name').eq('category', category)
+        if (error) throw error
+
+        const stale = (existing ?? []).filter(e => !keep.has(e.name.trim().toLowerCase()))
+        if (stale.length) {
+          const { error: delErr } = await sb
+            .from('events').delete().in('id', stale.map(e => e.id))
+          if (delErr) throw delErr
+        }
+        return json({ ok: true, removed: stale.map(e => e.name) })
       }
 
       // ── Maintenance ───────────────────────────────────────────

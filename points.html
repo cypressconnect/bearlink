@@ -171,6 +171,11 @@ tailwind.config = {
 <script type="module">
 import { fetchLeaderboard } from './js/data.js'
 
+// Names come from the spreadsheet, so they are untrusted input as far as
+// this page is concerned -- never drop them into innerHTML raw.
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
 const GRADE_LABELS = { 9:'9th Grade', 10:'10th Grade', 11:'11th Grade', 12:'12th Grade' }
 const PODIUM_LABELS = { 0:'Current Champion', 1:'Silver Milestone', 2:'Rising Star' }
 
@@ -205,8 +210,8 @@ function renderPodium(members) {
                     ${actualRank}
                 </div>
             </div>
-            <h3 class="${isFirst ? 'text-2xl' : 'text-xl'} font-bold font-headline text-primary mb-1 hover:text-secondary transition-colors">${m.name}</h3>
-            <span class="text-secondary font-bold ${isFirst ? 'text-3xl' : 'text-2xl'}">${m.total_points.toLocaleString()} pts</span>
+            <h3 class="${isFirst ? 'text-2xl' : 'text-xl'} font-bold font-headline text-primary mb-1 hover:text-secondary transition-colors">${esc(m.name)}</h3>
+            <span class="text-secondary font-bold ${isFirst ? 'text-3xl' : 'text-2xl'}">${(m.total_points ?? 0).toLocaleString()} pts</span>
             <span class="text-xs text-slate-500 uppercase tracking-widest mt-4">${PODIUM_LABELS[top.indexOf(m)]}</span>
         </a>`
     }).join('')
@@ -228,11 +233,11 @@ function renderTable(members, startRank = 1) {
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center">
                         <span class="material-symbols-outlined text-slate-400">account_circle</span>
                     </div>
-                    <span class="font-bold">${m.name}</span>
+                    <span class="font-bold">${esc(m.name)}</span>
                 </a>
             </td>
             <td class="px-8 py-6">${gradeChip(m.grade, i + 1)}</td>
-            <td class="px-8 py-6 text-right"><span class="font-bold text-lg text-primary">${m.total_points.toLocaleString()}</span></td>
+            <td class="px-8 py-6 text-right"><span class="font-bold text-lg text-primary">${(m.total_points ?? 0).toLocaleString()}</span></td>
         </tr>
     `).join('')
     document.getElementById('memberCount').textContent = `${members.length} members`

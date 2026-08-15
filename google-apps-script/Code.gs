@@ -1,80 +1,130 @@
 /**
  * Bear Link — Google Apps Script
- * Bidirectional sync: Google Sheet ↔ Supabase
+ * Two-way sync between the FBLA points spreadsheet and the website.
  *
- * ── Setup order ─────────────────────────────────────────────
- * 1. Generate a random secret string (any UUID or random hex).
- * 2. Add it to Supabase → Edge Functions → Secrets as SHEET_SYNC_SECRET.
- * 3. Deploy the sheet-sync Edge Function.
- * 4. Paste this file into Extensions → Apps Script → Save.
- * 5. Run setSheetSyncSecret() ONCE — paste your secret when prompted.
- *    (Stores it securely in Script Properties, never in this file.)
- * 6. Run importSheetToSupabase() ONCE to seed Supabase from the sheet.
- * 7. Run setupTrigger() ONCE to enable live onEdit sync.
+ * ── First-time setup ─────────────────────────────────────────────────
+ * 1. Extensions -> Apps Script, paste this file, Save.
+ * 2. Reload the spreadsheet. A "Bear Link" menu appears.
+ * 3. Bear Link -> Setup -> Set sync secret       (paste SHEET_SYNC_SECRET)
+ * 4. Bear Link -> Setup -> Check connection
+ * 5. Bear Link -> Repair sheet headers           (fixes corrupted A1 cells)
+ * 6. Bear Link -> Import sheet into website      (seeds the database)
+ * 7. Bear Link -> Setup -> Install live sync     (enables the onEdit trigger)
  *
- * ── How ongoing edits sync ───────────────────────────────────
- * Services / Fundraising / Social
- *   Column header = event name. Cell = points awarded.
- *   Editing sets the points. Setting to 0/blank removes them.
- *
- * Conferences / BAA
- *   Column header = event/award name. Cell = 1 (attended) or 0.
- *   1 → 6 pts. 0 → removes the assignment.
- *
- * Attendance
- *   Col C = General Meetings count. Col D = Officer Meetings count.
- *   Each meeting = 2 pts. Editing updates points (count × 2).
- *
- * Top 50 Members / Points in General — read-only (written by DB).
+ * ── How each tab syncs ───────────────────────────────────────────────
+ *  Services / Fundraising / Social / Committee Meetings
+ *      Header row = event names. Cell = points for that member.
+ *      Clearing a cell removes the points.
+ *  Conferences / BAA
+ *      Cell = 1 (earned) or 0/blank (not earned). Points come from the
+ *      table below: conferences 12, Everfi 18, Capstone 20, other BAAs 6.
+ *  Attendance
+ *      "# General Meetings Attended" and "# Officer Meetings Attended"
+ *      hold COUNTS. Each meeting is worth 2 points.
+ *  Points in General
+ *      The one-off point columns (T-Shirt Contest, Area Placements, ...)
+ *      sync as Miscellaneous events. Formula and subtotal columns are
+ *      ignored -- that is what put "Attendance Formula" and "|" into the
+ *      website's event list last time.
+ *  Top Member List / SETTINGS
+ *      Never touched.
  */
 
-// ── CONFIG ─────────────────────────────────────────────────────
-var SUPABASE_URL      = 'https://lrnlqdxudmoszlaeatst.supabase.co'
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxybmxxZHh1ZG1vc3psYWVhdHN0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxOTA4NzgsImV4cCI6MjA5MTc2Njg3OH0.B6uUexKBMGwn3brnrdsQQLF1Myrqd_4lyOV9GoffhYg'
-var PROXY_URL         = SUPABASE_URL + '/functions/v1/sheet-sync'
-// ───────────────────────────────────────────────────────────────
+// ── CONFIG ────────────────────────────────────────────────────────────
+var SUPABASE_URL = 'https://lrnlqdxudmoszlaeatst.supabase.co'
+var PROXY_URL    = SUPABASE_URL + '/functions/v1/sheet-sync'
 
-// Tab name → { category, binary }
-var TAB_CONFIG = {
-  'Services'    : { category: 'Service',     binary: false, pts: null, ptsMap: {} },
-  'Fundraising' : { category: 'Fundraising', binary: false, pts: null, ptsMap: {} },
-  'Social'      : { category: 'Social',      binary: false, pts: null, ptsMap: {} },
-  'Conferences' : { category: 'Conference',  binary: true,  pts: 12,   ptsMap: {} },
-  'BAA'         : { category: 'BAA',         binary: true,  pts: 6,    ptsMap: {
-    'Everfi Alternative BAA' : 18,
-    'Capstone Project'       : 20,
-    // Contributor Award, Leader Award, Advocate Award default to 6 (pts above)
-  }},
+var POINTS_PER_MEETING = 2
+
+// category -> tab names to look for, in order of preference
+var TAB_ALIASES = {
+  Service      : ['Services', 'Service', 'Service Projects'],
+  Fundraising  : ['Fundraising', 'Fundraisers', 'Fundraiser'],
+  Social       : ['Social', 'Socials', 'Social Events'],
+  Conference   : ['Conferences', 'Conference'],
+  BAA          : ['BAA', 'BAAs', 'Business Achievement Awards'],
+  Attendance   : ['Attendance'],
+  Committee    : ['Committee Meetings', 'Committee', 'Committees'],
+  Miscellaneous: ['Points in General', 'General Points', 'Points'],
 }
 
-// ── Secret helpers ─────────────────────────────────────────────
+// Tabs where a cell is 1/0 rather than a point value.
+var BINARY_CATEGORIES = { Conference: 12, BAA: 6 }
 
-/**
- * Run this ONCE to store your SHEET_SYNC_SECRET securely.
- * It will be saved in Script Properties (not visible in code).
- */
+// Per-award overrides for binary tabs.
+var POINT_OVERRIDES = {
+  'Everfi Alternative BAA': 18,
+  'Capstone Project'      : 20,
+}
+
+// Headers that are computed columns, not events.
+var SUBTOTAL_RE = /^(total|sum|#|points\s+for)|formula$|\((x)?\d+x?\)$/i
+
+// Cross-tab rollups on "Points in General". They mirror totals from other
+// tabs, so importing them would double-count every point.
+var MISC_ROLLUP_HEADERS = [
+  'grade lvl', 'socials', 'service project - points', 'fundraising points',
+  'attendance', 'conference', 'total points',
+]
+
+// Tabs that must never be written to or imported from.
+var IGNORED_TABS = /^(top\s*\d*\s*member|settings)/i
+
+// ══════════════════════════════════════════════════════════════════════
+// MENU
+// ══════════════════════════════════════════════════════════════════════
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('Bear Link')
+    .addItem('Import sheet into website', 'importSheetToSupabase')
+    .addItem('Push one tab to website',   'pushActiveTab')
+    .addSeparator()
+    .addItem('Repair sheet headers',      'repairSheetHeaders')
+    .addItem('Health check',              'healthCheck')
+    .addSeparator()
+    .addSubMenu(SpreadsheetApp.getUi().createMenu('Setup')
+      .addItem('Set sync secret',   'setSheetSyncSecret')
+      .addItem('Check connection',  'checkConnection')
+      .addItem('Install live sync', 'setupTrigger')
+      .addItem('Remove live sync',  'removeTrigger'))
+    .addToUi()
+}
+
+function toast_(msg, title) {
+  SpreadsheetApp.getActive().toast(msg, title || 'Bear Link', 8)
+}
+
+function alert_(title, msg) {
+  SpreadsheetApp.getUi().alert(title, msg, SpreadsheetApp.getUi().ButtonSet.OK)
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// SECRET + TRANSPORT
+// ══════════════════════════════════════════════════════════════════════
+
 function setSheetSyncSecret() {
-  var secret = Browser.inputBox(
-    'Bear Link Setup',
-    'Paste your SHEET_SYNC_SECRET (from Supabase → Edge Functions → Secrets):',
-    Browser.Buttons.OK_CANCEL
+  var ui = SpreadsheetApp.getUi()
+  var resp = ui.prompt(
+    'Bear Link setup',
+    'Paste your SHEET_SYNC_SECRET (Supabase -> Edge Functions -> Secrets):',
+    ui.ButtonSet.OK_CANCEL
   )
-  if (secret && secret !== 'cancel') {
-    PropertiesService.getScriptProperties().setProperty('SHEET_SYNC_SECRET', secret)
-    Logger.log('Secret stored successfully.')
-  } else {
-    Logger.log('Cancelled — secret not saved.')
-  }
+  if (resp.getSelectedButton() !== ui.Button.OK) return
+  var secret = resp.getResponseText().trim()
+  if (!secret) { alert_('Bear Link', 'Nothing pasted — secret not saved.'); return }
+  PropertiesService.getScriptProperties().setProperty('SHEET_SYNC_SECRET', secret)
+  alert_('Bear Link', 'Secret saved. Now run Setup -> Check connection.')
 }
 
 function getSecret_() {
-  var secret = PropertiesService.getScriptProperties().getProperty('SHEET_SYNC_SECRET')
-  if (!secret) throw new Error('SHEET_SYNC_SECRET not set. Run setSheetSyncSecret() first.')
-  return secret
+  var s = PropertiesService.getScriptProperties().getProperty('SHEET_SYNC_SECRET')
+  if (!s) throw new Error('Sync secret not set. Run Bear Link -> Setup -> Set sync secret.')
+  return s
 }
 
-// ── Proxy call helper ──────────────────────────────────────────
 function callProxy_(action, payload) {
+  payload = payload || {}
   payload.action = action
   var resp = UrlFetchApp.fetch(PROXY_URL, {
     method            : 'post',
@@ -84,374 +134,525 @@ function callProxy_(action, payload) {
     muteHttpExceptions: true,
   })
   var code = resp.getResponseCode()
+  var text = resp.getContentText()
   if (code < 200 || code >= 300) {
-    Logger.log('Proxy error [' + action + '] HTTP ' + code + ': ' + resp.getContentText())
-    return null
+    Logger.log('Proxy error [' + action + '] HTTP ' + code + ': ' + text)
+    throw new Error(action + ' failed (HTTP ' + code + '): ' + text)
   }
-  return JSON.parse(resp.getContentText())
+  return JSON.parse(text)
 }
-
-// ════════════════════════════════════════════════════════════════
-// INITIAL IMPORT: Sheet → Supabase (run once)
-// ════════════════════════════════════════════════════════════════
 
 /**
- * Reads all tabs and pushes everything into Supabase.
- * Run ONCE before going live. Safe to re-run — uses upsert.
+ * The member index, cached for 10 minutes. The live-sync trigger used to
+ * refetch all 200 members on every single cell edit.
  */
-function importSheetToSupabase() {
-  var ss = SpreadsheetApp.getActive()
-
-  Logger.log('=== Bear Link: Sheet → Supabase import ===')
-
-  Logger.log('Step 1/3: Importing members...')
-  _importMembers(ss)
-
-  Logger.log('Step 2/3: Fetching member IDs...')
-  var memberMap = _buildMemberMap()
-  Logger.log('  ' + Object.keys(memberMap).length + ' members in DB')
-
-  Logger.log('Step 3/3: Importing points...')
-  _importCategoryTab(ss, 'Services',    'Service',     false, null, null,                                               memberMap)
-  _importCategoryTab(ss, 'Fundraising', 'Fundraising', false, null, null,                                               memberMap)
-  _importCategoryTab(ss, 'Social',      'Social',      false, null, null,                                               memberMap)
-  _importCategoryTab(ss, 'Conferences', 'Conference',  true,  12,   null,                                               memberMap)
-  _importCategoryTab(ss, 'BAA',         'BAA',         true,  6,    { 'Everfi Alternative BAA': 18, 'Capstone Project': 20 },   memberMap)
-  _importAttendance(ss, memberMap)
-  _importMiscPoints(ss, memberMap)
-
-  Logger.log('=== Import complete! Run setupTrigger() next. ===')
-}
-
-function _importMembers(ss) {
-  var sheet = ss.getSheetByName('Points in General')
-  if (!sheet) { Logger.log('  ERROR: "Points in General" tab not found'); return }
-
-  var data = sheet.getDataRange().getValues()
-  // Row 0 = header: [Last Name, First Name, Grade, ...]
-
-  // Fetch existing members to avoid duplicates
-  var existingBody = sbGet_(SUPABASE_URL + '/rest/v1/members?select=first_name,last_name&limit=1000')
-  var existing     = existingBody ? JSON.parse(existingBody) : []
-  var existingKeys = {}
-  existing.forEach(function(m) {
-    existingKeys[(m.first_name + '|' + m.last_name).toLowerCase()] = true
-  })
-
-  var newMembers = []
-  for (var i = 1; i < data.length; i++) {
-    var lastName  = String(data[i][0]).trim()
-    var firstName = String(data[i][1]).trim()
-    if (!lastName && !firstName) continue
-    if (existingKeys[(firstName + '|' + lastName).toLowerCase()]) continue
-    var grade = parseInt(data[i][2]) || null
-    newMembers.push({ name: firstName + ' ' + lastName, first_name: firstName, last_name: lastName, grade: grade })
+function memberMap_(forceRefresh) {
+  var cache = CacheService.getScriptCache()
+  if (!forceRefresh) {
+    var hit = cache.get('memberMap')
+    if (hit) return JSON.parse(hit)
   }
-
-  if (newMembers.length === 0) { Logger.log('  All members already in DB'); return }
-
-  // Send in batches of 100 via proxy
-  for (var i = 0; i < newMembers.length; i += 100) {
-    var result = callProxy_('create_members', { members: newMembers.slice(i, i + 100) })
-    Logger.log('  Batch ' + (Math.floor(i / 100) + 1) + ': ' + (result ? 'OK' : 'FAILED'))
+  var map = callProxy_('resolve_members', {}).map
+  try {
+    cache.put('memberMap', JSON.stringify(map), 600)
+  } catch (e) {
+    // >100KB: too big to cache, just use it directly this time.
+    Logger.log('member map too large to cache: ' + e)
   }
-  Logger.log('  ' + newMembers.length + ' new members created')
-}
-
-function _buildMemberMap() {
-  var body = sbGet_(SUPABASE_URL + '/rest/v1/members?select=id,first_name,last_name&limit=1000')
-  if (!body) return {}
-  var map = {}
-  JSON.parse(body).forEach(function(m) {
-    map[(m.first_name + '|' + m.last_name).toLowerCase()] = m.id
-  })
   return map
 }
 
-function _importCategoryTab(ss, tabName, category, binary, binaryPts, binaryPtsMap, memberMap) {
-  var sheet = ss.getSheetByName(tabName)
-  if (!sheet) { Logger.log('  Skipping "' + tabName + '" — tab not found'); return }
-
-  var data = sheet.getDataRange().getValues()
-  if (data.length < 2) { Logger.log('  Skipping "' + tabName + '" — no data'); return }
-
-  var headers = data[0] // [Last Name, First Name, EventA, EventB, ...]
-
-  // Collect unique event names (cols 2+), skip any total/summary columns
-  var eventDefs = []
-  for (var c = 2; c < headers.length; c++) {
-    var name = String(headers[c]).trim()
-    if (!name) continue
-    if (/^(total|sum|#|points\s+for)/i.test(name)) continue // skip summary columns
-    var evPts = binary ? ((binaryPtsMap && binaryPtsMap[name]) ? binaryPtsMap[name] : binaryPts) : 0
-    eventDefs.push({ col: c, name: name, category: category, point_value: evPts })
+function checkConnection() {
+  try {
+    callProxy_('ping', {})
+    var m = callProxy_('resolve_members', {})
+    alert_('Bear Link', 'Connected.\n\n' + m.count + ' members currently in the website database.')
+  } catch (e) {
+    alert_('Bear Link — connection failed', String(e))
   }
-  if (eventDefs.length === 0) { Logger.log('  No events in ' + tabName); return }
+}
 
-  // Bulk get-or-create events via proxy, get back name|category → id map
-  var result = callProxy_('bulk_get_or_create_events', { events: eventDefs })
-  if (!result) { Logger.log('  Failed to get/create events for ' + tabName); return }
-  var eventIdMap = result.map // key: "name|category" (lowercase)
+// ══════════════════════════════════════════════════════════════════════
+// SHEET STRUCTURE HELPERS
+// ══════════════════════════════════════════════════════════════════════
 
-  // Build assignments array
-  var assignments = []
-  for (var row = 1; row < data.length; row++) {
-    var lastName  = String(data[row][0]).trim()
-    var firstName = String(data[row][1]).trim()
-    if (!lastName && !firstName) continue
+function norm_(s) {
+  return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]/g, '')
+}
 
-    var memberId = memberMap[(firstName + '|' + lastName).toLowerCase()]
-    if (!memberId) { Logger.log('  Unknown member (skipping): ' + firstName + ' ' + lastName); continue }
+/** Find the real Sheet object for a category, or null. */
+function findTab_(category) {
+  var ss = SpreadsheetApp.getActive()
+  var aliases = TAB_ALIASES[category] || [category]
+  var sheets = ss.getSheets().filter(function (sh) { return !IGNORED_TABS.test(sh.getName()) })
+  var i, j
+  for (i = 0; i < aliases.length; i++) {
+    for (j = 0; j < sheets.length; j++) {
+      if (sheets[j].getName() === aliases[i]) return sheets[j]
+    }
+  }
+  for (i = 0; i < aliases.length; i++) {
+    for (j = 0; j < sheets.length; j++) {
+      if (norm_(sheets[j].getName()) === norm_(aliases[i])) return sheets[j]
+    }
+  }
+  for (i = 0; i < aliases.length; i++) {
+    for (j = 0; j < sheets.length; j++) {
+      if (norm_(sheets[j].getName()).indexOf(norm_(aliases[i])) >= 0) return sheets[j]
+    }
+  }
+  return null
+}
 
-    for (var ei = 0; ei < eventDefs.length; ei++) {
-      var def     = eventDefs[ei]
-      var eventId = eventIdMap[(def.name.toLowerCase() + '|' + category)]
-      if (!eventId) continue
+/** Which category does this sheet belong to? null if it is not synced. */
+function categoryForSheet_(sheet) {
+  var name = sheet.getName()
+  if (IGNORED_TABS.test(name)) return null
+  for (var cat in TAB_ALIASES) {
+    var found = findTab_(cat)
+    if (found && found.getSheetId() === sheet.getSheetId()) return cat
+  }
+  return null
+}
 
-      var num = Number(data[row][def.col]) || 0
-      var pts
-      if (binary) {
-        if (num !== 1) continue
-        pts = (binaryPtsMap && binaryPtsMap[def.name]) ? binaryPtsMap[def.name] : binaryPts
-      } else {
-        if (num <= 0) continue
-        pts = num
+/**
+ * Read a tab once: display values plus the formulas, so we can tell a
+ * typed number from a computed one.
+ */
+function readTab_(sheet) {
+  var range = sheet.getDataRange()
+  return {
+    values  : range.getValues(),
+    formulas: range.getFormulas(),
+  }
+}
+
+function isFormulaCell_(grid, row, col) {
+  var f = grid.formulas[row] && grid.formulas[row][col]
+  return !!(f && String(f).charAt(0) === '=')
+}
+
+/**
+ * Which columns on this tab are real events?
+ * Skips the roster columns, blanks, subtotals, and any column whose data
+ * cells are formulas.
+ */
+function eventColumns_(grid, category) {
+  var headers = grid.values[0] || []
+  var out = []
+
+  // Everything to the RIGHT of a tab's subtotal column is invisible to the
+  // sheet's own totals, so importing it would make the site disagree with
+  // the sheet. Stop at the subtotal instead.
+  //
+  // "Points in General" is exempt: its rollups (Attendance (x2), Socials,
+  // ...) sit at the LEFT, before the real one-off point columns, so
+  // truncating there would drop everything. That tab uses the skip rules
+  // below instead.
+  var limit = headers.length
+  if (category !== 'Miscellaneous') {
+    for (var t = 2; t < headers.length; t++) {
+      var h = String(headers[t] == null ? '' : headers[t]).trim()
+      if (h && SUBTOTAL_RE.test(h)) { limit = t; break }
+    }
+  }
+
+  for (var c = 2; c < limit; c++) {
+    var name = String(headers[c] == null ? '' : headers[c]).trim()
+    if (!name) continue
+    if (name === '\\' || name === '|') continue
+    if (SUBTOTAL_RE.test(name)) continue
+    if (category === 'Miscellaneous' &&
+        MISC_ROLLUP_HEADERS.indexOf(name.toLowerCase()) >= 0) continue
+
+    // On "Points in General" a computed column is a cross-tab rollup
+    // (Committee Meetings = Committees!G, Socials = Social!G, ...), so it
+    // must not become an event. On the other tabs a computed column is a
+    // legitimate score -- "Area Conference (November 2025)" is a formula
+    // for all 200 members -- so its VALUE is imported like any other.
+    if (category === 'Miscellaneous') {
+      var formulaRows = 0, checked = 0
+      for (var r = 1; r < Math.min(grid.values.length, 6); r++) {
+        checked++
+        if (isFormulaCell_(grid, r, c)) formulaRows++
       }
-      assignments.push({ member_id: memberId, event_id: eventId, points_awarded: pts })
+      if (checked > 0 && formulaRows === checked) continue
+    }
+
+    out.push({ col: c, name: name })
+  }
+  return out
+}
+
+function pointsForBinary_(eventName, category) {
+  if (POINT_OVERRIDES[eventName] != null) return POINT_OVERRIDES[eventName]
+  return BINARY_CATEGORIES[category] || 0
+}
+
+function rosterFromTab_(grid) {
+  var rows = []
+  for (var r = 1; r < grid.values.length; r++) {
+    var last  = String(grid.values[r][0] == null ? '' : grid.values[r][0]).trim()
+    var first = String(grid.values[r][1] == null ? '' : grid.values[r][1]).trim()
+    if (!last && !first) continue
+    rows.push({ row: r, first: first, last: last, key: (first + '|' + last).toLowerCase() })
+  }
+  return rows
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// REPAIR: fix corrupted header cells
+// ══════════════════════════════════════════════════════════════════════
+
+/**
+ * A1 on several tabs got overwritten (the Services tab literally held
+ * "supabase functions deploy sync-to-sheets --no-verify-jwt", and the
+ * Attendance tab held "Atte"). Anything that is not a Last Name header
+ * in A1/B1 of a synced tab is restored.
+ */
+function repairSheetHeaders() {
+  var fixed = []
+  for (var cat in TAB_ALIASES) {
+    var sheet = findTab_(cat)
+    if (!sheet) continue
+
+    var a1 = String(sheet.getRange(1, 1).getValue()).trim()
+    var b1 = String(sheet.getRange(1, 2).getValue()).trim()
+
+    if (norm_(a1) !== 'lastname') {
+      sheet.getRange(1, 1).setValue('Last Name')
+      fixed.push(sheet.getName() + '!A1  was: "' + a1 + '"')
+    }
+    if (norm_(b1) !== 'firstname') {
+      sheet.getRange(1, 2).setValue('First Name')
+      fixed.push(sheet.getName() + '!B1  was: "' + b1 + '"')
     }
   }
-
-  if (assignments.length === 0) { Logger.log('  ' + tabName + ': nothing to import'); return }
-
-  // Bulk upsert via proxy in batches of 200
-  for (var i = 0; i < assignments.length; i += 200) {
-    var res = callProxy_('bulk_upsert_assignments', { assignments: assignments.slice(i, i + 200) })
-    Logger.log('  ' + tabName + ' batch ' + (Math.floor(i / 200) + 1) + ': ' + (res ? 'OK' : 'FAILED'))
-  }
-  Logger.log('  ' + tabName + ': ' + assignments.length + ' assignments imported')
+  SpreadsheetApp.flush()
+  alert_('Bear Link — header repair',
+    fixed.length ? 'Fixed ' + fixed.length + ' header cell(s):\n\n' + fixed.join('\n')
+                 : 'All header cells already correct.')
 }
 
-// ── Import miscellaneous point columns from Points in General ──
-// Reads all columns after Grade that aren't known category subtotals,
-// importing them as 'Other' category events.
-function _importMiscPoints(ss, memberMap) {
-  var sheet = ss.getSheetByName('Points in General')
-  if (!sheet) { Logger.log('  Skipping misc — Points in General not found'); return }
+// ══════════════════════════════════════════════════════════════════════
+// HEALTH CHECK
+// ══════════════════════════════════════════════════════════════════════
 
-  var data = sheet.getDataRange().getValues()
-  if (data.length < 2) return
-
-  var headers = data[0]
-
-  // Misc columns: K through W (0-indexed: 10 through 22)
-  // Starts at T-Shirt Contest, ends at Committee Meetings
-  var MISC_START = 10  // column K
-  var MISC_END   = 22  // column W
-
-  var eventDefs = []
-  for (var c = MISC_START; c <= MISC_END; c++) {
-    var name = String(headers[c]).trim()
-    if (!name) continue
-    eventDefs.push({ col: c, name: name, category: 'Other', point_value: 0 })
+function healthCheck() {
+  var lines = []
+  for (var cat in TAB_ALIASES) {
+    var sheet = findTab_(cat)
+    if (!sheet) { lines.push('MISSING  ' + cat + '  (looked for: ' + TAB_ALIASES[cat].join(', ') + ')'); continue }
+    var grid    = readTab_(sheet)
+    var roster  = rosterFromTab_(grid)
+    var events  = eventColumns_(grid, cat)
+    lines.push('OK  ' + cat + ' -> "' + sheet.getName() + '"  ' +
+               roster.length + ' members, ' + events.length + ' event column(s)')
   }
 
-  if (eventDefs.length === 0) { Logger.log('  No misc events found in Points in General'); return }
-  Logger.log('  Misc events found: ' + eventDefs.map(function(e) { return e.name }).join(', '))
+  var dbLine = ''
+  try {
+    var m = callProxy_('resolve_members', {})
+    dbLine = '\n\nWebsite database: ' + m.count + ' members.'
+  } catch (e) {
+    dbLine = '\n\nWebsite database: NOT REACHABLE\n' + e
+  }
 
-  var result = callProxy_('bulk_get_or_create_events', { events: eventDefs })
-  if (!result) { Logger.log('  Failed to get/create misc events'); return }
-  var eventIdMap = result.map
+  alert_('Bear Link — health check', lines.join('\n') + dbLine)
+}
 
-  var assignments = []
-  for (var row = 1; row < data.length; row++) {
-    var lastName  = String(data[row][0]).trim()
-    var firstName = String(data[row][1]).trim()
-    if (!lastName && !firstName) continue
+// ══════════════════════════════════════════════════════════════════════
+// FULL IMPORT: Sheet -> website
+// ══════════════════════════════════════════════════════════════════════
 
-    var memberId = memberMap[(firstName + '|' + lastName).toLowerCase()]
-    if (!memberId) continue
+function importSheetToSupabase() {
+  var ui = SpreadsheetApp.getUi()
+  var go = ui.alert('Bear Link',
+    'Import every tab into the website database?\n\n' +
+    'This makes the website match this spreadsheet exactly. ' +
+    'Points that are not in the sheet will be removed from the website.',
+    ui.ButtonSet.OK_CANCEL)
+  if (go !== ui.Button.OK) return
 
-    for (var ei = 0; ei < eventDefs.length; ei++) {
-      var def = eventDefs[ei]
-      var eventId = eventIdMap[(def.name.toLowerCase() + '|Other')]
-      if (!eventId) continue
-      var pts = Number(data[row][def.col]) || 0
-      if (pts <= 0) continue
-      assignments.push({ member_id: memberId, event_id: eventId, points_awarded: pts })
+  var log = []
+  try {
+    toast_('Step 1/3 — members...')
+    log.push(importMembers_())
+
+    toast_('Step 2/3 — building member index...')
+    var memberMap = memberMap_(true)
+    log.push(Object.keys(memberMap).length + ' members matched')
+
+    toast_('Step 3/3 — points...')
+    for (var cat in TAB_ALIASES) {
+      if (cat === 'Attendance') { log.push(importAttendance_(memberMap)); continue }
+      log.push(importCategory_(cat, memberMap))
     }
-  }
 
-  if (assignments.length === 0) { Logger.log('  Misc: nothing to import'); return }
-
-  for (var i = 0; i < assignments.length; i += 200) {
-    var res = callProxy_('bulk_upsert_assignments', { assignments: assignments.slice(i, i + 200) })
-    Logger.log('  Misc batch ' + (Math.floor(i / 200) + 1) + ': ' + (res ? 'OK' : 'FAILED'))
+    callProxy_('recalc_totals', {})
+    alert_('Bear Link — import complete', log.join('\n'))
+  } catch (e) {
+    alert_('Bear Link — import failed', log.join('\n') + '\n\nERROR: ' + e)
   }
-  Logger.log('  Misc: ' + assignments.length + ' assignments imported')
 }
 
-function _importAttendance(ss, memberMap) {
-  var sheet = ss.getSheetByName('Attendance')
-  if (!sheet) { Logger.log('  Skipping Attendance — tab not found'); return }
+function importMembers_() {
+  // The roster lives on "Points in General"; fall back to any synced tab.
+  var sheet = findTab_('Miscellaneous') || findTab_('Social')
+  if (!sheet) return 'Members: no roster tab found'
 
-  var data = sheet.getDataRange().getValues()
-  if (data.length < 2) return
-  // Cols: [0]=Last Name, [1]=First Name, [2]=General count, [3]=Officer count
-
-  var genResult = callProxy_('get_or_create_event', { name: 'General Meeting', category: 'Attendance', point_value: 2 })
-  var offResult = callProxy_('get_or_create_event', { name: 'Officer Meeting', category: 'Attendance', point_value: 2 })
-  var genId = genResult && genResult.data ? genResult.data.id : null
-  var offId = offResult && offResult.data ? offResult.data.id : null
-
-  var assignments = []
-  for (var row = 1; row < data.length; row++) {
-    var lastName  = String(data[row][0]).trim()
-    var firstName = String(data[row][1]).trim()
-    if (!lastName && !firstName) continue
-
-    var memberId = memberMap[(firstName + '|' + lastName).toLowerCase()]
-    if (!memberId) continue
-
-    var genCount = Number(data[row][2]) || 0
-    var offCount = Number(data[row][3]) || 0
-    if (genId && genCount > 0) assignments.push({ member_id: memberId, event_id: genId, points_awarded: genCount * 2 })
-    if (offId && offCount > 0) assignments.push({ member_id: memberId, event_id: offId, points_awarded: offCount * 2 })
+  var grid    = readTab_(sheet)
+  var headers = grid.values[0] || []
+  var gradeCol = -1
+  for (var c = 0; c < headers.length; c++) {
+    if (/grade/i.test(String(headers[c]))) { gradeCol = c; break }
   }
 
-  if (assignments.length === 0) return
-  var res = callProxy_('bulk_upsert_assignments', { assignments: assignments })
-  Logger.log('  Attendance: ' + assignments.length + ' assignments — ' + (res ? 'OK' : 'FAILED'))
+  var roster = rosterFromTab_(grid)
+  var members = roster.map(function (p) {
+    return {
+      first_name: p.first,
+      last_name : p.last,
+      grade     : gradeCol >= 0 ? (parseInt(grid.values[p.row][gradeCol], 10) || null) : null,
+    }
+  })
+
+  var created = 0
+  for (var i = 0; i < members.length; i += 100) {
+    var res = callProxy_('create_members', { members: members.slice(i, i + 100) })
+    created += res.created || 0
+  }
+  return 'Members: ' + roster.length + ' in sheet, ' + created + ' new'
 }
 
-// ════════════════════════════════════════════════════════════════
-// ONGOING SYNC: onEdit trigger → Supabase
-// ════════════════════════════════════════════════════════════════
+function importCategory_(category, memberMap) {
+  var sheet = findTab_(category)
+  if (!sheet) return category + ': tab not found — skipped'
+
+  var grid   = readTab_(sheet)
+  var roster = rosterFromTab_(grid)
+  var cols   = eventColumns_(grid, category)
+  if (!cols.length) return category + ': no event columns'
+
+  var binary = !!BINARY_CATEGORIES[category]
+
+  // Register every column as an event.
+  var defs = cols.map(function (c) {
+    return {
+      name        : c.name,
+      category    : category,
+      point_value : binary ? pointsForBinary_(c.name, category) : 0,
+      sheet_tab   : sheet.getName(),
+      sheet_header: c.name,
+    }
+  })
+  var eventMap = callProxy_('bulk_get_or_create_events', { events: defs }).map
+
+  // Push each column as a complete snapshot, so cleared cells actually
+  // remove points from the website.
+  var unknown = 0, total = 0
+  for (var i = 0; i < cols.length; i++) {
+    var def     = cols[i]
+    var eventId = eventMap[(def.name.trim().toLowerCase() + '|' + category.toLowerCase())]
+    if (!eventId) continue
+
+    var assignments = []
+    for (var j = 0; j < roster.length; j++) {
+      var p = roster[j]
+      var memberId = memberMap[p.key]
+      if (!memberId) { unknown++; continue }
+      // Only skip computed cells on the rollup-heavy "Points in General"
+      // tab; elsewhere a formula still produces a real score.
+      if (category === 'Miscellaneous' && isFormulaCell_(grid, p.row, def.col)) continue
+
+      var raw = Number(grid.values[p.row][def.col]) || 0
+      var pts = binary ? (raw === 1 ? pointsForBinary_(def.name, category) : 0) : raw
+      if (pts > 0) assignments.push({ member_id: memberId, points_awarded: pts })
+    }
+
+    callProxy_('replace_event_assignments', { event_id: eventId, assignments: assignments })
+    total += assignments.length
+  }
+
+  return category + ' ("' + sheet.getName() + '"): ' + cols.length + ' columns, ' +
+         total + ' point rows' + (unknown ? ', ' + unknown + ' unmatched member cells' : '')
+}
+
+function importAttendance_(memberMap) {
+  var sheet = findTab_('Attendance')
+  if (!sheet) return 'Attendance: tab not found — skipped'
+
+  var grid    = readTab_(sheet)
+  var headers = grid.values[0] || []
+  var roster  = rosterFromTab_(grid)
+
+  var genCol = -1, offCol = -1
+  for (var c = 2; c < headers.length; c++) {
+    var h = String(headers[c])
+    if (genCol < 0 && /general/i.test(h)) genCol = c
+    if (offCol < 0 && /officer/i.test(h)) offCol = c
+  }
+  if (genCol < 0 && offCol < 0) {
+    return 'Attendance: no General/Officer columns found (headers: ' + headers.join(' | ') + ')'
+  }
+
+  var events = callProxy_('bulk_get_or_create_events', {
+    events: [
+      { name: 'General Meeting', category: 'Attendance', point_value: POINTS_PER_MEETING,
+        sheet_tab: sheet.getName(), sheet_header: genCol >= 0 ? String(headers[genCol]) : 'General' },
+      { name: 'Officer Meeting', category: 'Attendance', point_value: POINTS_PER_MEETING,
+        sheet_tab: sheet.getName(), sheet_header: offCol >= 0 ? String(headers[offCol]) : 'Officer' },
+    ],
+  }).map
+
+  var pairs = [
+    { id: events['general meeting|attendance'], col: genCol },
+    { id: events['officer meeting|attendance'], col: offCol },
+  ]
+
+  var total = 0
+  for (var k = 0; k < pairs.length; k++) {
+    if (!pairs[k].id || pairs[k].col < 0) continue
+    var assignments = []
+    for (var j = 0; j < roster.length; j++) {
+      var p = roster[j]
+      var memberId = memberMap[p.key]
+      if (!memberId) continue
+      var count = Number(grid.values[p.row][pairs[k].col]) || 0
+      if (count > 0) assignments.push({ member_id: memberId, points_awarded: count * POINTS_PER_MEETING })
+    }
+    callProxy_('replace_event_assignments', { event_id: pairs[k].id, assignments: assignments })
+    total += assignments.length
+  }
+
+  return 'Attendance ("' + sheet.getName() + '"): ' + total + ' point rows'
+}
+
+/** Re-push just the tab the user is looking at. */
+function pushActiveTab() {
+  var sheet = SpreadsheetApp.getActiveSheet()
+  var cat   = categoryForSheet_(sheet)
+  if (!cat) { alert_('Bear Link', '"' + sheet.getName() + '" is not a synced tab.'); return }
+
+  try {
+    var memberMap = memberMap_(true)
+    var msg = cat === 'Attendance' ? importAttendance_(memberMap) : importCategory_(cat, memberMap)
+    callProxy_('recalc_totals', {})
+    alert_('Bear Link', msg)
+  } catch (e) {
+    alert_('Bear Link — push failed', String(e))
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// LIVE SYNC: onEdit -> website
+// ══════════════════════════════════════════════════════════════════════
 
 function onEditTrigger(e) {
-  var sheet     = e.range.getSheet()
-  var sheetName = sheet.getName()
-  var row       = e.range.getRow()
-  var col       = e.range.getColumn()
-  var value     = e.range.getValue()
+  try {
+    if (!e || !e.range) return
+    var sheet = e.range.getSheet()
+    var cat   = categoryForSheet_(sheet)
+    if (!cat) return
 
-  if (row <= 1) return
+    var row = e.range.getRow()
+    var col = e.range.getColumn()
+    if (row < 2 || col < 3) return                 // header row / roster columns
 
-  var config = TAB_CONFIG[sheetName]
-  if (config) { handleCategoryEdit_(sheet, row, col, value, config); return }
-  if (sheetName === 'Attendance') handleAttendanceEdit_(sheet, row, col, value)
-}
+    // A multi-cell paste: re-push the whole tab instead of one cell.
+    if (e.range.getNumRows() > 1 || e.range.getNumColumns() > 1) {
+      var pasted = memberMap_(false)
+      if (cat === 'Attendance') importAttendance_(pasted)
+      else                      importCategory_(cat, pasted)
+      toast_('Synced the whole "' + sheet.getName() + '" tab to the website.')
+      return
+    }
 
-function handleCategoryEdit_(sheet, row, col, value, config) {
-  if (col <= 2) return
+    var lastName  = String(sheet.getRange(row, 1).getValue()).trim()
+    var firstName = String(sheet.getRange(row, 2).getValue()).trim()
+    if (!lastName && !firstName) return
 
-  var lastName  = String(sheet.getRange(row, 1).getValue()).trim()
-  var firstName = String(sheet.getRange(row, 2).getValue()).trim()
-  if (!lastName && !firstName) return
+    var header = String(sheet.getRange(1, col).getValue()).trim()
+    if (!header || SUBTOTAL_RE.test(header)) return
+    if (cat === 'Miscellaneous' && e.range.getFormula()) return
 
-  var eventName = String(sheet.getRange(1, col).getValue()).trim()
-  if (!eventName) return
-  if (/^(total|sum|#|points\s+for)/i.test(eventName)) return // ignore summary columns
+    // Same rule as the bulk import: ignore columns past the subtotal.
+    if (cat !== 'Miscellaneous') {
+      var hdrRow = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      for (var t = 2; t < hdrRow.length; t++) {
+        var ht = String(hdrRow[t] == null ? '' : hdrRow[t]).trim()
+        if (ht && SUBTOTAL_RE.test(ht)) {
+          if (col - 1 > t) {
+            toast_('"' + header + '" is past the "' + ht + '" column, so the sheet does not count it. Ignored.')
+            return
+          }
+          break
+        }
+      }
+    }
 
-  var member = getMemberByName_(firstName, lastName)
-  if (!member) { Logger.log('Member not found: ' + firstName + ' ' + lastName); return }
+    var lookup = (firstName + '|' + lastName).toLowerCase()
+    var member = memberMap_(false)[lookup]
+    if (!member) member = memberMap_(true)[lookup]   // maybe just added — refetch once
+    if (!member) { toast_('"' + firstName + ' ' + lastName + '" is not in the website yet.'); return }
 
-  var binaryPts = config.binary
-    ? ((config.ptsMap && config.ptsMap[eventName]) ? config.ptsMap[eventName] : config.pts)
-    : 0
+    var value = Number(e.range.getValue()) || 0
 
-  var eventResult = callProxy_('get_or_create_event', {
-    name       : eventName,
-    category   : config.category,
-    point_value: binaryPts,
-  })
-  if (!eventResult || !eventResult.data) { Logger.log('Could not get/create event: ' + eventName); return }
-  var eventId = eventResult.data.id
+    if (cat === 'Attendance') {
+      var officer  = /officer/i.test(header)
+      var general  = /general/i.test(header)
+      if (!officer && !general) return
+      var evName   = officer ? 'Officer Meeting' : 'General Meeting'
+      var ev       = callProxy_('get_or_create_event', {
+        name: evName, category: 'Attendance', point_value: POINTS_PER_MEETING,
+        sheet_tab: sheet.getName(), sheet_header: header,
+      }).data
+      callProxy_('upsert_assignment', {
+        member_id: member, event_id: ev.id, points_awarded: value * POINTS_PER_MEETING,
+      })
+      toast_(firstName + ' ' + lastName + ': ' + evName + ' x' + value +
+             ' = ' + (value * POINTS_PER_MEETING) + ' pts')
+      return
+    }
 
-  var num = Number(value) || 0
-  if (config.binary) {
-    num === 1
-      ? callProxy_('upsert_assignment', { member_id: member.id, event_id: eventId, points_awarded: binaryPts })
-      : callProxy_('delete_assignment', { member_id: member.id, event_id: eventId })
-  } else {
-    num > 0
-      ? callProxy_('upsert_assignment', { member_id: member.id, event_id: eventId, points_awarded: num })
-      : callProxy_('delete_assignment', { member_id: member.id, event_id: eventId })
+    var binary = !!BINARY_CATEGORIES[cat]
+    var pv     = binary ? pointsForBinary_(header, cat) : 0
+    var event  = callProxy_('get_or_create_event', {
+      name: header, category: cat, point_value: pv,
+      sheet_tab: sheet.getName(), sheet_header: header,
+    }).data
+
+    var points = binary ? (value === 1 ? pv : 0) : value
+    callProxy_('upsert_assignment', {
+      member_id: member, event_id: event.id, points_awarded: points,
+    })
+    toast_(firstName + ' ' + lastName + ': ' + header + ' = ' + points + ' pts')
+  } catch (err) {
+    Logger.log('onEditTrigger error: ' + err)
+    toast_('Sync failed: ' + err, 'Bear Link — error')
   }
 }
 
-function handleAttendanceEdit_(sheet, row, col, value) {
-  if (col !== 3 && col !== 4) return
+// ══════════════════════════════════════════════════════════════════════
+// TRIGGERS
+// ══════════════════════════════════════════════════════════════════════
 
-  var lastName  = String(sheet.getRange(row, 1).getValue()).trim()
-  var firstName = String(sheet.getRange(row, 2).getValue()).trim()
-  if (!lastName && !firstName) return
-
-  var member = getMemberByName_(firstName, lastName)
-  if (!member) { Logger.log('Member not found: ' + firstName + ' ' + lastName); return }
-
-  var count     = Number(value) || 0
-  var points    = count * 2
-  var eventName = col === 3 ? 'General Meeting' : 'Officer Meeting'
-
-  var eventResult = callProxy_('get_or_create_event', { name: eventName, category: 'Attendance', point_value: 2 })
-  if (!eventResult || !eventResult.data) return
-  var eventId = eventResult.data.id
-
-  points > 0
-    ? callProxy_('upsert_assignment', { member_id: member.id, event_id: eventId, points_awarded: points })
-    : callProxy_('delete_assignment', { member_id: member.id, event_id: eventId })
-}
-
-// ════════════════════════════════════════════════════════════════
-// SUPABASE READ HELPERS (anon key — reads only)
-// ════════════════════════════════════════════════════════════════
-
-function sbGet_(url) {
-  var resp = UrlFetchApp.fetch(url, {
-    method            : 'get',
-    headers           : { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY },
-    muteHttpExceptions: true,
-  })
-  return resp.getResponseCode() === 200 ? resp.getContentText() : null
-}
-
-function getMemberByName_(firstName, lastName) {
-  var url  = SUPABASE_URL + '/rest/v1/members?first_name=eq.' + encodeURIComponent(firstName) +
-             '&last_name=eq.' + encodeURIComponent(lastName) + '&limit=1'
-  var body = sbGet_(url)
-  if (!body) return null
-  var rows = JSON.parse(body)
-  return rows.length > 0 ? rows[0] : null
-}
-
-// ════════════════════════════════════════════════════════════════
-// ONE-TIME SETUP FUNCTIONS
-// ════════════════════════════════════════════════════════════════
-
-/** Install the onEdit trigger. Run once after importSheetToSupabase(). */
 function setupTrigger() {
-  ScriptApp.getProjectTriggers().forEach(function(t) {
-    if (t.getHandlerFunction() === 'onEditTrigger') ScriptApp.deleteTrigger(t)
-  })
+  removeTrigger_()
   ScriptApp.newTrigger('onEditTrigger')
     .forSpreadsheet(SpreadsheetApp.getActive())
     .onEdit()
     .create()
-  Logger.log('onEdit trigger installed.')
+  alert_('Bear Link', 'Live sync installed. Edits to the point tabs now update the website immediately.')
 }
 
-/**
- * Manually trigger a full DB → Sheet sync.
- * Use if the sheet ever gets out of sync with the DB.
- */
-function syncDbToSheet() {
-  var resp = UrlFetchApp.fetch(SUPABASE_URL + '/functions/v1/sync-to-sheets', {
-    method            : 'post',
-    contentType       : 'application/json',
-    payload           : '{}',
-    muteHttpExceptions: true,
+function removeTrigger() {
+  removeTrigger_()
+  alert_('Bear Link', 'Live sync removed. The sheet and the website will no longer update each other automatically.')
+}
+
+function removeTrigger_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'onEditTrigger') ScriptApp.deleteTrigger(t)
   })
-  Logger.log(resp.getResponseCode() < 300
-    ? 'Sync complete: ' + resp.getContentText()
-    : 'Sync failed: '  + resp.getContentText())
 }

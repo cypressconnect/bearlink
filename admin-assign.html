@@ -73,7 +73,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
     <header class="mb-12 relative">
         <div class="inline-flex items-center gap-2 mb-4">
             <span class="px-3 py-1 bg-secondary text-on-secondary rounded-full text-xs font-bold tracking-widest uppercase">Admin Panel</span>
-            <span class="text-on-surface-variant text-sm font-medium">• Event ID: #BHS-2024-089</span>
+            <span class="text-on-surface-variant text-sm font-medium" id="eventMeta"></span>
         </div>
         <h1 class="text-5xl font-bold tracking-tight text-primary mb-4 leading-tight" id="eventTitle">Assign Points</h1>
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -99,15 +99,25 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
             <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
             <input id="memberSearch" type="text" placeholder="Search by member name or grade..." class="w-full pl-12 pr-4 py-3 bg-surface-container-lowest border-none rounded-lg focus:ring-2 focus:ring-primary/20 text-sm font-medium text-on-surface"/>
         </div>
-        <div class="flex gap-2">
-            <button class="bg-surface-container-lowest text-on-surface-variant px-5 py-3 rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined text-[20px]">filter_list</span>Grade 12
+        <div class="flex gap-2 flex-wrap">
+            <select id="gradeFilter" class="bg-surface-container-lowest text-on-surface-variant border-none px-5 py-3 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-primary/20">
+                <option value="">All grades</option>
+                <option value="9">Grade 9</option>
+                <option value="10">Grade 10</option>
+                <option value="11">Grade 11</option>
+                <option value="12">Grade 12</option>
+            </select>
+            <button type="button" onclick="selectAllVisible(true)" class="bg-surface-container-lowest text-on-surface-variant px-5 py-3 rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">select_all</span>Select all
             </button>
-            <button class="bg-surface-container-lowest text-on-surface-variant px-5 py-3 rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2">
-                <span class="material-symbols-outlined text-[20px]">group</span>All Teams
+            <button type="button" onclick="selectAllVisible(false)" class="bg-surface-container-lowest text-on-surface-variant px-5 py-3 rounded-lg text-sm font-semibold hover:bg-surface-container-high transition-colors flex items-center gap-2">
+                <span class="material-symbols-outlined text-[20px]">deselect</span>Clear
             </button>
         </div>
     </div>
+
+    <!-- Progress / result banner -->
+    <div id="assignStatus" class="hidden mb-8 rounded-xl p-5 text-sm font-medium"></div>
 
     <!-- Member Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12" id="memberGrid">
@@ -143,157 +153,224 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 <script type="module">
 import { requireAdmin } from './js/auth.js'
 import { supabase } from './js/supabase-client.js'
-import { assignPoints, recalcMemberTotal, triggerSheetSync } from './js/data.js'
+import { assignPoints, syncBatchToSheet, categoryInfo } from './js/data.js'
 
 await requireAdmin()
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 const params  = new URLSearchParams(location.search)
 const eventId = params.get('event') || sessionStorage.getItem('assignEventId')
 
+const statusBox  = document.getElementById('assignStatus')
+const submitBtn  = document.getElementById('submitBtn')
+const submitText = document.getElementById('submitLabel')
+
+function status(kind, html) {
+    const tone = {
+        info : 'bg-surface-container-low text-on-surface-variant',
+        work : 'bg-primary-container/40 text-on-surface',
+        good : 'bg-emerald-50 text-emerald-900 border-l-4 border-emerald-600',
+        warn : 'bg-amber-50 text-amber-900 border-l-4 border-amber-600',
+        bad  : 'bg-error-container text-on-error-container border-l-4 border-error',
+    }[kind]
+    statusBox.className = `mb-8 rounded-xl p-5 text-sm font-medium ${tone}`
+    statusBox.innerHTML = html
+}
+
 if (!eventId) {
     document.getElementById('eventTitle').textContent = 'No Event Selected'
     document.getElementById('eventDesc').innerHTML =
-        `Return to <a href="admin.html" class="text-secondary underline">Admin Dashboard</a> and create an event first.`
-    document.getElementById('submitBtn').disabled = true
+        `Return to <a href="admin.html" class="text-secondary underline">Admin Dashboard</a> and pick or create an event first.`
+    submitBtn.disabled = true
+    document.getElementById('memberGrid').innerHTML =
+        '<div class="col-span-3 py-12 text-center text-on-surface-variant">Nothing to assign.</div>'
 } else {
-// Load event details
-const { data: ev } = await supabase.from('events').select('*').eq('id', eventId).single()
-if (ev) {
-    document.getElementById('eventTitle').textContent = ev.name
-    document.getElementById('eventDesc').innerHTML =
-        `Select all members who participated. Each will receive <strong>${ev.point_value} points</strong>.`
-    document.getElementById('eventPoints').textContent = ev.point_value
-    document.getElementById('submitLabel').textContent = `Submit ${ev.point_value} Points`
+
+// ── Event ────────────────────────────────────────────────────
+const { data: ev, error: evErr } = await supabase
+    .from('events').select('*').eq('id', eventId).single()
+
+if (evErr || !ev) {
+    document.getElementById('eventTitle').textContent = 'Event not found'
+    document.getElementById('eventDesc').textContent =
+        'It may have been deleted. Go back to the dashboard and pick another one.'
+    submitBtn.disabled = true
+} else {
+
+const info      = categoryInfo(ev.category)
+const isCounted = ev.category === 'Attendance'
+
+document.getElementById('eventTitle').textContent = ev.name
+document.getElementById('eventMeta').textContent =
+    `• ${ev.category}${ev.event_date ? ` • ${new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}`
+document.getElementById('eventDesc').innerHTML = isCounted
+    ? `Select who attended. Each person gets <strong>${ev.point_value} points</strong> added for this meeting.`
+    : `Select who participated. Each gets <strong>${ev.point_value} points</strong> — change any individual amount in their card.`
+document.getElementById('eventPoints').textContent = ev.point_value
+submitText.textContent = `Submit ${ev.point_value} Points`
+
+if (info) {
+    status('info', `Points will also be written to the <strong>${esc(info.sheet)}</strong> tab of the Google Sheet.`)
+    statusBox.classList.remove('hidden')
 }
 
-// Load all members
-let allMembers = []
-const { data: members } = await supabase
-    .from('members')
-    .select('id, name, total_points, grade, student_id')
-    .order('name')
+// ── Members + who already has this event ─────────────────────
+const [{ data: members }, { data: existing }] = await Promise.all([
+    supabase.from('members')
+        .select('id, name, first_name, last_name, total_points, grade, student_id')
+        .order('last_name'),
+    supabase.from('point_assignments')
+        .select('member_id, points_awarded').eq('event_id', eventId),
+])
 
-allMembers = members ?? []
+const allMembers  = members ?? []
+const alreadyHas  = new Map((existing ?? []).map(a => [a.member_id, a.points_awarded]))
+
+// Selections survive filtering, so this must exist before the first render.
+const selected = new Map()   // memberId -> points
+
 renderGrid(allMembers)
 
-// Search
-document.getElementById('memberSearch').addEventListener('input', e => {
-    const q = e.target.value.toLowerCase()
-    const filtered = allMembers.filter(m =>
-        (m.name ?? '').toLowerCase().includes(q) ||
-        String(m.grade ?? '').includes(q) ||
-        (m.student_id ?? '').includes(q)
-    )
-    renderGrid(filtered)
-})
+// ── Filtering ────────────────────────────────────────────────
+function applyFilters() {
+    const q     = document.getElementById('memberSearch').value.toLowerCase().trim()
+    const grade = document.getElementById('gradeFilter').value
+    renderGrid(allMembers.filter(m => {
+        const name = `${m.first_name ?? ''} ${m.last_name ?? ''} ${m.name ?? ''}`.toLowerCase()
+        const matchesQ = !q || name.includes(q) || String(m.student_id ?? '').includes(q)
+        const matchesG = !grade || String(m.grade) === grade
+        return matchesQ && matchesG
+    }))
+}
+document.getElementById('memberSearch').addEventListener('input', applyFilters)
+document.getElementById('gradeFilter').addEventListener('change', applyFilters)
 
 function renderGrid(list) {
     const grid = document.getElementById('memberGrid')
     if (!list.length) {
         grid.innerHTML = '<div class="col-span-3 py-12 text-center text-on-surface-variant">No members found.</div>'
-        return
+        updateCount(); return
     }
     grid.innerHTML = list.map(m => {
-        const parts    = (m.name ?? '').trim().split(' ')
-        const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
+        const first    = m.first_name ?? (m.name ?? '').split(' ')[0] ?? ''
+        const last     = m.last_name  ?? (m.name ?? '').split(' ').slice(1).join(' ')
+        const initials = ((first[0] ?? '') + (last[0] ?? '')).toUpperCase() || '?'
+        const display  = esc(m.name || `${first} ${last}`.trim())
         const grade    = m.grade ? `Grade ${m.grade}` : '—'
-        const sid      = m.student_id ? ` • #${m.student_id}` : ''
+        const prior    = alreadyHas.get(m.id)
+        const isSel    = selected.has(m.id)
+        const pts      = selected.get(m.id) ?? prior ?? ev.point_value
+
         return `
-        <div class="member-card relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container cursor-pointer" data-id="${m.id}" onclick="toggleSelect(this)">
-            <div class="flex justify-between items-start mb-4">
+        <div class="member-card relative group bg-surface-container-lowest rounded-xl p-6 transition-all hover:bg-surface-container ${isSel ? 'selected ring-2 ring-secondary' : ''}"
+             data-id="${m.id}">
+            <div class="flex justify-between items-start mb-4 cursor-pointer" onclick="toggleSelect('${m.id}')">
                 <div class="flex items-center gap-3">
                     <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center font-bold text-lg text-on-surface-variant">${initials}</div>
                     <div>
-                        <h3 class="font-bold text-primary">${m.name ?? '—'}</h3>
-                        <p class="text-xs text-on-surface-variant font-medium">${grade}${sid}</p>
+                        <h3 class="font-bold text-primary">${display}</h3>
+                        <p class="text-xs text-on-surface-variant font-medium">${grade}</p>
                     </div>
                 </div>
-                <div class="checkbox flex items-center justify-center w-6 h-6 rounded border-2 border-outline-variant group-hover:border-primary transition-colors">
-                    <span class="material-symbols-outlined text-white text-[18px] hidden" style="font-variation-settings:'wght' 700">check</span>
+                <div class="checkbox flex items-center justify-center w-6 h-6 rounded border-2 shrink-0 transition-colors ${isSel ? 'bg-secondary border-secondary' : 'border-outline-variant group-hover:border-primary'}">
+                    <span class="material-symbols-outlined text-white text-[18px] ${isSel ? '' : 'hidden'}" style="font-variation-settings:'wght' 700">check</span>
                 </div>
             </div>
-            <div class="flex justify-between items-center text-sm">
-                <span class="text-on-surface-variant">Current Pts: <span class="font-bold text-on-surface">${(m.total_points ?? 0).toLocaleString()}</span></span>
-                <span class="pts-label text-outline-variant font-bold">Pending</span>
+            <div class="flex justify-between items-center text-sm gap-2">
+                <span class="text-on-surface-variant whitespace-nowrap">Total: <span class="font-bold text-on-surface">${(m.total_points ?? 0).toLocaleString()}</span></span>
+                ${isSel
+                    ? `<label class="flex items-center gap-1.5 text-xs font-bold text-secondary">
+                          +<input type="number" min="0" value="${pts}" data-points-for="${m.id}"
+                             onchange="setPoints('${m.id}', this.value)" onclick="event.stopPropagation()"
+                             class="w-16 bg-surface-container-low border border-outline-variant rounded px-1.5 py-0.5 text-center text-on-surface"/> pts
+                       </label>`
+                    : `<span class="pts-label font-bold ${prior != null ? 'text-emerald-700' : 'text-outline-variant'}">${prior != null ? `Has ${prior} pts` : 'Pending'}</span>`}
             </div>
         </div>`
     }).join('')
     updateCount()
 }
 
-window.toggleSelect = function(card) {
-    const isSelected = card.classList.contains('selected')
-    const checkbox   = card.querySelector('.checkbox')
-    const checkIcon  = checkbox.querySelector('.material-symbols-outlined')
-    const ptsLabel   = card.querySelector('.pts-label')
-    const accentBar  = card.querySelector('.accent-bar')
-    const pts        = ev ? ev.point_value : '?'
+window.toggleSelect = (id) => {
+    if (selected.has(id)) selected.delete(id)
+    else selected.set(id, alreadyHas.get(id) ?? ev.point_value)
+    applyFilters()
+}
 
-    if (isSelected) {
-        card.classList.remove('selected')
-        checkbox.classList.remove('bg-secondary', 'border-secondary')
-        checkbox.classList.add('border-outline-variant')
-        checkIcon.classList.add('hidden')
-        ptsLabel.textContent = 'Pending'
-        ptsLabel.className = 'pts-label text-outline-variant font-bold'
-        if (accentBar) accentBar.remove()
-    } else {
-        card.classList.add('selected')
-        checkbox.classList.add('bg-secondary', 'border-secondary')
-        checkbox.classList.remove('border-outline-variant')
-        checkIcon.classList.remove('hidden')
-        ptsLabel.textContent = `+${pts} Pts`
-        ptsLabel.className = 'pts-label text-secondary font-bold'
-        if (!card.querySelector('.accent-bar')) {
-            const bar = document.createElement('div')
-            bar.className = 'accent-bar absolute left-0 top-6 bottom-6 w-1 bg-secondary rounded-r'
-            card.insertBefore(bar, card.firstChild)
-        }
-    }
+window.setPoints = (id, value) => {
+    const n = Math.max(0, parseInt(value, 10) || 0)
+    selected.set(id, n)
     updateCount()
 }
 
-function updateCount() {
-    const count = document.querySelectorAll('.member-card.selected').length
-    document.getElementById('selectedCount').textContent = count
+window.selectAllVisible = (on) => {
+    document.querySelectorAll('.member-card').forEach(card => {
+        const id = card.dataset.id
+        if (on) { if (!selected.has(id)) selected.set(id, alreadyHas.get(id) ?? ev.point_value) }
+        else selected.delete(id)
+    })
+    applyFilters()
 }
 
-window.submitPoints = async function() {
-    const selected = [...document.querySelectorAll('.member-card.selected')]
-    if (!selected.length) { alert('Select at least one member.'); return }
+function updateCount() {
+    document.getElementById('selectedCount').textContent = selected.size
+    const total = [...selected.values()].reduce((s, p) => s + p, 0)
+    submitText.textContent = selected.size
+        ? `Submit ${total} Points to ${selected.size} member${selected.size === 1 ? '' : 's'}`
+        : 'Submit Points'
+}
 
-    const memberIds = selected.map(c => c.dataset.id)
-    const btn = document.getElementById('submitBtn')
-    btn.disabled = true
-    btn.querySelector('#submitLabel').textContent = 'Saving…'
+// ── Submit ───────────────────────────────────────────────────
+window.submitPoints = async function () {
+    if (!selected.size) { alert('Select at least one member.'); return }
+
+    const memberIds = [...selected.keys()]
+    const pointsMap = Object.fromEntries(selected)
+
+    submitBtn.disabled = true
+    statusBox.classList.remove('hidden')
+    status('work', 'Saving to the database…')
 
     try {
-        // Always save to Supabase for all categories
-        await assignPoints(eventId, memberIds, ev.point_value)
+        const { awarded, cleared } = await assignPoints(eventId, memberIds, pointsMap)
 
-        for (const memberId of memberIds) {
-            await recalcMemberTotal(memberId)
+        status('work', `Saved. Writing ${memberIds.length} cell${memberIds.length === 1 ? '' : 's'} to the Google Sheet… <span id="syncProgress">0/${memberIds.length}</span>`)
+
+        const failures = await syncBatchToSheet(memberIds, eventId, (done, total) => {
+            const el = document.getElementById('syncProgress')
+            if (el) el.textContent = `${done}/${total}`
+        })
+
+        if (!failures.length) {
+            status('good',
+                `Done. ${awarded} member${awarded === 1 ? '' : 's'} awarded` +
+                `${cleared ? `, ${cleared} cleared` : ''} — database and Google Sheet both updated.` +
+                ` <a href="admin.html" class="underline font-bold">Back to dashboard</a>`)
+        } else {
+            const names = failures.map(f => {
+                const m = allMembers.find(x => x.id === f.memberId)
+                return `<li><strong>${esc(m?.name ?? f.memberId)}</strong> — ${esc(f.error)}</li>`
+            }).join('')
+            status('warn',
+                `<p class="mb-2">Points are saved on the website, but ${failures.length} of ${memberIds.length} ` +
+                `did not reach the Google Sheet:</p><ul class="list-disc pl-5 space-y-1 text-xs">${names}</ul>` +
+                `<p class="mt-3">Fix the sheet, then use <em>Bear Link → Push one tab to website</em>, or re-submit here. ` +
+                `<a href="admin.html" class="underline font-bold">Back to dashboard</a></p>`)
         }
-
-        // Sync event cell — non-fatal per member
-        for (const memberId of memberIds) {
-            try {
-                await triggerSheetSync(memberId, ev.category, ev.name, ev.point_value)
-            } catch (sheetErr) {
-                console.warn(`Sheet sync failed for member ${memberId}:`, sheetErr)
-            }
-        }
-
-        alert(`Done! ${memberIds.length} member${memberIds.length !== 1 ? 's' : ''} updated.`)
-        window.location.href = 'admin.html'
+        statusBox.scrollIntoView({ behavior: 'smooth', block: 'center' })
     } catch (err) {
         console.error(err)
-        alert('Error saving: ' + err.message)
-        btn.disabled = false
-        btn.querySelector('#submitLabel').textContent = `Submit ${ev.point_value} Points`
+        status('bad', `Nothing was saved: ${esc(err.message)}`)
+    } finally {
+        submitBtn.disabled = false
+        updateCount()
     }
 }
-} // end else (eventId exists)
+
+} // end event-exists
+} // end eventId-exists
 </script>
 <script src="js/chat-widget.js"></script>
 </body>

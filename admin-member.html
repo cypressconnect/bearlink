@@ -93,14 +93,64 @@ tailwind.config = {
         </div>
     </section>
 
+    <!-- Member details -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold font-headline text-primary mb-6">Member Details</h2>
+        <form id="memberDetailsForm" class="bg-surface-container-lowest rounded-xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">First Name</label>
+                <input name="firstName" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-secondary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Last Name</label>
+                <input name="lastName" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-secondary"/>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Grade</label>
+                <select name="grade" class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-secondary">
+                    <option value="">—</option><option>9</option><option>10</option><option>11</option><option>12</option>
+                </select>
+            </div>
+            <button type="submit" class="bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">Save details</button>
+            <p id="detailsStatus" class="md:col-span-4 text-xs font-medium hidden"></p>
+        </form>
+    </section>
+
+    <!-- Award a new event -->
+    <section class="mb-12">
+        <h2 class="text-2xl font-bold font-headline text-primary mb-2">Award Points</h2>
+        <p class="text-on-surface-variant text-sm mb-6">Give this member points for an event they are not already credited with.</p>
+        <form id="awardForm" class="bg-surface-container-lowest rounded-xl p-6 shadow-sm grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-end">
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Event</label>
+                <select name="eventId" id="awardEventSelect" required class="w-full bg-surface-container-low border border-outline-variant rounded-lg text-sm px-3 py-2 focus:ring-1 focus:ring-secondary">
+                    <option value="">Loading events…</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Points</label>
+                <input name="points" id="awardPoints" type="number" min="1" required value="1"
+                    class="w-28 bg-surface-container-low border border-outline-variant rounded-lg text-sm px-3 py-2 text-center focus:ring-1 focus:ring-secondary"/>
+            </div>
+            <button type="submit" class="bg-secondary text-white px-6 py-2.5 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity whitespace-nowrap">Award points</button>
+            <p id="awardStatus" class="md:col-span-3 text-xs font-medium hidden"></p>
+        </form>
+    </section>
+
     <!-- Event history -->
     <section>
-        <div class="flex items-end justify-between mb-8">
+        <div class="flex items-end justify-between mb-8 flex-wrap gap-4">
             <div>
                 <h2 class="text-2xl font-bold font-headline text-primary">Event Assignments</h2>
-                <p class="text-on-surface-variant text-sm mt-1">Edit points or remove individual event assignments.</p>
+                <p class="text-on-surface-variant text-sm mt-1">Edit points or remove individual event assignments. Every change is written to the Google Sheet too.</p>
             </div>
-            <span id="eventCount" class="text-xs font-bold uppercase tracking-widest text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full"></span>
+            <div class="flex items-center gap-3">
+                <button onclick="resyncAll()" id="resyncBtn"
+                    class="flex items-center gap-1.5 text-xs font-bold text-secondary hover:text-primary transition-colors border border-outline-variant/40 px-3 py-1.5 rounded-lg">
+                    <span class="material-symbols-outlined text-sm">sync</span> Re-push all to sheet
+                </button>
+                <span id="eventCount" class="text-xs font-bold uppercase tracking-widest text-on-surface-variant bg-surface-container px-3 py-1.5 rounded-full"></span>
+            </div>
         </div>
         <div id="eventList" class="space-y-4">
             <div class="py-12 text-center text-on-surface-variant">
@@ -114,10 +164,17 @@ tailwind.config = {
 
 <script type="module">
 import { requireAdmin, signOut } from './js/auth.js'
-import { fetchMember, updatePointsAwarded, removeAssignment, recalcMemberTotal, triggerSheetSync } from './js/data.js'
+import {
+    fetchMember, fetchEvents, updateMember,
+    setAssignment, removeAssignment,
+    syncAssignmentToSheet, resyncMemberToSheet,
+} from './js/data.js'
 
 await requireAdmin()
 document.querySelectorAll('[data-signout]').forEach(el => el.addEventListener('click', () => signOut()))
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 function showError(msg) {
     const banner = document.getElementById('errorBanner')
@@ -125,44 +182,59 @@ function showError(msg) {
     banner.classList.remove('hidden')
     banner.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
+function hideError() { document.getElementById('errorBanner').classList.add('hidden') }
+
+function setStatus(id, kind, text) {
+    const el = document.getElementById(id)
+    const tone = { good: 'text-emerald-700', warn: 'text-amber-700', bad: 'text-error', work: 'text-on-surface-variant' }[kind]
+    el.className = `text-xs font-medium ${tone}`
+    el.textContent = text
+    el.classList.remove('hidden')
+}
 
 const params   = new URLSearchParams(window.location.search)
 const memberId = params.get('id') || sessionStorage.getItem('editMemberId')
 
-let memberData = null   // cached after first load
+let memberData = null
+let allEvents  = []
 
 // ── Load / render ─────────────────────────────────────────────
 async function load() {
     memberData = await fetchMember(memberId)
     const m = memberData
 
+    const first = m.first_name ?? (m.name ?? '').split(' ')[0] ?? ''
+    const last  = m.last_name  ?? (m.name ?? '').split(' ').slice(1).join(' ')
+
     document.title = `Edit ${m.name} | Bear Link`
     document.getElementById('memberName').textContent = m.name ?? '—'
     document.getElementById('memberMeta').textContent =
-        [m.grade ? `Grade ${m.grade}` : null, m.student_id ? `ID ${m.student_id}` : null]
+        [m.grade ? `Grade ${m.grade}` : null, m.student_id ? `ID ${m.student_id}` : null, m.email]
         .filter(Boolean).join(' • ')
+    document.getElementById('memberInitials').textContent =
+        ((first[0] ?? '') + (last[0] ?? '')).toUpperCase() || '?'
+    document.getElementById('totalPoints').textContent = (m.total_points ?? 0).toLocaleString()
+    document.getElementById('eventCount').textContent  = `${m.assignments.length} Events`
 
-    const parts    = (m.name ?? '').trim().split(' ')
-    const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
-    document.getElementById('memberInitials').textContent = initials
-
-    document.getElementById('totalPoints').textContent = m.total_points.toLocaleString()
-    document.getElementById('eventCount').textContent = `${m.assignments.length} Events`
+    const form = document.getElementById('memberDetailsForm')
+    form.firstName.value = first
+    form.lastName.value  = last
+    form.grade.value     = m.grade ?? ''
 
     renderEvents(m)
+    renderAwardOptions()
+}
+
+const ICONS = {
+    Attendance: 'how_to_reg', Social: 'groups', Service: 'volunteer_activism',
+    Fundraising: 'savings', Conference: 'emoji_events', BAA: 'military_tech',
+    Committee: 'diversity_3', Miscellaneous: 'star', Other: 'event',
 }
 
 function renderEvents(m) {
-    const ICONS = {
-        Competition: 'workspace_premium', Social: 'groups', Meeting: 'calendar_today',
-        Fundraiser: 'volunteer_activism', Education: 'school', Volunteer: 'volunteer_activism',
-        Attendance: 'how_to_reg', Conference: 'emoji_events', BAA: 'military_tech',
-        Service: 'handshake', Fundraising: 'savings',
-    }
-
     const list = document.getElementById('eventList')
     if (!m.assignments.length) {
-        list.innerHTML = `<p class="text-on-surface-variant py-8 text-center">No events assigned yet.</p>`
+        list.innerHTML = `<p class="text-on-surface-variant py-8 text-center">No events assigned yet. Use "Award Points" above.</p>`
         return
     }
 
@@ -170,26 +242,22 @@ function renderEvents(m) {
         const ev   = a.events
         const icon = ICONS[ev.category] ?? 'event'
         const date = ev.event_date
-            ? new Date(ev.event_date).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' })
-            : '—'
+            ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+            : 'No date'
         return `
         <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-4 relative">
             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-secondary rounded-r-full"></div>
 
-            <!-- icon -->
             <div class="w-12 h-12 bg-surface-container rounded-xl flex items-center justify-center text-primary shrink-0">
                 <span class="material-symbols-outlined text-2xl">${icon}</span>
             </div>
 
-            <!-- event info -->
             <div class="flex-1 min-w-0">
-                <h3 class="font-bold text-on-surface text-sm leading-tight">${ev.name}</h3>
-                <p class="text-xs text-on-surface-variant mt-0.5">${date} · ${ev.category}</p>
+                <h3 class="font-bold text-on-surface text-sm leading-tight">${esc(ev.name)}</h3>
+                <p class="text-xs text-on-surface-variant mt-0.5">${date} · ${esc(ev.category)}</p>
             </div>
 
-            <!-- points awarded — view/edit -->
             <div class="shrink-0">
-                <!-- view mode -->
                 <div id="ev-view-${ev.id}" class="flex flex-col items-end gap-1">
                     <button onclick="toggleEvEdit('${ev.id}', ${a.points_awarded})"
                         class="text-xs font-semibold text-secondary hover:text-primary flex items-center gap-0.5 transition-colors">
@@ -198,26 +266,25 @@ function renderEvents(m) {
                     <div class="text-xl font-extrabold font-headline text-primary">+${a.points_awarded}</div>
                     <div class="text-xs text-on-surface-variant font-medium">pts</div>
                 </div>
-                <!-- edit mode -->
                 <div id="ev-edit-${ev.id}" class="hidden flex-col items-end gap-1.5">
                     <div class="flex items-center gap-1">
                         <button onclick="adjustEv('${ev.id}', -1)" class="w-7 h-7 rounded-lg bg-surface-container-high font-bold text-sm flex items-center justify-center hover:bg-error/10 hover:text-error transition-colors">−</button>
                         <input id="ev-input-${ev.id}" type="number" value="${a.points_awarded}" min="0"
                             class="w-20 bg-surface-container-low border border-outline-variant rounded-lg px-2 py-1 text-sm font-bold text-on-surface text-center focus:outline-none focus:ring-1 focus:ring-secondary"
-                            onkeydown="if(event.key==='Enter') saveEv('${ev.id}', '${memberId}')" />
+                            onkeydown="if(event.key==='Enter') saveEv('${ev.id}')" />
                         <button onclick="adjustEv('${ev.id}', 1)" class="w-7 h-7 rounded-lg bg-surface-container-high font-bold text-sm flex items-center justify-center hover:bg-secondary/10 hover:text-secondary transition-colors">+</button>
                     </div>
                     <div class="flex gap-1">
-                        <button id="ev-save-${ev.id}" onclick="saveEv('${ev.id}', '${memberId}')"
+                        <button id="ev-save-${ev.id}" onclick="saveEv('${ev.id}')"
                             class="text-xs font-bold text-white bg-secondary px-2.5 py-1 rounded-lg hover:opacity-90 transition-opacity">Save</button>
                         <button onclick="cancelEvEdit('${ev.id}')"
                             class="text-xs font-medium text-on-surface-variant hover:text-error px-2 py-1 rounded-lg transition-colors">Cancel</button>
                     </div>
+                    <p id="ev-msg-${ev.id}" class="text-[11px] text-right max-w-[16rem]"></p>
                 </div>
             </div>
 
-            <!-- delete -->
-            <button onclick="deleteAssignment('${memberId}', '${ev.id}', '${ev.name.replace(/'/g,"&#39;")}')"
+            <button onclick="deleteAssignment('${ev.id}', '${esc(ev.name).replace(/'/g, '&#39;')}')"
                 class="shrink-0 p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Remove assignment">
                 <span class="material-symbols-outlined text-sm">delete</span>
             </button>
@@ -225,37 +292,134 @@ function renderEvents(m) {
     }).join('')
 }
 
+/** Only offer events the member does not already have. */
+function renderAwardOptions() {
+    const taken  = new Set(memberData.assignments.map(a => a.event_id))
+    const select = document.getElementById('awardEventSelect')
+    const open   = allEvents.filter(e => !taken.has(e.id))
+
+    if (!open.length) {
+        select.innerHTML = '<option value="">This member already has every event</option>'
+        select.disabled = true
+        return
+    }
+    select.disabled = false
+
+    const byCat = {}
+    for (const e of open) (byCat[e.category] ??= []).push(e)
+
+    select.innerHTML = '<option value="">Choose an event…</option>' +
+        Object.entries(byCat).sort().map(([cat, evs]) =>
+            `<optgroup label="${esc(cat)}">` +
+            evs.map(e => `<option value="${e.id}" data-points="${e.point_value}">${esc(e.name)}${e.event_date ? ` (${e.event_date})` : ''}</option>`).join('') +
+            `</optgroup>`
+        ).join('')
+}
+
+// Default the points box to the event's own value.
+document.getElementById('awardEventSelect').addEventListener('change', e => {
+    const opt = e.target.selectedOptions[0]
+    const pv  = Number(opt?.dataset.points ?? 0)
+    if (pv > 0) document.getElementById('awardPoints').value = pv
+})
+
+// ── Award a new event ─────────────────────────────────────────
+document.getElementById('awardForm').addEventListener('submit', async e => {
+    e.preventDefault()
+    hideError()
+    const fd      = new FormData(e.target)
+    const eventId = fd.get('eventId')
+    const points  = parseInt(fd.get('points'), 10)
+    if (!eventId) return
+
+    const btn = e.target.querySelector('button[type="submit"]')
+    btn.disabled = true
+    setStatus('awardStatus', 'work', 'Saving…')
+
+    try {
+        await setAssignment(memberId, eventId, points)
+        try {
+            await syncAssignmentToSheet(memberId, eventId)
+            setStatus('awardStatus', 'good', `Awarded ${points} points — written to the Google Sheet.`)
+        } catch (sheetErr) {
+            setStatus('awardStatus', 'warn', `Awarded ${points} points on the website, but the sheet was not updated: ${sheetErr.message}`)
+        }
+        e.target.reset()
+        await load()
+    } catch (err) {
+        setStatus('awardStatus', 'bad', err.message)
+    } finally {
+        btn.disabled = false
+    }
+})
+
+// ── Member details ────────────────────────────────────────────
+document.getElementById('memberDetailsForm').addEventListener('submit', async e => {
+    e.preventDefault()
+    const fd    = new FormData(e.target)
+    const first = fd.get('firstName').trim()
+    const last  = fd.get('lastName').trim()
+    const btn   = e.target.querySelector('button[type="submit"]')
+
+    btn.disabled = true
+    setStatus('detailsStatus', 'work', 'Saving…')
+    try {
+        await updateMember(memberId, {
+            first_name: first,
+            last_name : last,
+            name      : `${first} ${last}`.trim(),
+            grade     : fd.get('grade') ? Number(fd.get('grade')) : null,
+        })
+        setStatus('detailsStatus', 'good',
+            'Saved. Note: renaming here does not rename them in the Google Sheet — edit the sheet row to match, or the next sync will not find them.')
+        await load()
+    } catch (err) {
+        setStatus('detailsStatus', 'bad', err.message)
+    } finally {
+        btn.disabled = false
+    }
+})
+
 // ── Per-event inline edit ─────────────────────────────────────
 window.toggleEvEdit = (eventId, current) => {
     document.getElementById(`ev-view-${eventId}`).classList.add('hidden')
     const el = document.getElementById(`ev-edit-${eventId}`)
-    el.classList.remove('hidden')
-    el.classList.add('flex')
+    el.classList.remove('hidden'); el.classList.add('flex')
     const input = document.getElementById(`ev-input-${eventId}`)
     input.value = current; input.focus(); input.select()
 }
 
 window.cancelEvEdit = (eventId) => {
-    document.getElementById(`ev-edit-${eventId}`).classList.add('hidden')
-    document.getElementById(`ev-edit-${eventId}`).classList.remove('flex')
+    const el = document.getElementById(`ev-edit-${eventId}`)
+    el.classList.add('hidden'); el.classList.remove('flex')
     document.getElementById(`ev-view-${eventId}`).classList.remove('hidden')
 }
 
 window.adjustEv = (eventId, delta) => {
     const input = document.getElementById(`ev-input-${eventId}`)
-    input.value = Math.max(0, (parseInt(input.value) || 0) + delta)
+    input.value = Math.max(0, (parseInt(input.value, 10) || 0) + delta)
 }
 
-window.saveEv = async (eventId, memberId) => {
-    const newPts = parseInt(document.getElementById(`ev-input-${eventId}`).value)
+window.saveEv = async (eventId) => {
+    const newPts = parseInt(document.getElementById(`ev-input-${eventId}`).value, 10)
     if (isNaN(newPts) || newPts < 0) return
+
     const btn = document.getElementById(`ev-save-${eventId}`)
+    const msg = document.getElementById(`ev-msg-${eventId}`)
     btn.textContent = '…'; btn.disabled = true
+    msg.textContent = ''
+    hideError()
+
     try {
-        await updatePointsAwarded(memberId, eventId, newPts)
-        await recalcMemberTotal(memberId)
-        const a = memberData.assignments.find(a => a.event_id === eventId)
-        try { if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, newPts) } catch (e) { console.warn('Sheet sync failed:', e) }
+        // 0 points removes the assignment entirely.
+        await setAssignment(memberId, eventId, newPts)
+        try {
+            await syncAssignmentToSheet(memberId, eventId)
+        } catch (sheetErr) {
+            msg.className = 'text-[11px] text-right max-w-[16rem] text-amber-700'
+            msg.textContent = `Saved here, but not in the sheet: ${sheetErr.message}`
+            await new Promise(r => setTimeout(r, 4000))
+        }
         await load()
     } catch (err) {
         showError(err.message)
@@ -264,31 +428,60 @@ window.saveEv = async (eventId, memberId) => {
 }
 
 // ── Delete assignment ─────────────────────────────────────────
-window.deleteAssignment = async (memberId, eventId, eventName) => {
-    if (!confirm(`Remove "${eventName}" from this member? This cannot be undone.`)) return
+window.deleteAssignment = async (eventId, eventName) => {
+    if (!confirm(`Remove "${eventName}" from this member?\n\nTheir cell in the Google Sheet will be set to 0.`)) return
+    hideError()
     try {
-        const a = memberData.assignments.find(a => a.event_id === eventId)
         await removeAssignment(memberId, eventId)
-        await recalcMemberTotal(memberId)
-        try { if (a) await triggerSheetSync(memberId, a.events.category, a.events.name, 0) } catch (e) { console.warn('Sheet sync failed:', e) }
+        // Sync AFTER deleting so the sheet gets the new value of 0.
+        try { await syncAssignmentToSheet(memberId, eventId) }
+        catch (e) { showError(`Removed on the website, but the sheet still shows the old value: ${e.message}`) }
         await load()
     } catch (err) {
         showError(err.message)
     }
 }
 
-// Initial load
+// ── Re-push everything ────────────────────────────────────────
+window.resyncAll = async () => {
+    const btn = document.getElementById('resyncBtn')
+    const orig = btn.innerHTML
+    btn.disabled = true
+    btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">progress_activity</span> Pushing…'
+    hideError()
+    try {
+        const res = await resyncMemberToSheet(memberId)
+        const failed = (res.results ?? []).filter(r => r.error)
+        if (failed.length) {
+            showError(`${res.synced - failed.length} of ${res.synced} written to the sheet.\n\n` +
+                failed.map(f => `• ${f.error}`).join('\n'))
+        } else {
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> Sheet up to date'
+            setTimeout(() => { btn.innerHTML = orig; btn.disabled = false }, 2500)
+            return
+        }
+    } catch (err) {
+        showError(err.message)
+    }
+    btn.innerHTML = orig
+    btn.disabled = false
+}
+
+// ── Initial load ──────────────────────────────────────────────
 if (!memberId) {
     document.getElementById('memberName').textContent = 'No member selected'
     document.getElementById('eventList').innerHTML =
         `<p class="text-on-surface-variant py-4">Return to <a href="admin.html" class="text-secondary underline">Dashboard</a> and click Modify on a member.</p>`
 } else {
-    load().catch(err => {
+    try {
+        allEvents = await fetchEvents()
+        await load()
+    } catch (err) {
         document.getElementById('memberName').textContent = 'Error loading member'
         document.getElementById('eventList').innerHTML =
-            `<p class="text-error py-4 text-sm font-mono bg-error-container px-4 rounded-lg">${err?.message ?? JSON.stringify(err)}</p>`
+            `<p class="text-error py-4 text-sm font-mono bg-error-container px-4 rounded-lg">${esc(err?.message ?? JSON.stringify(err))}</p>`
         console.error(err)
-    })
+    }
 }
 </script>
 

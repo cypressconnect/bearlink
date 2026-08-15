@@ -102,13 +102,60 @@ tailwind.config = {
             <!-- Member Table -->
             <div class="col-span-12 lg:col-span-8">
                 <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
-                    <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
                         <h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
-                        <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
-                            <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
-                            <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
+                                <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
+                                <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+                            </div>
+                            <button onclick="openAddMember()"
+                                class="flex items-center gap-1.5 bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all">
+                                <span class="material-symbols-outlined text-sm">person_add</span> Add Member
+                            </button>
                         </div>
                     </div>
+
+                    <!-- Add Member form (hidden until the button is pressed) -->
+                    <form id="addMemberForm" class="hidden mb-8 bg-surface-container-low rounded-xl p-6 space-y-4">
+                        <h3 class="font-bold text-primary text-sm uppercase tracking-widest">New Member</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">First Name</label>
+                                <input name="firstName" required type="text" placeholder="Aadhavv"
+                                    class="w-full bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:ring-1 focus:ring-secondary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Last Name</label>
+                                <input name="lastName" required type="text" placeholder="Parthipan"
+                                    class="w-full bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:ring-1 focus:ring-secondary"/>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Grade</label>
+                                <select name="grade" class="w-full bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:ring-1 focus:ring-secondary">
+                                    <option value="">—</option>
+                                    <option>9</option><option>10</option><option>11</option><option>12</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Email <span class="font-normal normal-case tracking-normal text-outline">(optional)</span></label>
+                                <input name="email" type="email"
+                                    class="w-full bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:ring-1 focus:ring-secondary"/>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Student ID <span class="font-normal normal-case tracking-normal text-outline">(optional)</span></label>
+                                <input name="studentId" type="text"
+                                    class="w-full bg-surface border border-outline-variant rounded-lg text-sm text-on-surface focus:ring-1 focus:ring-secondary"/>
+                            </div>
+                        </div>
+                        <p id="addMemberStatus" class="text-xs font-medium hidden"></p>
+                        <div class="flex gap-2">
+                            <button type="submit" class="bg-primary text-white px-5 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">Create &amp; add to sheet</button>
+                            <button type="button" onclick="closeAddMember()" class="px-4 py-2 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+                        </div>
+                    </form>
                     <div id="memberTableBody" class="space-y-4">
                         <div class="py-8 text-center text-on-surface-variant">
                             <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
@@ -132,22 +179,19 @@ tailwind.config = {
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Point Value</label>
-                                <input name="pointValue" required min="1" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="100" type="number"/>
+                                <input name="pointValue" required min="1" value="1" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="100" type="number"/>
                             </div>
                             <div>
-                                <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Category</label>
-                                <select name="category" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary">
-                                    <option>Attendance - General</option>
-                                    <option>Attendance - Officer</option>
-                                    <option>Conference</option>
-                                    <option>Social</option>
-                                    <option>Service</option>
-                                    <option>Fundraising</option>
-                                    <option>BAA</option>
-                                    <option>Miscellaneous</option>
-                                    <option>Other</option>
-                                </select>
+                                <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Date</label>
+                                <input name="eventDate" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary" type="date"/>
                             </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Category</label>
+                            <!-- options are filled from CATEGORIES in js/data.js so the
+                                 dropdown can never drift from what the database accepts -->
+                            <select name="category" id="eventCategory" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary"></select>
+                            <p id="categoryHint" class="text-[11px] text-primary-fixed/80 mt-1.5 leading-snug"></p>
                         </div>
                         <button type="submit" class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold shadow-md hover:scale-[0.98] transition-all">Create Event</button>
                     </form>
@@ -164,13 +208,19 @@ tailwind.config = {
                     </a>
                 </div>
 
-                <!-- Connection Node -->
+                <!-- Google Sheet connection status -->
                 <div class="bg-surface-container-low rounded-xl p-6 border-l-4 border-secondary">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">bolt</span>
-                        <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Admin Action</span>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">sync</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Google Sheet</span>
+                        </div>
+                        <button onclick="checkSheet()" id="sheetCheckBtn"
+                            class="text-xs font-bold text-secondary hover:text-primary transition-colors">Check now</button>
                     </div>
-                    <p class="text-sm font-medium text-on-surface">System backup completed successfully. All point logs are synchronized with the primary database.</p>
+                    <div id="sheetStatus" class="text-sm font-medium text-on-surface-variant">
+                        Not checked yet.
+                    </div>
                 </div>
             </div>
         </div>
@@ -265,7 +315,11 @@ tailwind.config = {
 
 <script type="module">
 import { requireAdmin, signOut } from './js/auth.js'
-import { fetchEvents, createEvent, deleteEvent, deleteMember } from './js/data.js'
+import {
+    CATEGORIES, categoryInfo,
+    createEvent, deleteEvent, createMember, deleteMember,
+    fetchEventsWithCounts, sheetHealth,
+} from './js/data.js'
 
 await requireAdmin()
 
@@ -295,18 +349,33 @@ window.switchTab = function(tab) {
     }
 }
 
+// Escape anything that came from the database before it goes into HTML.
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
 // ── Load members ─────────────────────────────────────────────
 async function loadMembers(filter = '') {
     const { supabase } = await import('./js/supabase-client.js')
-    let q = supabase.from('members').select('id, name, total_points').order('total_points', { ascending: false })
-    if (filter) q = q.ilike('name', `%${filter}%`)
+    let q = supabase.from('members')
+        .select('id, name, first_name, last_name, grade, total_points')
+        // Same ranking rule as the public leaderboard: ties break on first name.
+        .order('total_points', { ascending: false })
+        .order('first_name', { ascending: true })
+    if (filter) q = q.or(`name.ilike.%${filter}%,first_name.ilike.%${filter}%,last_name.ilike.%${filter}%`)
     const { data, error } = await q
     if (error) { console.error(error); return }
 
     const body = document.getElementById('memberTableBody')
+    if (!data.length) {
+        body.innerHTML = `<div class="py-8 text-center text-on-surface-variant">No members match "${esc(filter)}".</div>`
+        document.getElementById('memberCountBadge').textContent = '0 Members'
+        return
+    }
     body.innerHTML = data.map((m, i) => {
-        const parts = (m.name ?? '').trim().split(' ')
-        const initials = ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?'
+        const first = m.first_name ?? (m.name ?? '').trim().split(' ')[0] ?? ''
+        const last  = m.last_name  ?? (m.name ?? '').trim().split(' ').slice(1).join(' ')
+        const initials = ((first[0] ?? '') + (last[0] ?? '')).toUpperCase() || '?'
+        const display  = esc(m.name || `${first} ${last}`.trim())
         return `
         <div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low">
             <div class="col-span-1 font-bold text-primary">${String(i+1).padStart(2,'0')}</div>
@@ -314,13 +383,16 @@ async function loadMembers(filter = '') {
                 <div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold text-sm">
                     ${initials}
                 </div>
-                <p class="font-bold text-on-surface">${m.name ?? ''}</p>
+                <div>
+                    <p class="font-bold text-on-surface">${display}</p>
+                    ${m.grade ? `<p class="text-xs text-on-surface-variant">Grade ${m.grade}</p>` : ''}
+                </div>
             </div>
             <div class="col-span-3">
-                <span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${m.total_points.toLocaleString()}</span>
+                <span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${(m.total_points ?? 0).toLocaleString()}</span>
             </div>
             <div class="col-span-4 flex justify-end gap-2">
-                <button onclick="deleteMemberRow('${m.id}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
+                <button onclick="deleteMemberRow('${m.id}', '${display.replace(/'/g, "\\'")}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
                     <span class="material-symbols-outlined text-sm">delete</span>
                 </button>
                 <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center">Modify</a>
@@ -331,69 +403,174 @@ async function loadMembers(filter = '') {
     document.getElementById('memberCountBadge').textContent = `${data.length} Members`
 }
 
-window.deleteMemberRow = async (id) => {
-    if (!confirm('Delete this member? This cannot be undone.')) return
-    const { deleteMember } = await import('./js/data.js')
-    await deleteMember(id)
-    loadMembers()
+window.deleteMemberRow = async (id, name) => {
+    if (!confirm(`Delete ${name || 'this member'}?\n\nThis removes all of their points and deletes their row from the Google Sheet. It cannot be undone.`)) return
+    try {
+        await deleteMember(id)
+        loadMembers(document.getElementById('memberSearchInput').value)
+    } catch (err) {
+        alert('Could not delete member: ' + err.message)
+    }
 }
 
-// ── Load events ──────────────────────────────────────────────
-async function loadEvents() {
-    const { supabase } = await import('./js/supabase-client.js')
-    const { data, error } = await supabase.from('events').select('*').order('event_date', { ascending: false }).limit(10)
-    if (error) return
-    const list = document.getElementById('eventList')
-    list.innerHTML = data.map(ev => `
-        <div class="flex items-start justify-between group">
-            <div class="flex items-start gap-4">
-                <div class="mt-1 w-2 h-2 rounded-full bg-secondary"></div>
-                <div>
-                    <h3 class="font-bold text-on-surface text-sm">${ev.name}</h3>
-                    <p class="text-xs text-on-surface-variant font-medium">${ev.point_value} Points • ${ev.category}</p>
-                </div>
-            </div>
-            <button onclick="removeEvent('${ev.id}')" class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1">
-                <span class="material-symbols-outlined text-sm">close</span>
-            </button>
-        </div>
-    `).join('')
-    document.getElementById('eventCountBadge').textContent = `${data.length} Active Events`
+// ── Add member ───────────────────────────────────────────────
+window.openAddMember  = () => {
+    document.getElementById('addMemberForm').classList.remove('hidden')
+    document.querySelector('#addMemberForm [name="firstName"]').focus()
+}
+window.closeAddMember = () => {
+    const form = document.getElementById('addMemberForm')
+    form.classList.add('hidden')
+    form.reset()
+    document.getElementById('addMemberStatus').classList.add('hidden')
 }
 
-window.removeEvent = async (id) => {
-    if (!confirm('Remove this event?')) return
-    const { deleteEvent } = await import('./js/data.js')
-    await deleteEvent(id)
-    loadEvents()
-}
-
-// ── Create event form ────────────────────────────────────────
-document.getElementById('createEventForm').addEventListener('submit', async e => {
+document.getElementById('addMemberForm').addEventListener('submit', async e => {
     e.preventDefault()
     const fd     = new FormData(e.target)
     const btn    = e.target.querySelector('button[type="submit"]')
-    const origTxt = btn.textContent
-    btn.textContent = 'Creating…'
+    const status = document.getElementById('addMemberStatus')
+
     btn.disabled = true
+    btn.textContent = 'Creating…'
+    status.className = 'text-xs font-medium text-on-surface-variant'
+    status.textContent = 'Adding to the database…'
 
     try {
-        const { createEvent, triggerSheetAddEventColumn } = await import('./js/data.js')
-        const name     = fd.get('eventName')
-        const category = fd.get('category')
-        const newEvent = await createEvent({
-            name,
-            point_value: parseInt(fd.get('pointValue')),
-            category,
-            event_date:  null,
+        const { member, sheet } = await createMember({
+            first_name: fd.get('firstName'),
+            last_name : fd.get('lastName'),
+            grade     : fd.get('grade'),
+            email     : fd.get('email'),
+            student_id: fd.get('studentId'),
         })
 
-        triggerSheetAddEventColumn(category, name).catch(err =>
-            console.warn('Sheet column sync failed:', err)
-        )
+        if (sheet.ok) {
+            const added = (sheet.detail?.tabs ?? []).filter(t => t.row).length
+            status.className = 'text-xs font-medium text-emerald-700'
+            status.textContent = `${member.name} added — row created on ${added} sheet tab${added !== 1 ? 's' : ''}.`
+        } else {
+            // The member is saved; only the spreadsheet write failed.
+            status.className = 'text-xs font-medium text-amber-700'
+            status.textContent = `${member.name} added to the website, but the Google Sheet was not updated: ${sheet.detail}`
+        }
 
-        sessionStorage.setItem('assignEventId', newEvent.id)
-        window.location.href = `admin-assign.html?event=${newEvent.id}`
+        e.target.reset()
+        loadMembers()
+        setTimeout(() => { if (sheet.ok) closeAddMember() }, 2500)
+    } catch (err) {
+        status.className = 'text-xs font-medium text-error'
+        status.textContent = err.message
+    } finally {
+        btn.disabled = false
+        btn.textContent = 'Create & add to sheet'
+    }
+})
+
+// ── Load events ──────────────────────────────────────────────
+async function loadEvents() {
+    const list = document.getElementById('eventList')
+    try {
+        const events = await fetchEventsWithCounts()
+        if (!events.length) {
+            list.innerHTML = `<p class="text-sm text-on-surface-variant italic">No events yet. Create one above.</p>`
+            document.getElementById('eventCountBadge').textContent = '0 Active Events'
+            return
+        }
+        list.innerHTML = events.slice(0, 12).map(ev => `
+            <div class="flex items-start justify-between group">
+                <div class="flex items-start gap-4 min-w-0">
+                    <div class="mt-1.5 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
+                    <div class="min-w-0">
+                        <h3 class="font-bold text-on-surface text-sm truncate">${esc(ev.name)}</h3>
+                        <p class="text-xs text-on-surface-variant font-medium">
+                            ${ev.point_value} pt${ev.point_value === 1 ? '' : 's'} • ${esc(ev.category)}
+                            ${ev.event_date ? ` • ${new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                        </p>
+                        <p class="text-xs text-outline mt-0.5">${ev.members} member${ev.members === 1 ? '' : 's'} awarded</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                    <a href="admin-assign.html?event=${ev.id}" class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Assign points">
+                        <span class="material-symbols-outlined text-sm">how_to_reg</span>
+                    </a>
+                    <button onclick="removeEvent('${ev.id}', '${esc(ev.name)}', ${ev.members})" class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Delete event">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+            </div>
+        `).join('')
+        document.getElementById('eventCountBadge').textContent = `${events.length} Active Events`
+    } catch (err) {
+        list.innerHTML = `<p class="text-sm text-error">Could not load events: ${esc(err.message)}</p>`
+    }
+}
+
+window.removeEvent = async (id, name, memberCount) => {
+    const warning = memberCount > 0
+        ? `Delete "${name}"?\n\nThis also removes the points it gave to ${memberCount} member${memberCount === 1 ? '' : 's'}. The spreadsheet column is left alone.`
+        : `Delete "${name}"?`
+    if (!confirm(warning)) return
+    try {
+        await deleteEvent(id)
+        loadEvents()
+        loadMembers(document.getElementById('memberSearchInput').value)
+    } catch (err) {
+        alert('Could not delete event: ' + err.message)
+    }
+}
+
+// ── Create event form ────────────────────────────────────────
+// Build the category dropdown from the shared list so it always matches
+// what the database will accept.
+const catSelect = document.getElementById('eventCategory')
+catSelect.innerHTML = CATEGORIES
+    .map(c => `<option value="${c.value}">${c.label}</option>`).join('')
+
+function syncCategoryHint() {
+    const info = categoryInfo(catSelect.value)
+    const pv   = document.querySelector('#createEventForm [name="pointValue"]')
+    const hint = document.getElementById('categoryHint')
+    if (!info) { hint.textContent = ''; return }
+
+    if (info.fixedPoints != null) {
+        pv.value = info.fixedPoints
+        hint.textContent = info.value === 'Attendance'
+            ? `Goes to the "${info.sheet}" tab. Attendance is counted per meeting at ${info.fixedPoints} points each.`
+            : `Goes to the "${info.sheet}" tab. Standard value is ${info.fixedPoints} points — change it if this one differs.`
+    } else {
+        hint.textContent = `A new column will be added to the "${info.sheet}" tab.`
+    }
+}
+catSelect.addEventListener('change', syncCategoryHint)
+syncCategoryHint()
+
+document.getElementById('createEventForm').addEventListener('submit', async e => {
+    e.preventDefault()
+    const fd      = new FormData(e.target)
+    const btn     = e.target.querySelector('button[type="submit"]')
+    const origTxt = btn.textContent
+    btn.textContent = 'Creating…'
+    btn.disabled    = true
+
+    try {
+        const { event, sheet } = await createEvent({
+            name       : fd.get('eventName'),
+            point_value: parseInt(fd.get('pointValue'), 10),
+            category   : fd.get('category'),
+            event_date : fd.get('eventDate') || null,
+        })
+
+        if (!sheet.ok) {
+            const goOn = confirm(
+                `"${event.name}" was created on the website, but its column could not be added to the Google Sheet:\n\n` +
+                `${sheet.detail}\n\nAssign points anyway? (You can add the column by hand later.)`
+            )
+            if (!goOn) { loadEvents(); btn.textContent = origTxt; btn.disabled = false; return }
+        }
+
+        sessionStorage.setItem('assignEventId', event.id)
+        window.location.href = `admin-assign.html?event=${event.id}`
     } catch (err) {
         console.error(err)
         alert('Failed to create event: ' + err.message)
@@ -402,9 +579,39 @@ document.getElementById('createEventForm').addEventListener('submit', async e =>
     }
 })
 
+// ── Google Sheet status ──────────────────────────────────────
+window.checkSheet = async () => {
+    const box = document.getElementById('sheetStatus')
+    const btn = document.getElementById('sheetCheckBtn')
+    btn.disabled = true
+    box.innerHTML = `<span class="text-on-surface-variant">Checking…</span>`
+    try {
+        const { report } = await sheetHealth()
+        const rows = Object.entries(report.categories).map(([cat, info]) => info.error
+            ? `<li class="text-error">${esc(cat)} — not found</li>`
+            : `<li><span class="font-semibold text-on-surface">${esc(cat)}</span> → "${esc(info.tab)}" · ${info.rows} members · ${info.headers.length - 2} columns</li>`
+        ).join('')
+        const broken = Object.values(report.categories).filter(i => i.error).length
+        box.innerHTML = `
+            <p class="mb-2 font-semibold ${broken ? 'text-amber-700' : 'text-emerald-700'}">
+                ${broken ? `${broken} tab${broken === 1 ? '' : 's'} missing` : 'All tabs connected'}
+                · ${report.database.members} members · ${report.database.events} events
+            </p>
+            <ul class="space-y-0.5 text-xs list-none">${rows}</ul>`
+    } catch (err) {
+        box.innerHTML = `<span class="text-error">${esc(err.message)}</span>`
+    } finally {
+        btn.disabled = false
+    }
+}
+
 // ── Search ───────────────────────────────────────────────────
-document.getElementById('memberSearchInput').addEventListener('input', e =>
-    loadMembers(e.target.value))
+let searchTimer
+document.getElementById('memberSearchInput').addEventListener('input', e => {
+    clearTimeout(searchTimer)
+    const v = e.target.value
+    searchTimer = setTimeout(() => loadMembers(v), 200)
+})
 
 // ── Chapter Report ───────────────────────────────────────────
 let reportData = null   // cache so we don't refetch on every tab switch

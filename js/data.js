@@ -1,179 +1,315 @@
 // ── Data helpers (shared across pages) ───────────────────────
 import { supabase } from './supabase-client.js'
 
+/**
+ * The categories the app understands. These must match the CHECK
+ * constraint in supabase/migrations/002_repair_and_harden.sql and the
+ * TAB_ALIASES maps in the two edge functions + Code.gs.
+ */
+export const CATEGORIES = [
+    { value: 'Attendance',    label: 'Attendance (meetings)', sheet: 'Attendance',        fixedPoints: 2  },
+    { value: 'Social',        label: 'Social',                sheet: 'Social',            fixedPoints: null },
+    { value: 'Service',       label: 'Service project',       sheet: 'Services',          fixedPoints: null },
+    { value: 'Fundraising',   label: 'Fundraiser',            sheet: 'Fundraising',       fixedPoints: null },
+    { value: 'Conference',    label: 'Conference',            sheet: 'Conferences',       fixedPoints: 12 },
+    { value: 'BAA',           label: 'Business Achievement Award', sheet: 'BAA',          fixedPoints: 6  },
+    { value: 'Committee',     label: 'Committee meeting',     sheet: 'Committee Meetings', fixedPoints: null },
+    { value: 'Miscellaneous', label: 'Miscellaneous points',  sheet: 'Points in General', fixedPoints: null },
+]
+
+export const categoryInfo = (value) => CATEGORIES.find(c => c.value === value) ?? null
+
 // ── Leaderboard / Members ────────────────────────────────────
 
-/** Fetch all members ordered by total_points descending. */
+/** All members, highest points first. */
 export async function fetchLeaderboard() {
     const { data, error } = await supabase
         .from('members')
-        .select('id, name, grade, total_points')
+        .select('id, name, first_name, last_name, grade, total_points')
+        // Ties break on first name, A->Z.
         .order('total_points', { ascending: false })
+        .order('first_name', { ascending: true })
     if (error) throw error
     return data
 }
 
-/** Fetch a single member with their full event history. */
+/** One member plus their full point history. */
 export async function fetchMember(memberId) {
     const { data: member, error: memberErr } = await supabase
         .from('members')
-        .select('id, name, email, grade, student_id, total_points')
+        .select('id, name, first_name, last_name, email, grade, student_id, total_points')
         .eq('id', memberId)
         .single()
     if (memberErr) throw memberErr
 
     const { data: assignments, error: assignErr } = await supabase
         .from('point_assignments')
-        .select('points_awarded, event_id, events(id, name, category, event_date)')
+        .select('points_awarded, assigned_at, event_id, events(id, name, category, event_date, point_value)')
         .eq('member_id', memberId)
     if (assignErr) throw assignErr
 
-    return { ...member, assignments }
+    // Newest first, undated events last.
+    const sorted = (assignments ?? []).sort((a, b) => {
+        const da = a.events?.event_date, db = b.events?.event_date
+        if (da && db) return db.localeCompare(da)
+        if (da) return -1
+        if (db) return 1
+        return (a.events?.name ?? '').localeCompare(b.events?.name ?? '')
+    })
+
+    return { ...member, assignments: sorted }
+}
+
+/** Create a member, then give them a row on every tab of the sheet. */
+export async function createMember({ first_name, last_name, grade, email, student_id }) {
+    const first = (first_name ?? '').trim()
+    const last  = (last_name ?? '').trim()
+    if (!first && !last) throw new Error('A first or last name is required.')
+
+    const { data: clash } = await supabase
+        .from('members')
+        .select('id')
+        .ilike('first_name', first)
+        .ilike('last_name', last)
+        .maybeSingle()
+    if (clash) throw new Error(`${first} ${last} is already a member.`)
+
+    const { data, error } = await supabase
+        .from('members')
+        .insert({
+            name      : `${first} ${last}`.trim(),
+            first_name: first,
+            last_name : last,
+            grade     : grade ? Number(grade) : null,
+            email     : email?.trim() || null,
+            student_id: student_id?.trim() || null,
+        })
+        .select()
+        .single()
+    if (error) throw error
+
+    // Non-fatal: the member exists in the DB even if the sheet write fails.
+    const sheet = await callSheetSync({ action: 'add_member_row', member_id: data.id })
+        .then(r => ({ ok: true, detail: r }))
+        .catch(err => ({ ok: false, detail: err.message }))
+
+    return { member: data, sheet }
+}
+
+export async function updateMember(memberId, fields) {
+    const { error } = await supabase.from('members').update(fields).eq('id', memberId)
+    if (error) throw error
+}
+
+export async function deleteMember(memberId) {
+    const { data: m } = await supabase
+        .from('members').select('first_name, last_name').eq('id', memberId).maybeSingle()
+
+    const { error } = await supabase.from('members').delete().eq('id', memberId)
+    if (error) throw error
+
+    if (m) {
+        await callSheetSync({
+            action: 'remove_member_row', first_name: m.first_name, last_name: m.last_name,
+        }).catch(err => console.warn('Sheet row removal failed:', err.message))
+    }
 }
 
 // ── Events ───────────────────────────────────────────────────
 
-/** Fetch all events ordered by most recent. */
+/** All events, newest first, undated last. */
 export async function fetchEvents() {
     const { data, error } = await supabase
         .from('events')
         .select('*')
-        .order('event_date', { ascending: false })
+        .order('event_date', { ascending: false, nullsFirst: false })
+        .order('name', { ascending: true })
     if (error) throw error
     return data
 }
 
-/** Create a new event. */
+/** Events with how many members have been awarded each one. */
+export async function fetchEventsWithCounts() {
+    const [{ data: events, error: evErr }, { data: rows, error: paErr }] = await Promise.all([
+        supabase.from('events').select('*')
+            .order('event_date', { ascending: false, nullsFirst: false }),
+        supabase.from('point_assignments').select('event_id, points_awarded'),
+    ])
+    if (evErr) throw evErr
+    if (paErr) throw paErr
+
+    const counts = new Map()
+    for (const r of rows ?? []) {
+        const c = counts.get(r.event_id) ?? { members: 0, points: 0 }
+        c.members += 1
+        c.points  += r.points_awarded ?? 0
+        counts.set(r.event_id, c)
+    }
+    return (events ?? []).map(e => ({ ...e, ...(counts.get(e.id) ?? { members: 0, points: 0 }) }))
+}
+
+/**
+ * Create an event and add its column to the spreadsheet.
+ * Rejects duplicates up front so the sheet never grows a second column
+ * for the same thing.
+ */
 export async function createEvent({ name, point_value, category, event_date }) {
+    const clean = (name ?? '').trim()
+    if (!clean) throw new Error('Event name is required.')
+    if (!CATEGORIES.some(c => c.value === category)) throw new Error(`Unknown category: ${category}`)
+
+    const { data: clash } = await supabase
+        .from('events').select('id, name').eq('category', category).ilike('name', clean).maybeSingle()
+    if (clash) throw new Error(`"${clash.name}" already exists in ${category}.`)
+
+    const info = categoryInfo(category)
     const { data, error } = await supabase
         .from('events')
-        .insert({ name, point_value, category, event_date })
+        .insert({
+            name        : clean,
+            point_value : Number(point_value) || 0,
+            category,
+            event_date  : event_date || null,
+            sheet_tab   : info?.sheet ?? null,
+            sheet_header: clean,
+        })
         .select()
         .single()
     if (error) throw error
-    return data
+
+    const sheet = await callSheetSync({ action: 'add_event_column', event_id: data.id })
+        .then(r => ({ ok: true, detail: r }))
+        .catch(err => ({ ok: false, detail: err.message }))
+
+    return { event: data, sheet }
 }
 
-/** Delete an event by id. */
+export async function updateEvent(eventId, fields) {
+    const { error } = await supabase.from('events').update(fields).eq('id', eventId)
+    if (error) throw error
+    if (fields.name) {
+        await callSheetSync({ action: 'rename_event', event_id: eventId })
+            .catch(err => console.warn('Sheet header rename failed:', err.message))
+    }
+}
+
 export async function deleteEvent(eventId) {
-    const { error } = await supabase
-        .from('events')
-        .delete()
-        .eq('id', eventId)
+    const { error } = await supabase.from('events').delete().eq('id', eventId)
     if (error) throw error
 }
 
-// ── Point Assignment ─────────────────────────────────────────
+// ── Point assignments ────────────────────────────────────────
 
 /**
- * Assign points from a specific event to multiple members.
- * Uses upsert so re-submitting the same event/member pair is safe.
+ * Award points for one event to a set of members.
  *
- * @param {string}   eventId   - UUID of the event
- * @param {string[]} memberIds - Array of member UUIDs
- * @param {number}   pointValue
+ * @param {string}   eventId
+ * @param {string[]} memberIds
+ * @param {number|Record<string, number>} points
+ *        A single value for everyone, or a map of memberId -> points.
  */
-export async function assignPoints(eventId, memberIds, pointValue) {
+export async function assignPoints(eventId, memberIds, points) {
     const rows = memberIds.map(member_id => ({
         member_id,
-        event_id: eventId,
-        points_awarded: pointValue,
+        event_id      : eventId,
+        points_awarded: typeof points === 'number' ? points : (points[member_id] ?? 0),
     }))
+
+    const awarded = rows.filter(r => r.points_awarded > 0)
+    const cleared = rows.filter(r => r.points_awarded <= 0).map(r => r.member_id)
+
+    if (awarded.length) {
+        const { error } = await supabase
+            .from('point_assignments')
+            .upsert(awarded, { onConflict: 'member_id,event_id' })
+        if (error) throw error
+    }
+    // 0 points means "not awarded" -- do not leave a zero row behind.
+    if (cleared.length) {
+        const { error } = await supabase
+            .from('point_assignments').delete().eq('event_id', eventId).in('member_id', cleared)
+        if (error) throw error
+    }
+
+    return { awarded: awarded.length, cleared: cleared.length }
+}
+
+/** Award (or change) one member's points for one event. */
+export async function setAssignment(memberId, eventId, pointsAwarded) {
+    const pts = Number(pointsAwarded) || 0
+    if (pts <= 0) return removeAssignment(memberId, eventId)
+
     const { error } = await supabase
         .from('point_assignments')
-        .upsert(rows, { onConflict: 'member_id,event_id' })
+        .upsert([{ member_id: memberId, event_id: eventId, points_awarded: pts }],
+                { onConflict: 'member_id,event_id' })
     if (error) throw error
 }
 
-/** Remove a point assignment (un-award points). */
 export async function removeAssignment(memberId, eventId) {
     const { error } = await supabase
-        .from('point_assignments')
-        .delete()
-        .eq('member_id', memberId)
-        .eq('event_id', eventId)
+        .from('point_assignments').delete().eq('member_id', memberId).eq('event_id', eventId)
     if (error) throw error
-}
-
-// ── Members CRUD ─────────────────────────────────────────────
-
-/** Create a new member. */
-export async function createMember({ name, email, grade, student_id }) {
-    const { data, error } = await supabase
-        .from('members')
-        .insert({ name, email, grade, student_id })
-        .select()
-        .single()
-    if (error) throw error
-    return data
-}
-
-/** Update a member's details. */
-export async function updateMember(memberId, fields) {
-    const { error } = await supabase
-        .from('members')
-        .update(fields)
-        .eq('id', memberId)
-    if (error) throw error
-}
-
-/** Update points_awarded for a single assignment (identified by member+event). */
-export async function updatePointsAwarded(memberId, eventId, pointsAwarded) {
-    const { error } = await supabase
-        .from('point_assignments')
-        .update({ points_awarded: pointsAwarded })
-        .eq('member_id', memberId)
-        .eq('event_id', eventId)
-    if (error) throw error
-}
-
-/** Recalculate a member's total_points from their assignments and save it. */
-export async function recalcMemberTotal(memberId) {
-    const { data, error } = await supabase
-        .from('point_assignments')
-        .select('points_awarded')
-        .eq('member_id', memberId)
-    if (error) throw error
-    const total = (data ?? []).reduce((s, r) => s + (r.points_awarded ?? 0), 0)
-    await updateMember(memberId, { total_points: total })
-    return total
 }
 
 /**
- * Add a new column header (and zero-fill existing rows) in the Google Sheet
- * for a newly created event. No-ops gracefully if the category has no sheet tab.
+ * total_points is maintained by a database trigger on point_assignments,
+ * so there is nothing to recompute here -- just read the fresh value.
  */
-export async function triggerSheetAddEventColumn(category, eventName) {
-    const { error } = await supabase.functions.invoke('sync-to-sheets', {
-        body: { action: 'add_event_column', category, event_name: eventName },
-    })
-    if (error) {
-        const detail = error.context
-            ? await error.context.text().catch(() => '')
-            : ''
-        throw new Error(detail || error.message)
-    }
-}
-
-
-/** Update a single cell in the Google Sheet for the given assignment. */
-export async function triggerSheetSync(memberId, category, eventName, value) {
-    const { error } = await supabase.functions.invoke('sync-to-sheets', {
-        body: { member_id: memberId, category, event_name: eventName, value },
-    })
-    if (error) {
-        const detail = error.context
-            ? await error.context.text().catch(() => '')
-            : ''
-        throw new Error(detail || error.message)
-    }
-}
-
-/** Delete a member. */
-export async function deleteMember(memberId) {
-    const { error } = await supabase
-        .from('members')
-        .delete()
-        .eq('id', memberId)
+export async function refreshMemberTotal(memberId) {
+    const { data, error } = await supabase
+        .from('members').select('total_points').eq('id', memberId).single()
     if (error) throw error
+    return data.total_points
+}
+
+// ── Google Sheet bridge ──────────────────────────────────────
+
+/**
+ * Call the sync-to-sheets edge function. It verifies the caller is an
+ * admin, so the browser session must be signed in.
+ */
+async function callSheetSync(body) {
+    const { data, error } = await supabase.functions.invoke('sync-to-sheets', { body })
+    if (error) {
+        let detail = ''
+        try { detail = await error.context?.text() ?? '' } catch { /* body already read */ }
+        try { detail = JSON.parse(detail).error ?? detail } catch { /* not JSON */ }
+        throw new Error(detail || error.message)
+    }
+    if (data && data.ok === false) throw new Error(data.error ?? 'Sheet sync failed')
+    return data
+}
+
+/** Push one member's points for one event into the spreadsheet. */
+export async function syncAssignmentToSheet(memberId, eventId) {
+    return callSheetSync({ action: 'write_points', member_id: memberId, event_id: eventId })
+}
+
+/** Push every point one member has into the spreadsheet. */
+export async function resyncMemberToSheet(memberId) {
+    return callSheetSync({ action: 'resync_member', member_id: memberId })
+}
+
+/** Structural report on the spreadsheet — used by the dashboard's Sheet Status. */
+export async function sheetHealth() {
+    return callSheetSync({ action: 'health' })
+}
+
+/**
+ * Push a batch of members for one event, reporting per-member failures
+ * instead of aborting the whole run.
+ */
+export async function syncBatchToSheet(memberIds, eventId, onProgress) {
+    const failures = []
+    let done = 0
+    for (const memberId of memberIds) {
+        try {
+            await syncAssignmentToSheet(memberId, eventId)
+        } catch (err) {
+            failures.push({ memberId, error: err.message })
+        }
+        onProgress?.(++done, memberIds.length)
+    }
+    return failures
 }

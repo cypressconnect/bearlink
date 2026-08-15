@@ -192,7 +192,7 @@ function renderPodium(members) {
         const actualRank = top.indexOf(m) + 1
         const isFirst = actualRank === 1
         return `
-        <a href="member?id=${m.id}" class="${isFirst ? 'order-1 md:order-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform scale-105 z-10 hover:shadow-lg transition-shadow'
+        <a href="member.html?id=${m.id}" class="${isFirst ? 'order-1 md:order-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform scale-105 z-10 hover:shadow-lg transition-shadow'
                                : 'bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm hover:shadow-md transition-shadow ' + (actualRank===2?'order-2 md:order-1 border-l-4 border-slate-300':'order-3 border-r-4 border-orange-200')}">
             ${isFirst ? `<div class="absolute -top-6 left-1/2 -translate-x-1/2">
                 <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings:'FILL' 1">workspace_premium</span>
@@ -224,7 +224,7 @@ function renderTable(members, startRank = 1) {
         <tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
             <td class="px-8 py-6"><span class="font-bold text-primary">#${startRank + i}</span></td>
             <td class="px-8 py-6">
-                <a href="member?id=${m.id}" class="flex items-center gap-4 group-hover:text-secondary transition-colors">
+                <a href="member.html?id=${m.id}" class="flex items-center gap-4 group-hover:text-secondary transition-colors">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center">
                         <span class="material-symbols-outlined text-slate-400">account_circle</span>
                     </div>

@@ -1,16 +1,91 @@
-# Bear Link — Backend Setup Guide
+# Bear Link — Setup & Operations
 
-## 1. Supabase Project
+Bear Link keeps two things in step:
 
-1. Go to [supabase.com](https://supabase.com) → New Project
-2. **SQL Editor** → paste and run `supabase/schema.sql`
-3. Note your **Project URL** and **anon/public key** (Settings → API)
-4. Paste both into `js/supabase-client.js`
+* the **Google Sheet** (`2025 - 2026 FBLA Points System`) — where officers log points
+* the **website** (Supabase + these HTML pages) — the leaderboard and admin dashboard
 
-### Create the first admin account
+Either side can be edited and the other catches up.
 
-In Supabase Dashboard → **Authentication → Users → Invite user**, enter your email.
-Then in **SQL Editor** run:
+---
+
+## Deploying the repair (do this first, in order)
+
+The sync had drifted badly. These four steps bring both sides back in line.
+
+### 1. Run the repair migration
+
+Supabase Dashboard → **SQL Editor** → paste and run
+`supabase/migrations/002_repair_and_harden.sql`.
+
+It is idempotent — running it twice is safe. It:
+
+* deletes the ~39 fake "events" that were really spreadsheet formula and
+  subtotal columns (`Attendance Formula`, `# of Socials Participated In`, `|`, …)
+* merges the 14 duplicate `SilverCrest` events and the duplicate meeting events
+* adds a unique index so duplicates cannot come back
+* fixes point values (conferences 12, Everfi 18, Capstone 20)
+* backfills event dates from the `M/D` in each event name
+* recalculates every member's total from their assignments
+
+Verify with the queries commented at the bottom of the file.
+
+### 2. Deploy both edge functions
+
+```bash
+supabase login
+supabase link --project-ref lrnlqdxudmoszlaeatst
+
+# Called by the website. The admin's login token is checked, so it needs JWT verification ON.
+supabase functions deploy sync-to-sheets
+
+# Called by Apps Script, which has no login. It authenticates with a shared secret instead.
+supabase functions deploy sheet-sync --no-verify-jwt
+```
+
+> The `--no-verify-jwt` flag belongs on **`sheet-sync` only**. Putting it on
+> `sync-to-sheets` would let anyone on the internet write to the spreadsheet.
+
+### 3. Update the Apps Script
+
+Open the sheet → **Extensions → Apps Script** → replace everything with
+`google-apps-script/Code.gs` → Save → reload the spreadsheet.
+
+A **Bear Link** menu appears. Then, in order:
+
+1. **Setup → Set sync secret** — paste `SHEET_SYNC_SECRET`
+2. **Setup → Check connection** — should report the member count
+3. **Repair sheet headers** — fixes the corrupted `A1` cells
+   (the Services tab literally contained
+   `supabase functions deploy sync-to-sheets --no-verify-jwt`, and the
+   Attendance tab contained `Atte`)
+4. **Health check** — confirms every tab is found and readable
+5. **Import sheet into website** — makes the website match the sheet exactly
+6. **Setup → Install live sync** — turns on the onEdit trigger
+
+### 4. Confirm from the website
+
+Sign in to `admin.html` and press **Check now** in the Google Sheet panel.
+It should list every category with the tab it resolved to and the member count.
+
+---
+
+## Secrets
+
+Supabase Dashboard → **Edge Functions → Secrets**:
+
+| Key | Value |
+|-----|-------|
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | `xxx@xxx.iam.gserviceaccount.com` |
+| `GOOGLE_PRIVATE_KEY` | the `private_key` from the service-account JSON, `\n` escapes intact |
+| `GOOGLE_SHEET_ID` | `1tHgs43YZz4nver4kH4QYXOpJpSX_s9a0K9ff5tSHQFE` |
+| `SHEET_SYNC_SECRET` | any random string; the same value goes into Apps Script |
+
+The spreadsheet must be shared with the service-account email as **Editor**.
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
+
+### Creating an admin
 
 ```sql
 insert into public.admin_profiles (id, name)
@@ -18,81 +93,112 @@ select id, email from auth.users
 where email = 'your-admin-email@example.com';
 ```
 
----
-
-## 2. Google Sheets Sync
-
-### Site → Sheet (automatic when DB changes)
-
-1. **Create a Google Service Account**
-   - [console.cloud.google.com](https://console.cloud.google.com) → IAM & Admin → Service Accounts → Create
-   - Enable the **Google Sheets API** for your project
-   - Create a JSON key → download it
-
-2. **Share your spreadsheet** with the service account email (`xxx@xxx.iam.gserviceaccount.com`) as **Editor**
-
-3. **Store secrets** in Supabase → Edge Functions → Secrets:
-   | Key | Value |
-   |-----|-------|
-   | `GOOGLE_SERVICE_ACCOUNT_EMAIL` | service account email |
-   | `GOOGLE_PRIVATE_KEY` | `private_key` from the JSON (keep `\n` as-is) |
-   | `GOOGLE_SHEET_ID` | the ID in your sheet URL (`/d/XXXXXX/edit`) |
-   | `GOOGLE_SHEET_TAB` | tab name, e.g. `Points` |
-
-4. **Deploy the Edge Function** (requires [Supabase CLI](https://supabase.com/docs/guides/cli)):
-   ```bash
-   supabase login
-   supabase link --project-ref YOUR_PROJECT_ID
-   supabase functions deploy sync-to-sheets --no-verify-jwt
-   ```
-
-5. **Create a Database Webhook** in Supabase Dashboard → Database → Webhooks:
-   - Table: `members` | Events: ✅ INSERT ✅ UPDATE ✅ DELETE
-   - URL: `https://YOUR_PROJECT_ID.supabase.co/functions/v1/sync-to-sheets`
-   - Method: POST
-
-### Sheet → Site (when you edit the Google Sheet)
-
-1. Open your Google Sheet → **Extensions → Apps Script**
-2. Paste the contents of `google-apps-script/Code.gs`
-3. Update `SUPABASE_URL` and `SUPABASE_KEY` at the top
-4. Run `setupTrigger()` once (Run menu → setupTrigger)
-5. Run `initialImport()` once to pull current DB data into the sheet
-
-From now on, editing any cell in columns B–F (Name, Grade, Student ID, Email, Points) will automatically upsert that row into Supabase.
+Only accounts with a row here can reach the admin pages or write to the sheet.
 
 ---
 
-## 3. Hosting (optional)
+## How the two sides map to each other
 
-The site is plain HTML — drop it anywhere:
-- **Netlify**: drag the folder to [app.netlify.com/drop](https://app.netlify.com/drop)
-- **GitHub Pages**: push to a repo, enable Pages in Settings
-- **Supabase Storage**: not recommended for HTML hosting
+| Category | Sheet tab | Cell means | Points |
+|---|---|---|---|
+| Attendance | `Attendance` | count of meetings | 2 each |
+| Social | `Social` | points | as entered |
+| Service | `Services` | points | as entered |
+| Fundraising | `Fundraising` | points | as entered |
+| Conference | `Conferences` | 1 = attended | 12 |
+| BAA | `BAA` | 1 = earned | 6, Everfi 18, Capstone 20 |
+| Committee | `Committee Meetings` | points | as entered |
+| Miscellaneous | `Points in General` | points | as entered |
+
+Tab names are matched loosely, so renaming `Services` to `Service Projects`
+will not break anything.
+
+**Columns that are never treated as events:** anything whose header starts
+with `Total`, `Sum`, `#` or `Points for`, anything ending in `Formula`, the
+`(x2)`-style multiplier columns, and any column whose cells contain formulas.
+Those are computed by the sheet and importing them was what inflated the
+website's event list.
 
 ---
 
-## File Map
+## Everyday tasks
+
+### Add a member
+`admin.html` → **Add Member**. Creates them in the database and appends a row
+to every tab of the spreadsheet, copying the formulas from the row above so
+their subtotals work immediately.
+
+### Add an event
+`admin.html` → **Add New Event**. Pick the category (this decides the tab), set
+the date and point value. A new column is inserted on that tab, just before
+the subtotal column, and zero-filled. You are then taken straight to the
+assign-points screen.
+
+### Award points
+`admin-assign.html` — select members, optionally change any individual's
+amount, submit. The database is written first, then each sheet cell; if a cell
+write fails you get a per-member report rather than a silent failure.
+
+To give one member points for something, use **Award Points** on their
+`admin-member.html` page instead.
+
+### Fix a member whose sheet and site disagree
+Their page → **Re-push all to sheet**.
+
+### Fix a whole tab
+In the sheet: **Bear Link → Push one tab to website** (while that tab is open).
+
+---
+
+## Safety rules built into the sync
+
+* **Formulas are never overwritten.** If a write targets a cell containing a
+  formula, it is refused with an explanatory error instead of destroying it.
+* **Clearing a cell clears the points.** A full tab import replaces that
+  column's assignments outright, so deleting a value in the sheet removes the
+  points on the site. This did not used to happen.
+* **Attendance counts are set, not incremented.** The old code added 1 to the
+  meeting count on every sync, including deletions.
+* **0 points means no assignment.** Zero rows are deleted rather than stored.
+* **Duplicate events are impossible.** Enforced by a unique index on
+  `(lower(name), category)`.
+
+---
+
+## Hosting
+
+The site is plain static HTML:
+
+* **Netlify** — drag the folder to [app.netlify.com/drop](https://app.netlify.com/drop)
+* **GitHub Pages** — push and enable Pages in Settings
+
+---
+
+## File map
 
 ```
 fbla-website/
-├── index.html                  Home
-├── competitive-events.html     Events
-├── resources.html              Resources
-├── points.html                 Live leaderboard (Supabase)
-├── member.html                 Member detail (Supabase, ?id=UUID)
-├── login.html                  Admin login
-├── admin.html                  Admin dashboard (auth-gated)
-├── admin-assign.html           Assign event points (auth-gated)
+├── index.html                    Home
+├── points.html                   Public leaderboard
+├── member.html                   Public member detail (?id=UUID)
+├── login.html                    Admin login
+├── admin.html                    Dashboard: members, events, sheet status, chapter report
+├── admin-assign.html             Award an event to many members
+├── admin-member.html             One member: details, award points, edit/remove, re-push
+├── competitive-events.html       Events info
+├── resources.html                Resources
 ├── js/
-│   ├── supabase-client.js      ← PUT YOUR KEYS HERE
-│   ├── auth.js                 Auth helpers
-│   └── data.js                 DB query helpers
+│   ├── supabase-client.js        Project URL + anon key
+│   ├── auth.js                   Session + admin gate
+│   └── data.js                   All database and sheet-sync calls
 ├── supabase/
-│   ├── schema.sql              Run once in Supabase SQL Editor
+│   ├── schema.sql                Original schema (first install only)
+│   ├── migrations/
+│   │   ├── 001_update_schema.sql first_name/last_name + categories
+│   │   └── 002_repair_and_harden.sql   ← the repair
 │   └── functions/
-│       └── sync-to-sheets/
-│           └── index.ts        Edge Function (deploy via CLI)
+│       ├── sync-to-sheets/       website -> sheet   (admin JWT required)
+│       └── sheet-sync/           sheet -> website   (shared secret)
 └── google-apps-script/
-    └── Code.gs                 Paste into Apps Script editor
+    └── Code.gs                   Paste into the sheet's Apps Script editor
 ```

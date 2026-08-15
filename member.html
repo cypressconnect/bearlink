@@ -111,9 +111,13 @@ tailwind.config = {
 import { fetchMember } from './js/data.js'
 
 const CATEGORY_ICONS = {
-    Competition: 'workspace_premium', Social: 'groups', Meeting: 'calendar_today',
-    Fundraiser: 'volunteer_activism', Education: 'school', Volunteer: 'volunteer_activism'
+    Attendance: 'how_to_reg', Social: 'groups', Service: 'volunteer_activism',
+    Fundraising: 'savings', Conference: 'emoji_events', BAA: 'military_tech',
+    Committee: 'diversity_3', Miscellaneous: 'star', Other: 'event',
 }
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 const params   = new URLSearchParams(window.location.search)
 const memberId = params.get('id')
@@ -124,7 +128,9 @@ if (!memberId) {
     fetchMember(memberId).then(m => {
         document.title = `${m.name} | Bear Link`
         document.getElementById('memberName').textContent   = m.name
-        document.getElementById('memberMeta').textContent   = `Grade ${m.grade} • Student ID ${m.student_id ?? '—'}`
+        document.getElementById('memberMeta').textContent   =
+            [m.grade ? `Grade ${m.grade}` : null, m.student_id ? `Student ID ${m.student_id}` : null]
+            .filter(Boolean).join(' • ') || 'Chapter member'
         document.getElementById('memberPoints').textContent = m.total_points.toLocaleString()
 
         // Badges
@@ -141,7 +147,9 @@ if (!memberId) {
         history.innerHTML = m.assignments.map(a => {
             const ev   = a.events
             const icon = CATEGORY_ICONS[ev.category] ?? 'event'
-            const date = ev.event_date ? new Date(ev.event_date).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) : '—'
+            const date = ev.event_date
+                ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
+                : 'No date'
             return `
             <div class="group bg-surface-container-low rounded-xl p-6 transition-all hover:bg-surface-container flex flex-col md:flex-row items-center justify-between gap-6 relative">
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1 bg-secondary rounded-r-full"></div>
@@ -150,8 +158,8 @@ if (!memberId) {
                         <span class="material-symbols-outlined text-3xl">${icon}</span>
                     </div>
                     <div>
-                        <h3 class="text-lg font-bold font-headline text-primary">${ev.name}</h3>
-                        <p class="text-sm text-on-surface-variant">${date} • ${ev.category}</p>
+                        <h3 class="text-lg font-bold font-headline text-primary">${esc(ev.name)}</h3>
+                        <p class="text-sm text-on-surface-variant">${date} • ${esc(ev.category)}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-8">

@@ -264,9 +264,12 @@ els.form.addEventListener('submit', async (e) => {
     busy(true, 'Signing in…')
     const { error } = await signIn(email, password)
     if (error) {
-        showError(error.message === 'Invalid login credentials'
-            ? 'Incorrect email or password.'
-            : error.message)
+        const msg = /not confirmed/i.test(error.message)
+            ? 'Your account still needs confirming. Check your school email for the link — if it never arrived, ask an officer to confirm you.'
+            : error.message === 'Invalid login credentials'
+                ? 'Incorrect email or password.'
+                : error.message
+        showError(msg)
         busy(false, 'Sign in')
         return
     }

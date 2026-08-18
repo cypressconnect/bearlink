@@ -17,10 +17,10 @@ export function schoolEmailError(email) {
     const value = String(email ?? '').trim()
     if (!value) return 'Enter your school email.'
     if (!value.toLowerCase().endsWith('@stu.cfisd.net')) {
-        return 'Use your school email — it has to end in @stu.cfisd.net'
+        return 'Use your CFISD student email address.'
     }
     if (!SCHOOL_EMAIL_RE.test(value)) {
-        return 'That does not look like a CFISD student address. It should be four letters, then four numbers, e.g. abcd1234@stu.cfisd.net'
+        return 'That is not a valid CFISD student email address.'
     }
     return null
 }

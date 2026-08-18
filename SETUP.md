@@ -89,10 +89,12 @@ The spreadsheet must be shared with the service-account email as **Editor**.
 
 There are two kinds, and the difference is which table holds a row for them.
 
-**Students** sign up themselves at `login.html` with a CFISD address — four
-letters, four digits, `@stu.cfisd.net` (e.g. `abcd1234@stu.cfisd.net`). A
-database trigger creates their `student_profiles` row; nothing to do by hand.
-They can read the whole site and change nothing.
+**Students** sign up themselves at `login.html` with their CFISD student
+address. The accepted shape is enforced by `SCHOOL_EMAIL_RE` in `js/auth.js`
+and by a CHECK constraint on `student_profiles`; change it in both places if
+the district ever changes format. A database trigger creates the profile row,
+so there is nothing to do by hand. Students read the whole site and change
+nothing.
 
 **Officers/admins** are created by you:
 

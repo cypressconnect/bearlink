@@ -26,8 +26,8 @@ create table if not exists public.student_profiles (
 comment on table public.student_profiles is
   'One row per student login. Admins are in admin_profiles instead.';
 
--- A CFISD student address: 4 letters, 4 digits, @stu.cfisd.net
--- e.g. abcd1234@stu.cfisd.net
+-- A CFISD student address. Keep this in step with SCHOOL_EMAIL_RE
+-- in js/auth.js -- the browser and the database must agree.
 alter table public.student_profiles
   drop constraint if exists student_profiles_school_email;
 alter table public.student_profiles

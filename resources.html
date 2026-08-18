@@ -51,7 +51,10 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
             <a href="points.html"             class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors duration-200">Points</a>
         </div>
         <div class="flex items-center gap-4">
-            <a href="login.html" class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Admin Login</a>
+            <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
+            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
             <div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant text-xl">account_circle</span>
             </div>
@@ -190,6 +193,11 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
     </div>
     <div class="text-xs uppercase tracking-widest text-slate-500 mt-4">© 2026 Bridgeland High School FBLA. All rights reserved.</div>
 </footer>
+<script type="module">
+import { requireUser, initAuthNav } from './js/auth.js'
+await requireUser()
+initAuthNav()
+</script>
 <script src="js/chat-widget.js"></script>
 </body>
 </html>

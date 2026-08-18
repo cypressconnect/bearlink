@@ -163,7 +163,7 @@ tailwind.config = {
 </main>
 
 <script type="module">
-import { requireAdmin, signOut } from './js/auth.js'
+import { requireAdmin, initAuthNav } from './js/auth.js'
 import {
     fetchMember, fetchEvents, updateMember,
     setAssignment, removeAssignment,
@@ -171,7 +171,7 @@ import {
 } from './js/data.js'
 
 await requireAdmin()
-document.querySelectorAll('[data-signout]').forEach(el => el.addEventListener('click', () => signOut()))
+initAuthNav()
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))

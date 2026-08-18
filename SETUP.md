@@ -85,15 +85,47 @@ The spreadsheet must be shared with the service-account email as **Editor**.
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
 
-### Creating an admin
+### Accounts
+
+There are two kinds, and the difference is which table holds a row for them.
+
+**Students** sign up themselves at `login.html` with a CFISD address — four
+letters, four digits, `@stu.cfisd.net` (e.g. `dbha0518@stu.cfisd.net`). A
+database trigger creates their `student_profiles` row; nothing to do by hand.
+They can read the whole site and change nothing.
+
+**Officers/admins** are created by you:
 
 ```sql
+-- 1. Authentication -> Users -> Add user (tick Auto Confirm User)
+-- 2. then:
 insert into public.admin_profiles (id, name)
 select id, email from auth.users
-where email = 'your-admin-email@example.com';
+where email = 'your-admin-email@example.com'
+on conflict (id) do nothing;
 ```
 
-Only accounts with a row here can reach the admin pages or write to the sheet.
+Only accounts with an `admin_profiles` row reach the admin pages or write to
+the sheet. An admin address does not need to be a school address.
+
+To see who has what:
+
+```sql
+select (select count(*) from public.admin_profiles)   as admins,
+       (select count(*) from public.student_profiles) as students;
+```
+
+### Who can see what
+
+| | Homepage | Points, events, resources | Admin pages |
+|---|---|---|---|
+| Signed out | yes | no | no |
+| Student | yes | yes | no |
+| Admin | yes | yes | yes |
+
+This is enforced by row-level security, not just by the pages — migration 005
+replaced the old `using (true)` read policies, which let anyone with the
+public anon key read the whole roster straight from the REST API.
 
 ---
 
@@ -188,14 +220,17 @@ fbla-website/
 ├── competitive-events.html       Events info
 ├── resources.html                Resources
 ├── js/
-│   ├── supabase-client.js        Project URL + anon key
-│   ├── auth.js                   Session + admin gate
+│   ├── supabase-client.js        Project URL + anon key, session storage
+│   ├── auth.js                   Sessions, sign-up/in, page gates
 │   └── data.js                   All database and sheet-sync calls
 ├── supabase/
 │   ├── schema.sql                Original schema (first install only)
 │   ├── migrations/
 │   │   ├── 001_update_schema.sql first_name/last_name + categories
-│   │   └── 002_repair_and_harden.sql   ← the repair
+│   │   ├── 002_repair_and_harden.sql   ← the repair
+│   │   ├── 003_merge_other_into_miscellaneous.sql
+│   │   ├── 004_drop_test_columns.sql
+│   │   └── 005_student_accounts.sql    ← student logins + locked-down reads
 │   └── functions/
 │       ├── sync-to-sheets/       website -> sheet   (admin JWT required)
 │       └── sheet-sync/           sheet -> website   (shared secret)

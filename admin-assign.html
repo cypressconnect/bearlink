@@ -51,7 +51,10 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
             <a href="points.html"             class="text-slate-600 hover:text-[#002D72] text-sm font-medium transition-colors duration-200">Points</a>
         </div>
         <div class="flex items-center gap-4">
-            <a href="login.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 text-sm font-medium">Admin Login</a>
+            <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
+            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
             <div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
             </div>
@@ -151,11 +154,12 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 </footer>
 
 <script type="module">
-import { requireAdmin } from './js/auth.js'
+import { requireAdmin, initAuthNav } from './js/auth.js'
 import { supabase } from './js/supabase-client.js'
 import { assignPoints, syncBatchToSheet, categoryInfo } from './js/data.js'
 
 await requireAdmin()
+initAuthNav()
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))

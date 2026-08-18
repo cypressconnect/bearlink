@@ -314,7 +314,7 @@ tailwind.config = {
 </main>
 
 <script type="module">
-import { requireAdmin, signOut } from './js/auth.js'
+import { requireAdmin, initAuthNav } from './js/auth.js'
 import {
     CATEGORIES, categoryInfo,
     createEvent, deleteEvent, createMember, deleteMember,
@@ -323,8 +323,7 @@ import {
 
 await requireAdmin()
 
-document.querySelectorAll('[data-signout]').forEach(el =>
-    el.addEventListener('click', () => signOut()))
+initAuthNav()
 
 // ── Tab switching ─────────────────────────────────────────────
 window.switchTab = function(tab) {

@@ -95,7 +95,10 @@ tailwind.config = {
             <a href="points.html"             class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Points</a>
         </div>
         <div class="flex items-center gap-4">
-            <a href="login.html" class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Admin Login</a>
+            <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
+            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
             <div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden flex items-center justify-center bg-surface-container-high">
                 <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
             </div>
@@ -116,7 +119,7 @@ tailwind.config = {
                     Bridgeland High School's Future Business Leaders of America inspires and prepares students to become community-minded business leaders in a global society through relevant career preparation and leadership experiences.
                 </p>
                 <div class="flex flex-wrap gap-4">
-                    <a href="resources.html" class="px-8 py-4 bg-secondary text-on-secondary font-semibold rounded-md shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+                    <a href="login.html?mode=signup" class="px-8 py-4 bg-secondary text-on-secondary font-semibold rounded-md shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
                         Join Bear Link
                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
                     </a>
@@ -226,6 +229,10 @@ tailwind.config = {
     </div>
     <div class="text-xs uppercase tracking-widest text-slate-400">© 2026 Bridgeland High School FBLA. All rights reserved.</div>
 </footer>
+<script type="module">
+import { initAuthNav } from './js/auth.js'
+initAuthNav()
+</script>
 <script src="js/chat-widget.js"></script>
 </body>
 </html>

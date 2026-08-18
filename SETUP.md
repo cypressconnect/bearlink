@@ -90,7 +90,7 @@ The spreadsheet must be shared with the service-account email as **Editor**.
 There are two kinds, and the difference is which table holds a row for them.
 
 **Students** sign up themselves at `login.html` with a CFISD address — four
-letters, four digits, `@stu.cfisd.net` (e.g. `dbha0518@stu.cfisd.net`). A
+letters, four digits, `@stu.cfisd.net` (e.g. `abcd1234@stu.cfisd.net`). A
 database trigger creates their `student_profiles` row; nothing to do by hand.
 They can read the whole site and change nothing.
 

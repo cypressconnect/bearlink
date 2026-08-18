@@ -20,7 +20,7 @@ export function schoolEmailError(email) {
         return 'Use your school email — it has to end in @stu.cfisd.net'
     }
     if (!SCHOOL_EMAIL_RE.test(value)) {
-        return 'That does not look like a CFISD student address. It should be four letters, then four numbers, e.g. dbha0518@stu.cfisd.net'
+        return 'That does not look like a CFISD student address. It should be four letters, then four numbers, e.g. abcd1234@stu.cfisd.net'
     }
     return null
 }

@@ -27,7 +27,7 @@ comment on table public.student_profiles is
   'One row per student login. Admins are in admin_profiles instead.';
 
 -- A CFISD student address: 4 letters, 4 digits, @stu.cfisd.net
--- e.g. dbha0518@stu.cfisd.net
+-- e.g. abcd1234@stu.cfisd.net
 alter table public.student_profiles
   drop constraint if exists student_profiles_school_email;
 alter table public.student_profiles

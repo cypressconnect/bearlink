@@ -165,6 +165,7 @@ tailwind.config = {
 <script type="module">
 import { requireAdmin, initAuthNav } from './js/auth.js'
 import {
+    isSheetManaged, SHEET_MANAGED_CATEGORIES,
     fetchMember, fetchEvents, updateMember,
     setAssignment, removeAssignment,
     syncAssignmentToSheet, resyncMemberToSheet,
@@ -292,11 +293,11 @@ function renderEvents(m) {
     }).join('')
 }
 
-/** Only offer events the member does not already have. */
+/** Only offer events the member does not already have, and that we can write. */
 function renderAwardOptions() {
     const taken  = new Set(memberData.assignments.map(a => a.event_id))
     const select = document.getElementById('awardEventSelect')
-    const open   = allEvents.filter(e => !taken.has(e.id))
+    const open   = allEvents.filter(e => !taken.has(e.id) && !isSheetManaged(e.category))
 
     if (!open.length) {
         select.innerHTML = '<option value="">This member already has every event</option>'

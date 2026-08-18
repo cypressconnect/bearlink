@@ -2,20 +2,38 @@
 import { supabase } from './supabase-client.js'
 
 /**
- * The categories the app understands. These must match the CHECK
- * constraint in supabase/migrations/002_repair_and_harden.sql and the
+ * Categories that can be created and awarded from the website. These must
+ * match the CHECK constraint in 002_repair_and_harden.sql and the
  * TAB_ALIASES maps in the two edge functions + Code.gs.
+ *
+ * Attendance and Conference are deliberately missing — see
+ * SHEET_MANAGED_CATEGORIES.
  */
 export const CATEGORIES = [
-    { value: 'Attendance',    label: 'Attendance (meetings)', sheet: 'Attendance',        fixedPoints: 2  },
     { value: 'Social',        label: 'Social',                sheet: 'Social',            fixedPoints: null },
     { value: 'Service',       label: 'Service project',       sheet: 'Services',          fixedPoints: null },
     { value: 'Fundraising',   label: 'Fundraiser',            sheet: 'Fundraising',       fixedPoints: null },
-    { value: 'Conference',    label: 'Conference',            sheet: 'Conferences',       fixedPoints: 12 },
     { value: 'BAA',           label: 'Business Achievement Award', sheet: 'BAA',          fixedPoints: 6  },
-    { value: 'Committee',     label: 'Committee meeting',     sheet: 'Committees', fixedPoints: null },
+    { value: 'Committee',     label: 'Committee meeting',     sheet: 'Committees',        fixedPoints: null },
     { value: 'Miscellaneous', label: 'Miscellaneous points',  sheet: 'Points In General', fixedPoints: null },
 ]
+
+/**
+ * Categories that live in the spreadsheet only.
+ *
+ * "# General Meetings Attended" is an ARRAYFORMULA fed by the meeting
+ * sign-in form, and "Area Conference (November 2025)" is an ARRAYFORMULA
+ * over IMPORTRANGE from another spreadsheet. Writing to either would break
+ * the formula and blank the column for all 200 members, so the sync refuses.
+ * Rather than let an officer find that out halfway through awarding points,
+ * these are not offered on the site at all.
+ */
+export const SHEET_MANAGED_CATEGORIES = {
+    Attendance: 'Attendance comes from the meeting sign-in form. Record it in the spreadsheet.',
+    Conference: 'Conference attendance is pulled from another spreadsheet. Record it there.',
+}
+
+export const isSheetManaged = (category) => category in SHEET_MANAGED_CATEGORIES
 
 export const categoryInfo = (value) => CATEGORIES.find(c => c.value === value) ?? null
 

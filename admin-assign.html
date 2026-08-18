@@ -156,7 +156,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 <script type="module">
 import { requireAdmin, initAuthNav } from './js/auth.js'
 import { supabase } from './js/supabase-client.js'
-import { assignPoints, syncBatchToSheet, categoryInfo } from './js/data.js'
+import { assignPoints, syncBatchToSheet, categoryInfo, isSheetManaged, SHEET_MANAGED_CATEGORIES } from './js/data.js'
 
 await requireAdmin()
 initAuthNav()
@@ -203,31 +203,35 @@ if (evErr || !ev) {
     submitBtn.disabled = true
 } else {
 
-const info      = categoryInfo(ev.category)
-const isCounted = ev.category === 'Attendance'
-const isOfficer = isCounted && /officer/i.test(ev.name)
-const PTS_PER_MEETING = 2
+const info = categoryInfo(ev.category)
+
+// Attendance and conferences are recorded in the spreadsheet, not here.
+if (isSheetManaged(ev.category)) {
+    document.getElementById('eventTitle').textContent = ev.name
+    document.getElementById('eventMeta').textContent  = `• ${ev.category}`
+    document.getElementById('eventDesc').textContent  = SHEET_MANAGED_CATEGORIES[ev.category]
+    document.getElementById('eventPoints').textContent = '—'
+    submitBtn.disabled = true
+    submitBtn.classList.add('opacity-40', 'cursor-not-allowed')
+    document.getElementById('memberGrid').innerHTML =
+        `<div class="col-span-3 py-12 text-center text-on-surface-variant">
+            ${SHEET_MANAGED_CATEGORIES[ev.category]}
+         </div>`
+    statusBox.classList.remove('hidden')
+    status('warn', SHEET_MANAGED_CATEGORIES[ev.category])
+    await new Promise(() => {})   // stop here; nothing below should run
+}
 
 document.getElementById('eventTitle').textContent = ev.name
 document.getElementById('eventMeta').textContent =
     `• ${ev.category}${ev.event_date ? ` • ${new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : ''}`
-document.getElementById('eventDesc').innerHTML = isCounted
-    ? `Select who attended. Each person's meeting count goes up by one — worth <strong>${PTS_PER_MEETING} points</strong>.`
-    : `Select who participated. Each gets <strong>${ev.point_value} points</strong> — change any individual amount in their card.`
+document.getElementById('eventDesc').innerHTML =
+    `Select who participated. Each gets <strong>${ev.point_value} points</strong> — change any individual amount in their card.`
 document.getElementById('eventPoints').textContent = ev.point_value
 submitText.textContent = `Submit ${ev.point_value} Points`
 
-if (isCounted && !isOfficer) {
-    status('warn',
-        `<strong>General meeting attendance is automatic.</strong> That column on the Attendance tab is ` +
-        `filled by a formula from your sign-in form, so the site cannot write to it — submitting here will ` +
-        `save on the website but fail on the sheet, putting the two out of step. ` +
-        `Record general attendance through the form instead.`)
-    statusBox.classList.remove('hidden')
-} else if (info) {
-    status('info', isCounted
-        ? `Each submit adds one meeting (${PTS_PER_MEETING} points) and updates the <strong>Attendance</strong> tab.`
-        : `Points will also be written to the <strong>${esc(info.sheet)}</strong> tab of the Google Sheet.`)
+if (info) {
+    status('info', `Points will also be written to the <strong>${esc(info.sheet)}</strong> tab of the Google Sheet.`)
     statusBox.classList.remove('hidden')
 }
 
@@ -297,14 +301,12 @@ function renderGrid(list) {
                 <span class="text-on-surface-variant whitespace-nowrap">Total: <span class="font-bold text-on-surface">${(m.total_points ?? 0).toLocaleString()}</span></span>
                 ${isSel
                     ? `<label class="flex items-center gap-1.5 text-xs font-bold text-secondary">
-                          ${isCounted ? '' : '+'}<input type="number" min="0" step="${isCounted ? PTS_PER_MEETING : 1}" value="${pts}" data-points-for="${m.id}"
+                          +<input type="number" min="0" step="1" value="${pts}" data-points-for="${m.id}"
                              onchange="setPoints('${m.id}', this.value)" onclick="event.stopPropagation()"
-                             class="w-16 bg-surface-container-low border border-outline-variant rounded px-1.5 py-0.5 text-center text-on-surface"/> ${isCounted ? 'pts total' : 'pts'}
+                             class="w-16 bg-surface-container-low border border-outline-variant rounded px-1.5 py-0.5 text-center text-on-surface"/> pts
                        </label>`
                     : `<span class="pts-label font-bold ${prior != null ? 'text-emerald-700' : 'text-outline-variant'}">${
-                        prior != null
-                          ? (isCounted ? `${prior / PTS_PER_MEETING} meeting${prior / PTS_PER_MEETING === 1 ? '' : 's'}` : `Has ${prior} pts`)
-                          : 'Pending'}</span>`}
+                        prior != null ? `Has ${prior} pts` : 'Pending'}</span>`}
             </div>
         </div>`
     }).join('')
@@ -313,9 +315,6 @@ function renderGrid(list) {
 
 window.toggleSelect = (id) => {
     if (selected.has(id)) selected.delete(id)
-    // Attendance is cumulative: selecting someone adds one more meeting to
-    // whatever they already have. Everything else is an absolute amount.
-    else if (isCounted) selected.set(id, (alreadyHas.get(id) ?? 0) + PTS_PER_MEETING)
     else selected.set(id, alreadyHas.get(id) ?? ev.point_value)
     applyFilters()
 }
@@ -330,10 +329,7 @@ window.selectAllVisible = (on) => {
     document.querySelectorAll('.member-card').forEach(card => {
         const id = card.dataset.id
         if (on) {
-            if (!selected.has(id)) {
-                selected.set(id, isCounted ? (alreadyHas.get(id) ?? 0) + PTS_PER_MEETING
-                                           : (alreadyHas.get(id) ?? ev.point_value))
-            }
+            if (!selected.has(id)) selected.set(id, alreadyHas.get(id) ?? ev.point_value)
         } else selected.delete(id)
     })
     applyFilters()
@@ -342,11 +338,9 @@ window.selectAllVisible = (on) => {
 function updateCount() {
     document.getElementById('selectedCount').textContent = selected.size
     if (!selected.size) { submitText.textContent = 'Submit Points'; return }
-    // For attendance the stored value is a running total, so summing it
-    // would report a nonsense figure like "Submit 512 Points".
-    submitText.textContent = isCounted
-        ? `Record meeting for ${selected.size} member${selected.size === 1 ? '' : 's'}`
-        : `Submit ${[...selected.values()].reduce((a, p) => a + p, 0)} Points to ${selected.size} member${selected.size === 1 ? '' : 's'}`
+    const total = [...selected.values()].reduce((a, p) => a + p, 0)
+    submitText.textContent =
+        `Submit ${total} Points to ${selected.size} member${selected.size === 1 ? '' : 's'}`
 }
 
 // ── Submit ───────────────────────────────────────────────────

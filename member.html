@@ -112,7 +112,7 @@ tailwind.config = {
 
 <script type="module">
 import { requireUser, initAuthNav } from './js/auth.js'
-import { fetchMember } from './js/data.js'
+import { fetchMember, meetingLabel } from './js/data.js'
 
 await requireUser()
 initAuthNav()
@@ -157,6 +157,7 @@ if (!memberId) {
             const date = ev.event_date
                 ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })
                 : 'No date'
+            const meetings = meetingLabel(a)
             return `
             <div class="group bg-surface-container-low rounded-xl p-6 transition-all hover:bg-surface-container flex flex-col md:flex-row items-center justify-between gap-6 relative">
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1 bg-secondary rounded-r-full"></div>
@@ -173,6 +174,7 @@ if (!memberId) {
                     <div class="text-right">
                         <div class="text-sm font-bold text-secondary">POINTS EARNED</div>
                         <div class="text-2xl font-extrabold font-headline text-primary">+${a.points_awarded}</div>
+                        ${meetings ? `<div class="text-sm font-semibold text-on-surface-variant">${meetings}</div>` : ''}
                     </div>
                     <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
                         <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">check_circle</span>

@@ -95,6 +95,10 @@ tailwind.config = {
                 class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
                 <span class="material-symbols-outlined text-sm">analytics</span> Chapter Report
             </button>
+            <button id="tab-timeline" onclick="switchTab('timeline')"
+                class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                <span class="material-symbols-outlined text-sm">view_timeline</span> Homepage Timeline
+            </button>
         </div>
 
         <!-- ── MEMBER POINTS PANEL ─────────────────────────────── -->
@@ -310,6 +314,60 @@ tailwind.config = {
             </div>
         </div>
         <!-- ── END CHAPTER REPORT PANEL ──────────────────────── -->
+
+        <!-- ── HOMEPAGE TIMELINE PANEL ────────────────────────── -->
+        <div id="panel-timeline" class="col-span-12 hidden">
+            <div class="grid grid-cols-12 gap-8">
+                <!-- Entry list -->
+                <div class="col-span-12 lg:col-span-8">
+                    <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                        <div class="flex items-center justify-between mb-2 flex-wrap gap-4">
+                            <h2 class="text-xl font-bold font-headline text-primary">Upcoming Events on the Homepage</h2>
+                            <a href="index.html" target="_blank" class="text-xs font-bold text-secondary hover:text-primary flex items-center gap-1 transition-colors">
+                                <span class="material-symbols-outlined text-sm">open_in_new</span> View homepage
+                            </a>
+                        </div>
+                        <p class="text-sm text-on-surface-variant mb-8">Shown in date order, soonest first. Changes appear on the homepage straight away.</p>
+                        <div id="timelineList" class="space-y-4">
+                            <div class="py-8 text-center text-on-surface-variant text-sm">Loading…</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add / edit form -->
+                <div class="col-span-12 lg:col-span-4">
+                    <div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
+                        <h2 id="timelineFormTitle" class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add Timeline Event</h2>
+                        <form id="timelineForm" class="space-y-4 relative z-10">
+                            <input type="hidden" name="id"/>
+                            <div>
+                                <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Title</label>
+                                <input name="title" required class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="e.g. Fall Social" type="text"/>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Label</label>
+                                    <input name="tag" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="Social Event" type="text"/>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Date</label>
+                                    <input name="eventDate" class="w-full bg-primary-container/40 border-none rounded-lg text-white focus:ring-secondary" type="date"/>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-primary-fixed uppercase tracking-widest mb-1 block">Description</label>
+                                <textarea name="description" rows="4" class="w-full bg-primary-container/40 border-none rounded-lg text-white placeholder-primary-fixed/50 focus:ring-secondary" placeholder="What is it, and who should come?"></textarea>
+                            </div>
+                            <p id="timelineStatus" class="text-xs font-medium text-primary-fixed hidden"></p>
+                            <button type="submit" id="timelineSubmit" class="w-full bg-secondary text-on-secondary py-3 rounded-lg font-bold shadow-md hover:scale-[0.98] transition-all">Add to Homepage</button>
+                            <button type="button" id="timelineCancel" onclick="resetTimelineForm()" class="hidden w-full py-2 rounded-lg text-sm font-medium text-primary-fixed hover:bg-primary-container/40 transition-colors">Cancel edit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ── END HOMEPAGE TIMELINE PANEL ───────────────────── -->
     </div>
 </main>
 
@@ -319,6 +377,7 @@ import {
     CATEGORIES, categoryInfo,
     createEvent, deleteEvent, createMember, deleteMember,
     fetchEventsWithCounts, sheetHealth,
+    fetchTimeline, createTimelineEvent, updateTimelineEvent, deleteTimelineEvent,
 } from './js/data.js'
 
 await requireAdmin()
@@ -327,25 +386,21 @@ initAuthNav()
 
 // ── Tab switching ─────────────────────────────────────────────
 window.switchTab = function(tab) {
-    const isReport = tab === 'report'
-
-    document.getElementById('panel-members').className = isReport ? 'hidden' : 'contents'
-    document.getElementById('panel-report').className  = isReport ? 'col-span-12' : 'col-span-12 hidden'
+    document.getElementById('panel-members').className  = tab === 'members'  ? 'contents'    : 'hidden'
+    document.getElementById('panel-report').className   = tab === 'report'   ? 'col-span-12' : 'col-span-12 hidden'
+    document.getElementById('panel-timeline').className = tab === 'timeline' ? 'col-span-12' : 'col-span-12 hidden'
 
     const activeClass   = ['bg-primary','text-on-primary','shadow-sm']
     const inactiveClass = ['bg-surface-container-highest','text-on-surface-variant']
 
-    const tM = document.getElementById('tab-members')
-    const tR = document.getElementById('tab-report')
-
-    if (isReport) {
-        tM.classList.remove(...activeClass);  tM.classList.add(...inactiveClass)
-        tR.classList.remove(...inactiveClass); tR.classList.add(...activeClass)
-        loadReport()
-    } else {
-        tR.classList.remove(...activeClass);  tR.classList.add(...inactiveClass)
-        tM.classList.remove(...inactiveClass); tM.classList.add(...activeClass)
+    for (const name of ['members', 'report', 'timeline']) {
+        const btn = document.getElementById(`tab-${name}`)
+        if (name === tab) { btn.classList.remove(...inactiveClass); btn.classList.add(...activeClass) }
+        else              { btn.classList.remove(...activeClass);   btn.classList.add(...inactiveClass) }
     }
+
+    if (tab === 'report')   loadReport()
+    if (tab === 'timeline') loadTimeline()
 }
 
 // Escape anything that came from the database before it goes into HTML.
@@ -629,6 +684,112 @@ document.getElementById('memberSearchInput').addEventListener('input', e => {
 
 // ── Chapter Report ───────────────────────────────────────────
 let reportData = null   // cache so we don't refetch on every tab switch
+
+// ── Homepage timeline ─────────────────────────────────────────
+let timelineEvents = []
+
+async function loadTimeline() {
+    const list = document.getElementById('timelineList')
+    try {
+        timelineEvents = await fetchTimeline()
+    } catch (err) {
+        list.innerHTML = `<p class="text-sm text-error">Could not load the timeline: ${esc(err.message)}.
+            If this mentions timeline_events, run supabase/migrations/008_timeline_events.sql first.</p>`
+        return
+    }
+    if (!timelineEvents.length) {
+        list.innerHTML = `<p class="text-sm text-on-surface-variant italic">Nothing on the homepage yet. Add an event on the right.</p>`
+        return
+    }
+    const today = new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, local time
+    list.innerHTML = timelineEvents.map(ev => {
+        const past = ev.event_date && ev.event_date < today
+        const date = ev.event_date
+            ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : 'Date TBA'
+        return `
+        <div class="bg-surface-container-low rounded-xl p-5 flex items-start justify-between gap-4 group ${past ? 'opacity-60' : ''}">
+            <div class="min-w-0">
+                <p class="text-xs font-bold text-secondary uppercase tracking-widest">${esc(ev.tag) || '&nbsp;'}</p>
+                <h3 class="font-bold text-on-surface mt-0.5">${esc(ev.title)}</h3>
+                <p class="text-xs text-on-surface-variant font-medium mt-0.5">${date}${past ? ' · already happened' : ''}</p>
+                ${ev.description ? `<p class="text-sm text-on-surface-variant mt-2 leading-relaxed">${esc(ev.description)}</p>` : ''}
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+                <button onclick="editTimelineEvent('${ev.id}')" class="text-secondary hover:text-primary p-1 transition-colors" title="Edit">
+                    <span class="material-symbols-outlined text-sm">edit</span>
+                </button>
+                <button onclick="removeTimelineEvent('${ev.id}')" class="text-error p-1" title="Delete">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                </button>
+            </div>
+        </div>`
+    }).join('')
+}
+
+const timelineForm = document.getElementById('timelineForm')
+// form.elements, not the form: form.id and form.title are the form's own attributes.
+const tf = timelineForm.elements
+
+window.resetTimelineForm = function() {
+    timelineForm.reset()
+    tf.id.value = ''
+    document.getElementById('timelineFormTitle').textContent = 'Add Timeline Event'
+    document.getElementById('timelineSubmit').textContent    = 'Add to Homepage'
+    document.getElementById('timelineCancel').classList.add('hidden')
+    document.getElementById('timelineStatus').classList.add('hidden')
+}
+
+window.editTimelineEvent = function(id) {
+    const ev = timelineEvents.find(e => e.id === id)
+    if (!ev) return
+    tf.id.value          = ev.id
+    tf.title.value       = ev.title
+    tf.tag.value         = ev.tag ?? ''
+    tf.eventDate.value   = ev.event_date ?? ''
+    tf.description.value = ev.description ?? ''
+    document.getElementById('timelineFormTitle').textContent = 'Edit Timeline Event'
+    document.getElementById('timelineSubmit').textContent    = 'Save Changes'
+    document.getElementById('timelineCancel').classList.remove('hidden')
+    tf.title.focus()
+}
+
+window.removeTimelineEvent = async function(id) {
+    const ev = timelineEvents.find(e => e.id === id)
+    if (!ev || !confirm(`Remove "${ev.title}" from the homepage?`)) return
+    try {
+        await deleteTimelineEvent(id)
+        if (tf.id.value === id) resetTimelineForm()
+        loadTimeline()
+    } catch (err) {
+        alert('Could not delete: ' + err.message)
+    }
+}
+
+timelineForm.addEventListener('submit', async e => {
+    e.preventDefault()
+    const status = document.getElementById('timelineStatus')
+    const button = document.getElementById('timelineSubmit')
+    const fields = {
+        title      : tf.title.value,
+        tag        : tf.tag.value,
+        event_date : tf.eventDate.value,
+        description: tf.description.value,
+    }
+    button.disabled = true
+    try {
+        const id = tf.id.value
+        if (id) await updateTimelineEvent(id, fields)
+        else    await createTimelineEvent(fields)
+        resetTimelineForm()
+        loadTimeline()
+    } catch (err) {
+        status.textContent = err.message
+        status.classList.remove('hidden')
+    } finally {
+        button.disabled = false
+    }
+})
 
 async function loadReport() {
     if (reportData) { renderReport(reportData); return }

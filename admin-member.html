@@ -169,6 +169,7 @@ import {
     fetchMember, fetchEvents, updateMember,
     setAssignment, removeAssignment,
     syncAssignmentToSheet, resyncMemberToSheet,
+    meetingLabel,
 } from './js/data.js'
 
 await requireAdmin()
@@ -245,6 +246,7 @@ function renderEvents(m) {
         const date = ev.event_date
             ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
             : 'No date'
+        const meetings = meetingLabel(a)
         return `
         <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-4 relative">
             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-secondary rounded-r-full"></div>
@@ -265,7 +267,7 @@ function renderEvents(m) {
                         <span class="material-symbols-outlined" style="font-size:13px">edit</span> Edit
                     </button>
                     <div class="text-xl font-extrabold font-headline text-primary">+${a.points_awarded}</div>
-                    <div class="text-xs text-on-surface-variant font-medium">pts</div>
+                    <div class="text-xs text-on-surface-variant font-medium">pts${meetings ? ` · ${meetings}` : ''}</div>
                 </div>
                 <div id="ev-edit-${ev.id}" class="hidden flex-col items-end gap-1.5">
                     <div class="flex items-center gap-1">

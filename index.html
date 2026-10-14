@@ -170,6 +170,9 @@ tailwind.config = {
             <div class="relative space-y-12">
                 <div class="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-slate-200 transform md:-translate-x-1/2"></div>
 
+                <!-- Entries come from timeline_events (edited in admin.html). The
+                     three below are shown if that table can't be read. -->
+                <div id="timeline" class="space-y-12">
                 <!-- Timeline 1 -->
                 <div class="relative flex flex-col md:flex-row items-center md:justify-between group">
                     <div class="md:w-[45%] mb-8 md:mb-0">
@@ -214,6 +217,7 @@ tailwind.config = {
                     </div>
                     <div class="absolute left-[-4px] md:left-1/2 w-3 h-3 bg-secondary rounded-full transform md:-translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
                 </div>
+                </div>
             </div>
         </div>
     </section>
@@ -231,7 +235,39 @@ tailwind.config = {
 </footer>
 <script type="module">
 import { initAuthNav } from './js/auth.js'
+import { fetchTimeline } from './js/data.js'
 initAuthNav()
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
+// Alternate sides and accent colours, like the original hardcoded entries.
+function timelineEntry(ev, i) {
+    const accent = i % 2 ? 'primary' : 'secondary'
+    const date = ev.event_date
+        ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : 'Date TBA'
+    return `
+    <div class="relative flex flex-col ${i % 2 ? 'md:flex-row-reverse' : 'md:flex-row'} items-center md:justify-between group">
+        <div class="md:w-[45%] mb-8 md:mb-0">
+            <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-${accent} hover:shadow-md transition-all">
+                ${ev.tag ? `<span class="text-xs font-bold text-${accent} uppercase tracking-widest">${esc(ev.tag)}</span>` : ''}
+                <h3 class="text-xl font-bold text-primary mt-2">${esc(ev.title)}</h3>
+                ${ev.description ? `<p class="text-slate-600 mt-3 text-sm leading-relaxed">${esc(ev.description)}</p>` : ''}
+                <div class="flex items-center gap-2 mt-6 text-primary font-semibold text-sm">
+                    <span class="material-symbols-outlined text-sm">calendar_today</span>${date}
+                </div>
+            </div>
+        </div>
+        <div class="absolute left-[-4px] md:left-1/2 w-3 h-3 bg-${accent} rounded-full transform md:-translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
+    </div>`
+}
+
+fetchTimeline().then(events => {
+    document.getElementById('timeline').innerHTML = events.length
+        ? events.map(timelineEntry).join('')
+        : `<p class="text-center text-slate-500">No upcoming events yet — check back soon.</p>`
+}).catch(err => console.warn('Timeline not loaded, keeping the built-in entries:', err.message))
 </script>
 <script src="js/chat-widget.js"></script>
 </body>

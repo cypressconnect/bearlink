@@ -37,6 +37,19 @@ export const isSheetManaged = (category) => category in SHEET_MANAGED_CATEGORIES
 
 export const categoryInfo = (value) => CATEGORIES.find(c => c.value === value) ?? null
 
+/**
+ * Attendance points are a meeting count times this (POINTS_PER_MEETING in
+ * Code.gs), so the count can be recovered from the points.
+ */
+export const POINTS_PER_MEETING = 2
+
+/** "4 meetings" for an Attendance assignment, null for anything else. */
+export function meetingLabel(assignment) {
+    if (assignment.events?.category !== 'Attendance') return null
+    const n = Math.round((assignment.points_awarded ?? 0) / POINTS_PER_MEETING)
+    return `${n} meeting${n === 1 ? '' : 's'}`
+}
+
 // ── Leaderboard / Members ────────────────────────────────────
 
 /** All members, highest points first. */
@@ -317,6 +330,45 @@ export async function setAssignment(memberId, eventId, pointsAwarded) {
 export async function removeAssignment(memberId, eventId) {
     const { error } = await supabase
         .from('point_assignments').delete().eq('member_id', memberId).eq('event_id', eventId)
+    if (error) throw error
+}
+
+// ── Homepage timeline ────────────────────────────────────────
+
+/** Timeline entries, soonest first, undated last. Readable signed out. */
+export async function fetchTimeline() {
+    const { data, error } = await supabase
+        .from('timeline_events')
+        .select('*')
+        .order('event_date', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true })
+    if (error) throw error
+    return data
+}
+
+function timelineFields({ tag, title, description, event_date }) {
+    const clean = (title ?? '').trim()
+    if (!clean) throw new Error('Title is required.')
+    return {
+        tag        : (tag ?? '').trim(),
+        title      : clean,
+        description: (description ?? '').trim(),
+        event_date : event_date || null,
+    }
+}
+
+export async function createTimelineEvent(fields) {
+    const { error } = await supabase.from('timeline_events').insert(timelineFields(fields))
+    if (error) throw error
+}
+
+export async function updateTimelineEvent(id, fields) {
+    const { error } = await supabase.from('timeline_events').update(timelineFields(fields)).eq('id', id)
+    if (error) throw error
+}
+
+export async function deleteTimelineEvent(id) {
+    const { error } = await supabase.from('timeline_events').delete().eq('id', id)
     if (error) throw error
 }
 

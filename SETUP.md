@@ -168,6 +168,11 @@ the date and point value. A new column is inserted on that tab, just before
 the subtotal column, and zero-filled. You are then taken straight to the
 assign-points screen.
 
+### Edit the homepage timeline
+`admin.html` → **Homepage Timeline**. Add, edit or remove the entries in the
+homepage's "Upcoming Events" section; they show in date order. Needs
+`supabase/migrations/008_timeline_events.sql` to have been run once.
+
 ### Award points
 `admin-assign.html` — select members, optionally change any individual's
 amount, submit. The database is written first, then each sheet cell; if a cell
@@ -232,7 +237,8 @@ fbla-website/
 │   │   ├── 002_repair_and_harden.sql   ← the repair
 │   │   ├── 003_merge_other_into_miscellaneous.sql
 │   │   ├── 004_drop_test_columns.sql
-│   │   └── 005_student_accounts.sql    ← student logins + locked-down reads
+│   │   ├── 005_student_accounts.sql    ← student logins + locked-down reads
+│   │   └── 008_timeline_events.sql     ← editable homepage timeline
 │   └── functions/
 │       ├── sync-to-sheets/       website -> sheet   (admin JWT required)
 │       └── sheet-sync/           sheet -> website   (shared secret)

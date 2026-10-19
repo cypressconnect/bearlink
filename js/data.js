@@ -246,11 +246,18 @@ export async function createEvent({ name, point_value, category, event_date }) {
 }
 
 export async function updateEvent(eventId, fields) {
+    // The column is found by its current header, so read it before renaming.
+    const { data: before } = await supabase
+        .from('events').select('name, sheet_header').eq('id', eventId).maybeSingle()
+
     const { error } = await supabase.from('events').update(fields).eq('id', eventId)
     if (error) throw error
-    if (fields.name) {
-        await callSheetSync({ action: 'rename_event', event_id: eventId })
-            .catch(err => console.warn('Sheet header rename failed:', err.message))
+    if (fields.name && before && fields.name !== before.name) {
+        await callSheetSync({
+            action    : 'rename_event',
+            event_id  : eventId,
+            old_header: before.sheet_header || before.name,
+        }).catch(err => console.warn('Sheet header rename failed:', err.message))
     }
 }
 

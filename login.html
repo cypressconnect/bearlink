@@ -126,7 +126,10 @@ const params = new URLSearchParams(location.search)
 // here with next=admin.html; sending them back would just bounce them again,
 // so admin destinations are only honoured for admins.
 const ADMIN_PAGES   = /^admin(-assign|-member)?\.html/
-const requestedNext = params.get('next')
+// Only pages on this site: a link like ?next=https://elsewhere must not
+// turn the sign-in page into a redirect to another website.
+const SITE_PAGE     = /^[\w-]+\.html([?#].*)?$/
+const requestedNext = SITE_PAGE.test(params.get('next') ?? '') ? params.get('next') : null
 const nextFor = (isAdmin) =>
     requestedNext && (isAdmin || !ADMIN_PAGES.test(requestedNext))
         ? requestedNext
@@ -252,9 +255,10 @@ els.form.addEventListener('submit', async (e) => {
             return
         }
         if (needsConfirmation) {
-            showOk(`Account created. Check ${email} for a confirmation link, then come back and sign in.`)
-            busy(false, 'Create account')
+            // Switch tabs first: setMode clears the banners.
             setMode('signin')
+            busy(false, 'Sign in')
+            showOk(`Account created. Check ${email} for a confirmation link, then come back and sign in.`)
             return
         }
         location.replace(nextFor(false))
@@ -284,6 +288,5 @@ els.form.addEventListener('submit', async (e) => {
     location.replace(nextFor(who.isAdmin))
 })
 </script>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

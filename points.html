@@ -61,6 +61,13 @@ tailwind.config = {
             </div>
         </div>
     </div>
+    <!-- Phones: the links above are hidden below md -->
+    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+        <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
+        <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
+        <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
+        <a href="points.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Points</a>
+    </div>
 </nav>
 
 <main class="max-w-7xl mx-auto px-8 py-12">
@@ -74,7 +81,7 @@ tailwind.config = {
                 <p class="text-on-primary-container text-lg leading-relaxed font-medium opacity-90 mb-8">
                     Tracking excellence, leadership, and service. Every action brings you closer to the Nationals. Check your rank and see how you stack up against the best.
                 </p>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLScgltlq4eXdMmgFNAp3kJlaW8rIdBQTHrjNkzD3n0XbFR9waw/viewform?usp=publish-editor" target="_blank" rel="noopener"
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVHMkifrvvw0vtVqVDsq_sU2vqVFwK4AgpIcxCe6xxUuKxXA/viewform?usp=publish-editor" target="_blank" rel="noopener"
                    class="inline-flex items-center gap-2 bg-secondary text-white px-6 py-3 rounded-md font-bold hover:opacity-90 transition-all shadow-lg">
                     <span class="material-symbols-outlined text-sm">flag</span>
                     Report a Discrepancy
@@ -141,35 +148,6 @@ tailwind.config = {
         </div>
     </div>
 
-    <!-- Connection Nodes -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-20">
-        <div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden border-l-4 border-secondary">
-            <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-secondary mb-4">Latest Achievement</h4>
-            <div class="flex gap-6 items-start">
-                <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-secondary shadow-sm">
-                    <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">groups</span>
-                </div>
-                <div>
-                    <p class="text-lg font-bold text-primary mb-2">Team Participation Peak</p>
-                    <p class="text-on-surface-variant text-sm leading-relaxed mb-4">Bridgeland High School reached a record 85% participation in regional qualifiers last week. Well done, Bears!</p>
-                    <span class="text-[10px] font-bold text-slate-400">2 HOURS AGO • SYSTEM UPDATE</span>
-                </div>
-            </div>
-        </div>
-        <div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden border-l-4 border-primary">
-            <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-4">Point System Note</h4>
-            <div class="flex gap-6 items-start">
-                <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center text-primary shadow-sm">
-                    <span class="material-symbols-outlined text-3xl" style="font-variation-settings:'FILL' 1">info</span>
-                </div>
-                <div>
-                    <p class="text-lg font-bold text-primary mb-2">Points for Service Hours</p>
-                    <p class="text-on-surface-variant text-sm leading-relaxed mb-4">Don't forget to log your volunteer hours for the local community service drive. Each hour equals 15 competitive points.</p>
-                    <span class="text-[10px] font-bold text-slate-400">YESTERDAY • ADMIN</span>
-                </div>
-            </div>
-        </div>
-    </section>
 </main>
 
 <script type="module">
@@ -204,23 +182,24 @@ const PODIUM_LABELS = { 0:'Current Champion', 1:'Silver Milestone', 2:'Rising St
 let allMembers = []
 
 function gradeChip(grade, rank) {
+    if (grade == null) return '<span class="text-xs text-slate-400">—</span>'
     const bg = (rank === 1 || rank === 3) ? 'bg-primary-fixed text-on-primary-fixed-variant'
                                           : 'bg-secondary-fixed text-on-secondary-fixed-variant'
     return `<span class="px-3 py-1 ${bg} text-[10px] font-bold uppercase tracking-tighter rounded-full">${GRADE_LABELS[grade] ?? `Grade ${grade}`}</span>`
 }
 
 function renderPodium(members) {
-    if (members.length < 1) { document.getElementById('podium').innerHTML = ''; return }
     const top = members.slice(0, 3)
+    if (top.length < 1) { document.getElementById('podium').innerHTML = ''; return }
     // Reorder: 2nd, 1st, 3rd for visual podium
     const order = [top[1], top[0], top[2]].filter(Boolean)
     const html = order.map((m, i) => {
         const rank = order.indexOf(m) === 1 ? 1 : (order.indexOf(m) === 0 ? 2 : 3)
-        const actualRank = top.indexOf(m) + 1
-        const isFirst = actualRank === 1
+        const slot = top.indexOf(m) + 1    // podium position: 1 centre, 2 left, 3 right
+        const isFirst = slot === 1
         return `
         <a href="member.html?id=${m.id}" class="${isFirst ? 'order-1 md:order-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform scale-105 z-10 hover:shadow-lg transition-shadow'
-                               : 'bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm hover:shadow-md transition-shadow ' + (actualRank===2?'order-2 md:order-1 border-l-4 border-slate-300':'order-3 border-r-4 border-orange-200')}">
+                               : 'bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm hover:shadow-md transition-shadow ' + (slot===2?'order-2 md:order-1 border-l-4 border-slate-300':'order-3 border-r-4 border-orange-200')}">
             ${isFirst ? `<div class="absolute -top-6 left-1/2 -translate-x-1/2">
                 <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings:'FILL' 1">workspace_premium</span>
             </div>` : ''}
@@ -228,8 +207,8 @@ function renderPodium(members) {
                 <div class="${isFirst ? 'w-32 h-32 rounded-full border-4 border-secondary' : 'w-24 h-24 rounded-full border-4 border-slate-200'} overflow-hidden bg-surface-container flex items-center justify-center">
                     <span class="material-symbols-outlined ${isFirst ? 'text-5xl' : 'text-4xl'} text-on-surface-variant">account_circle</span>
                 </div>
-                <div class="absolute -bottom-2 -right-2 ${isFirst ? 'bg-secondary w-10 h-10 text-lg shadow-lg' : actualRank===2 ? 'bg-slate-400 w-8 h-8 text-sm' : 'bg-orange-700 w-8 h-8 text-sm'} text-white rounded-full flex items-center justify-center font-bold">
-                    ${actualRank}
+                <div class="absolute -bottom-2 -right-2 ${isFirst ? 'bg-secondary w-10 h-10 text-lg shadow-lg' : slot===2 ? 'bg-slate-400 w-8 h-8 text-sm' : 'bg-orange-700 w-8 h-8 text-sm'} text-white rounded-full flex items-center justify-center font-bold">
+                    ${m.rank}
                 </div>
             </div>
             <h3 class="${isFirst ? 'text-2xl' : 'text-xl'} font-bold font-headline text-primary mb-1 hover:text-secondary transition-colors">${esc(m.name)}</h3>
@@ -240,16 +219,16 @@ function renderPodium(members) {
     document.getElementById('podium').innerHTML = html
 }
 
-function renderTable(members, startRank = 1) {
+function renderTable(members) {
     const body = document.getElementById('leaderboardBody')
     if (members.length === 0) {
         body.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-on-surface-variant">No members found.</td></tr>`
         document.getElementById('memberCount').textContent = '0 members'
         return
     }
-    body.innerHTML = members.map((m, i) => `
+    body.innerHTML = members.map(m => `
         <tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
-            <td class="px-8 py-6"><span class="font-bold text-primary">#${startRank + i}</span></td>
+            <td class="px-8 py-6"><span class="font-bold text-primary">#${m.rank}</span></td>
             <td class="px-8 py-6">
                 <a href="member.html?id=${m.id}" class="flex items-center gap-4 group-hover:text-secondary transition-colors">
                     <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center">
@@ -258,7 +237,7 @@ function renderTable(members, startRank = 1) {
                     <span class="font-bold">${esc(m.name)}</span>
                 </a>
             </td>
-            <td class="px-8 py-6">${gradeChip(m.grade, i + 1)}</td>
+            <td class="px-8 py-6">${gradeChip(m.grade, m.rank)}</td>
             <td class="px-8 py-6 text-right"><span class="font-bold text-lg text-primary">${(m.total_points ?? 0).toLocaleString()}</span></td>
         </tr>
     `).join('')
@@ -267,18 +246,39 @@ function renderTable(members, startRank = 1) {
 
 function applyFilters() {
     const grade  = document.getElementById('gradeFilter').value
-    const search = document.getElementById('memberSearch').value.toLowerCase()
+    const search = document.getElementById('memberSearch').value.toLowerCase().trim()
+    // No filter: the same view as on load, with the podium members left out.
+    if (!grade && !search) {
+        renderTable(tableMembers())
+        document.getElementById('memberCount').textContent = `${allMembers.length} total members`
+        return
+    }
     let filtered = allMembers
     if (grade)  filtered = filtered.filter(m => String(m.grade) === grade)
     if (search) filtered = filtered.filter(m => m.name.toLowerCase().includes(search))
     renderTable(filtered)
 }
 
+// Members on the podium are not repeated in the table.
+let podiumIds = new Set()
+const tableMembers = () => allMembers.filter(m => !podiumIds.has(m.id))
+
 // Load data
 fetchLeaderboard().then(members => {
-    allMembers = members
-    renderPodium(members)
-    renderTable(members.slice(3), 4) // table shows rank 4+, podium has top 3
+    // Rank by place on the full leaderboard, so a search or grade filter
+    // still shows each member's real placement. Equal points share a rank
+    // (1, 2, 2, 4), so two members on 8 points are both shown as tied.
+    allMembers = members.map(m => ({ ...m }))
+    allMembers.forEach((m, i) => {
+        const prev = allMembers[i - 1]
+        m.rank = prev && (prev.total_points ?? 0) === (m.total_points ?? 0) ? prev.rank : i + 1
+    })
+    // Only members with points belong on the podium -- at the start of the
+    // year everyone is on 0 and nobody is a champion yet.
+    const podium = allMembers.filter(m => (m.total_points ?? 0) > 0).slice(0, 3)
+    podiumIds = new Set(podium.map(m => m.id))
+    renderPodium(podium)
+    renderTable(tableMembers())
     document.getElementById('memberCount').textContent = `${members.length} total members`
 }).catch(err => {
     document.getElementById('leaderboardBody').innerHTML =
@@ -289,16 +289,5 @@ document.getElementById('gradeFilter').addEventListener('change', applyFilters)
 document.getElementById('memberSearch').addEventListener('input',  applyFilters)
 </script>
 
-<!-- Footer -->
-<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50">
-    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
-    <div class="flex gap-8">
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Contact</a>
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Privacy Policy</a>
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Terms of Service</a>
-    </div>
-    <p class="text-xs uppercase tracking-widest text-slate-400 mt-4">© 2026 Bridgeland High School FBLA. All rights reserved.</p>
-</footer>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

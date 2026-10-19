@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Member Detail – Marcus Thorne | Bear Link</title>
+<title>Member | Bear Link</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -59,6 +59,13 @@ tailwind.config = {
                 <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
             </div>
         </div>
+    </div>
+    <!-- Phones: the links above are hidden below md -->
+    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+        <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
+        <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
+        <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
+        <a href="points.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Points</a>
     </div>
 </header>
 
@@ -136,8 +143,8 @@ if (!memberId) {
         document.title = `${m.name} | Bear Link`
         document.getElementById('memberName').textContent   = m.name
         document.getElementById('memberMeta').textContent   =
-            [m.grade ? `Grade ${m.grade}` : null, m.student_id ? `Student ID ${m.student_id}` : null]
-            .filter(Boolean).join(' • ') || 'Chapter member'
+            // Any student can open this page, so no student ID here.
+            (m.grade ? `Grade ${m.grade}` : 'Chapter member')
         document.getElementById('memberPoints').textContent = m.total_points.toLocaleString()
 
         // Badges
@@ -189,16 +196,5 @@ if (!memberId) {
 }
 </script>
 
-<!-- Footer -->
-<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50 mt-20">
-    <a href="index.html" class="text-lg font-bold text-[#002D72] font-headline">Bear Link</a>
-    <nav class="flex gap-8">
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Contact</a>
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Privacy Policy</a>
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Terms of Service</a>
-    </nav>
-    <p class="text-slate-500 text-xs uppercase tracking-widest">© 2026 Bridgeland High School FBLA. All rights reserved.</p>
-</footer>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

@@ -52,6 +52,13 @@ tailwind.config = {
         </div>
         <button data-signout class="text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
     </div>
+    <!-- Phones: the links above are hidden below md -->
+    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+        <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
+        <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
+        <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
+        <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+    </div>
 </nav>
 
 <main class="max-w-5xl mx-auto px-8 py-12">
@@ -287,7 +294,7 @@ function renderEvents(m) {
                 </div>
             </div>
 
-            <button onclick="deleteAssignment('${ev.id}', '${esc(ev.name).replace(/'/g, '&#39;')}')"
+            <button onclick="deleteAssignment('${ev.id}')"
                 class="shrink-0 p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Remove assignment">
                 <span class="material-symbols-outlined text-sm">delete</span>
             </button>
@@ -302,7 +309,9 @@ function renderAwardOptions() {
     const open   = allEvents.filter(e => !taken.has(e.id) && !isSheetManaged(e.category))
 
     if (!open.length) {
-        select.innerHTML = '<option value="">This member already has every event</option>'
+        select.innerHTML = allEvents.some(e => !isSheetManaged(e.category))
+            ? '<option value="">This member already has every event</option>'
+            : '<option value="">No events yet — create one on the dashboard</option>'
         select.disabled = true
         return
     }
@@ -438,7 +447,8 @@ window.saveEv = async (eventId) => {
 }
 
 // ── Delete assignment ─────────────────────────────────────────
-window.deleteAssignment = async (eventId, eventName) => {
+window.deleteAssignment = async (eventId) => {
+    const eventName = memberData.assignments.find(a => a.event_id === eventId)?.events?.name ?? 'this event'
     if (!confirm(`Remove "${eventName}" from this member?\n\nTheir cell in the Google Sheet will be set to 0.`)) return
     hideError()
     try {
@@ -495,11 +505,5 @@ if (!memberId) {
 }
 </script>
 
-<!-- Footer -->
-<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50 mt-20">
-    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
-    <p class="text-xs uppercase tracking-widest text-slate-500">© 2026 Bridgeland High School FBLA. All rights reserved.</p>
-</footer>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

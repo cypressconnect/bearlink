@@ -60,6 +60,13 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
             </div>
         </div>
     </div>
+    <!-- Phones: the links above are hidden below md -->
+    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+        <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
+        <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
+        <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
+        <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+    </div>
 </nav>
 
 <main class="flex-grow max-w-7xl mx-auto w-full px-8 py-12">
@@ -142,16 +149,6 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
     </div>
 </main>
 
-<!-- Footer -->
-<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50 mt-auto">
-    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
-    <div class="flex gap-8">
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Contact</a>
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Privacy Policy</a>
-        <a href="#" class="text-slate-500 hover:text-[#a04100] transition-colors text-sm">Terms of Service</a>
-    </div>
-    <p class="text-slate-500 text-xs uppercase tracking-widest">© 2026 Bridgeland High School FBLA. All rights reserved.</p>
-</footer>
 
 <script type="module">
 import { requireAdmin, initAuthNav } from './js/auth.js'
@@ -357,6 +354,11 @@ window.submitPoints = async function () {
     try {
         const { awarded, cleared } = await assignPoints(eventId, memberIds, pointsMap)
 
+        // Keep the cards in step with what was just saved.
+        for (const [id, pts] of selected) {
+            if (pts > 0) alreadyHas.set(id, pts); else alreadyHas.delete(id)
+        }
+
         status('work', `Saved. Writing ${memberIds.length} cell${memberIds.length === 1 ? '' : 's'} to the Google Sheet… <span id="syncProgress">0/${memberIds.length}</span>`)
 
         const failures = await syncBatchToSheet(memberIds, eventId, (done, total) => {
@@ -377,7 +379,8 @@ window.submitPoints = async function () {
             status('warn',
                 `<p class="mb-2">Points are saved on the website, but ${failures.length} of ${memberIds.length} ` +
                 `did not reach the Google Sheet:</p><ul class="list-disc pl-5 space-y-1 text-xs">${names}</ul>` +
-                `<p class="mt-3">Fix the sheet, then use <em>Bear Link → Push one tab to website</em>, or re-submit here. ` +
+                `<p class="mt-3">Fix the problem above, then submit again here. Don't use <em>Bear Link → Push one tab</em> ` +
+                `for this — it copies the sheet onto the website and would remove these points. ` +
                 `<a href="admin.html" class="underline font-bold">Back to dashboard</a></p>`)
         }
         statusBox.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -393,6 +396,5 @@ window.submitPoints = async function () {
 } // end event-exists
 } // end eventId-exists
 </script>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

@@ -59,6 +59,13 @@ tailwind.config = {
             </div>
         </div>
     </div>
+    <!-- Phones: the links above are hidden below md -->
+    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+        <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
+        <a href="competitive-events.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Events</a>
+        <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
+        <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+    </div>
 </header>
 
 <main>
@@ -236,7 +243,7 @@ tailwind.config = {
             <div class="text-center mb-12">
                 <span class="inline-block px-3 py-1 rounded-full bg-secondary text-on-secondary text-xs font-bold tracking-widest uppercase mb-4">Find Your Event</span>
                 <h2 class="text-4xl font-bold font-headline text-primary tracking-tight mb-4">Event Matchmaker</h2>
-                <p class="text-on-surface-variant text-lg font-light">Answer 8 quick questions and we'll recommend your top 3 FBLA competitive events.</p>
+                <p class="text-on-surface-variant text-lg font-light">Answer 8 quick questions and we'll recommend up to 3 FBLA competitive events that fit you.</p>
             </div>
 
             <!-- Quiz Card -->
@@ -441,6 +448,8 @@ tailwind.config = {
 
         const results = [];
         for (const [cat, score] of ranked) {
+            // Never recommend a format the student did not pick once.
+            if (score === 0) break;
             const events = EVENTS[cat];
             // Pick a pseudo-random event from this category (seeded by answer pattern)
             const seed  = answers.filter(a => a === cat).length;
@@ -864,21 +873,10 @@ tailwind.config = {
     </script>
 </main>
 
-<!-- Footer -->
-<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50">
-    <a href="index.html" class="text-lg font-bold text-[#002D72] font-headline">Bear Link</a>
-    <div class="flex flex-wrap justify-center gap-8">
-        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Contact</a>
-        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Privacy Policy</a>
-        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Terms of Service</a>
-    </div>
-    <div class="text-xs uppercase tracking-widest text-slate-400 mt-4">© 2026 Bridgeland High School FBLA. All rights reserved.</div>
-</footer>
 <script type="module">
 import { requireUser, initAuthNav } from './js/auth.js'
 await requireUser()
 initAuthNav()
 </script>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

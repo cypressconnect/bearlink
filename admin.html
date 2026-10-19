@@ -60,6 +60,13 @@ tailwind.config = {
             </div>
         </div>
     </div>
+    <!-- Phones: the links above are hidden below md -->
+    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+        <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
+        <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
+        <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
+        <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+    </div>
 </nav>
 
 <main class="max-w-7xl mx-auto px-8 py-12">
@@ -204,7 +211,7 @@ tailwind.config = {
                 <!-- Active Events -->
                 <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
                     <h2 class="text-xl font-bold font-headline text-primary mb-6">Active Events</h2>
-                    <div id="eventList" class="space-y-6">
+                    <div id="eventList" class="space-y-6 max-h-[32rem] overflow-y-auto pr-1">
                         <div class="py-4 text-center text-on-surface-variant text-sm">Loading…</div>
                     </div>
                     <a href="admin-assign.html" class="block w-full mt-8 border border-outline-variant/30 py-2.5 rounded-lg text-xs font-bold text-outline hover:bg-surface-container-low transition-colors text-center">
@@ -327,7 +334,7 @@ tailwind.config = {
                                 <span class="material-symbols-outlined text-sm">open_in_new</span> View homepage
                             </a>
                         </div>
-                        <p class="text-sm text-on-surface-variant mb-8">Shown in date order, soonest first. Changes appear on the homepage straight away.</p>
+                        <p class="text-sm text-on-surface-variant mb-8">Shown in date order, soonest first. Changes appear on the homepage straight away. Events whose date has passed are hidden from the homepage automatically.</p>
                         <div id="timelineList" class="space-y-4">
                             <div class="py-8 text-center text-on-surface-variant text-sm">Loading…</div>
                         </div>
@@ -374,7 +381,7 @@ tailwind.config = {
 <script type="module">
 import { requireAdmin, initAuthNav } from './js/auth.js'
 import {
-    CATEGORIES, categoryInfo,
+    CATEGORIES, categoryInfo, fetchLeaderboard,
     createEvent, deleteEvent, createMember, deleteMember,
     fetchEventsWithCounts, sheetHealth,
     fetchTimeline, createTimelineEvent, updateTimelineEvent, deleteTimelineEvent,
@@ -408,31 +415,47 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 // ── Load members ─────────────────────────────────────────────
+// Everyone is loaded once and searched in the page, so a search result
+// keeps the member's real place on the leaderboard instead of 01, 02, 03.
+let allMembers = []
+
 async function loadMembers(filter = '') {
-    const { supabase } = await import('./js/supabase-client.js')
-    let q = supabase.from('members')
-        .select('id, name, first_name, last_name, grade, total_points')
-        // Same ranking rule as the public leaderboard: ties break on first name.
-        .order('total_points', { ascending: false })
-        .order('first_name', { ascending: true })
-    if (filter) q = q.or(`name.ilike.%${filter}%,first_name.ilike.%${filter}%,last_name.ilike.%${filter}%`)
-    const { data, error } = await q
-    if (error) { console.error(error); return }
+    try {
+        allMembers = (await fetchLeaderboard()).map(m => ({ ...m }))
+    } catch (err) {
+        console.error(err)
+        document.getElementById('memberTableBody').innerHTML =
+            `<div class="py-8 text-center text-error">Could not load members: ${esc(err.message)}</div>`
+        return
+    }
+    // Same ranking rule as the public leaderboard: equal points share a rank.
+    allMembers.forEach((m, i) => {
+        const prev = allMembers[i - 1]
+        m.rank = prev && (prev.total_points ?? 0) === (m.total_points ?? 0) ? prev.rank : i + 1
+    })
+    document.getElementById('memberCountBadge').textContent = `${allMembers.length} Members`
+    renderMembers(filter)
+}
+
+function renderMembers(filter = '') {
+    const q    = filter.trim().toLowerCase()
+    const data = q
+        ? allMembers.filter(m => `${m.name ?? ''} ${m.first_name ?? ''} ${m.last_name ?? ''}`.toLowerCase().includes(q))
+        : allMembers
 
     const body = document.getElementById('memberTableBody')
     if (!data.length) {
         body.innerHTML = `<div class="py-8 text-center text-on-surface-variant">No members match "${esc(filter)}".</div>`
-        document.getElementById('memberCountBadge').textContent = '0 Members'
         return
     }
-    body.innerHTML = data.map((m, i) => {
+    body.innerHTML = data.map(m => {
         const first = m.first_name ?? (m.name ?? '').trim().split(' ')[0] ?? ''
         const last  = m.last_name  ?? (m.name ?? '').trim().split(' ').slice(1).join(' ')
         const initials = ((first[0] ?? '') + (last[0] ?? '')).toUpperCase() || '?'
         const display  = esc(m.name || `${first} ${last}`.trim())
         return `
         <div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low">
-            <div class="col-span-1 font-bold text-primary">${String(i+1).padStart(2,'0')}</div>
+            <div class="col-span-1 font-bold text-primary">${String(m.rank).padStart(2,'0')}</div>
             <div class="col-span-4 flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold text-sm">
                     ${initials}
@@ -446,18 +469,17 @@ async function loadMembers(filter = '') {
                 <span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${(m.total_points ?? 0).toLocaleString()}</span>
             </div>
             <div class="col-span-4 flex justify-end gap-2">
-                <button onclick="deleteMemberRow('${m.id}', '${display.replace(/'/g, "\\'")}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
+                <button onclick="deleteMemberRow('${m.id}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
                     <span class="material-symbols-outlined text-sm">delete</span>
                 </button>
                 <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center">Modify</a>
             </div>
         </div>
     `}).join('')
-
-    document.getElementById('memberCountBadge').textContent = `${data.length} Members`
 }
 
-window.deleteMemberRow = async (id, name) => {
+window.deleteMemberRow = async (id) => {
+    const name = allMembers.find(m => m.id === id)?.name
     if (!confirm(`Delete ${name || 'this member'}?\n\nThis removes all of their points and deletes their row from the Google Sheet. It cannot be undone.`)) return
     try {
         await deleteMember(id)
@@ -525,16 +547,18 @@ document.getElementById('addMemberForm').addEventListener('submit', async e => {
 })
 
 // ── Load events ──────────────────────────────────────────────
+let allEvents = []
+
 async function loadEvents() {
     const list = document.getElementById('eventList')
     try {
-        const events = await fetchEventsWithCounts()
+        const events = allEvents = await fetchEventsWithCounts()
         if (!events.length) {
             list.innerHTML = `<p class="text-sm text-on-surface-variant italic">No events yet. Create one above.</p>`
             document.getElementById('eventCountBadge').textContent = '0 Active Events'
             return
         }
-        list.innerHTML = events.slice(0, 12).map(ev => `
+        list.innerHTML = events.map(ev => `
             <div class="flex items-start justify-between group">
                 <div class="flex items-start gap-4 min-w-0">
                     <div class="mt-1.5 w-2 h-2 rounded-full bg-secondary shrink-0"></div>
@@ -551,7 +575,7 @@ async function loadEvents() {
                     <a href="admin-assign.html?event=${ev.id}" class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Assign points">
                         <span class="material-symbols-outlined text-sm">how_to_reg</span>
                     </a>
-                    <button onclick="removeEvent('${ev.id}', '${esc(ev.name)}', ${ev.members})" class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Delete event">
+                    <button onclick="removeEvent('${ev.id}')" class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Delete event">
                         <span class="material-symbols-outlined text-sm">close</span>
                     </button>
                 </div>
@@ -563,10 +587,13 @@ async function loadEvents() {
     }
 }
 
-window.removeEvent = async (id, name, memberCount) => {
+window.removeEvent = async (id) => {
+    const ev = allEvents.find(e => e.id === id)
+    if (!ev) return
+    const name = ev.name, memberCount = ev.members
     const warning = memberCount > 0
-        ? `Delete "${name}"?\n\nThis also removes the points it gave to ${memberCount} member${memberCount === 1 ? '' : 's'}. The spreadsheet column is left alone.`
-        : `Delete "${name}"?`
+        ? `Delete "${name}"?\n\nThis also removes the points it gave to ${memberCount} member${memberCount === 1 ? '' : 's'}, and deletes its column from the Google Sheet.`
+        : `Delete "${name}"?\n\nIts column is also deleted from the Google Sheet.`
     if (!confirm(warning)) return
     try {
         const { sheet } = await deleteEvent(id)
@@ -679,7 +706,7 @@ let searchTimer
 document.getElementById('memberSearchInput').addEventListener('input', e => {
     clearTimeout(searchTimer)
     const v = e.target.value
-    searchTimer = setTimeout(() => loadMembers(v), 200)
+    searchTimer = setTimeout(() => renderMembers(v), 150)
 })
 
 // ── Chapter Report ───────────────────────────────────────────
@@ -848,11 +875,6 @@ async function loadReport() {
         document.getElementById('report-loading').classList.add('hidden')
         document.getElementById('report-empty').classList.remove('hidden')
     }
-}
-
-function fmtDate(d) {
-    if (!d) return 'Date TBD'
-    return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function buildEventTable(events) {
@@ -1082,7 +1104,7 @@ window.exportReportPDF = function() {
         doc.text(`Page ${i} of ${pageCount}`, pageW - margin, doc.internal.pageSize.getHeight() - 3.5, { align: 'right' })
     }
 
-    doc.save(`FBLA-Chapter-Report-${new Date().toISOString().slice(0,10)}.pdf`)
+    doc.save(`FBLA-Chapter-Report-${new Date().toLocaleDateString('en-CA')}.pdf`)
 }
 
 // ── Initial load
@@ -1090,16 +1112,5 @@ loadMembers()
 loadEvents()
 </script>
 
-<!-- Footer -->
-<footer class="w-full py-12 px-8 flex flex-col items-center gap-6 bg-slate-50 mt-20">
-    <a href="index.html" class="text-lg font-bold text-[#002D72]">Bear Link</a>
-    <div class="flex gap-8">
-        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Contact</a>
-        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Privacy Policy</a>
-        <a href="#" class="text-sm text-slate-500 hover:text-[#a04100] transition-colors">Terms of Service</a>
-    </div>
-    <p class="text-xs uppercase tracking-widest text-slate-500">© 2026 Bridgeland High School FBLA. All rights reserved.</p>
-</footer>
-<script src="js/chat-widget.js"></script>
 </body>
 </html>

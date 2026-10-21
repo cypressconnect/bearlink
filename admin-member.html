@@ -41,7 +41,7 @@ tailwind.config = {
 
 <!-- Nav -->
 <nav class="top-0 sticky z-50 bg-white/80 backdrop-blur-md shadow-sm">
-    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
             <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
             <div class="hidden md:flex items-center gap-6">
@@ -50,18 +50,19 @@ tailwind.config = {
                 <a href="points.html"             class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Points</a>
             </div>
         </div>
-        <button data-signout class="text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
+        <button data-signout class="whitespace-nowrap text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
         <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+        <a href="admin.html" class="text-slate-600 pb-1 whitespace-nowrap">Admin</a>
     </div>
 </nav>
 
-<main class="max-w-5xl mx-auto px-8 py-12">
+<main class="max-w-5xl mx-auto px-4 sm:px-8 py-12">
 
     <!-- Back -->
     <div class="mb-8">
@@ -78,25 +79,25 @@ tailwind.config = {
     </div>
 
     <!-- Profile header -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 mb-8 sm:mb-12">
 
         <!-- Name card -->
-        <div class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm relative overflow-hidden flex items-center gap-8">
+        <div class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-sm relative overflow-hidden flex items-center gap-4 sm:gap-8">
             <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
-            <div class="w-20 h-20 rounded-xl bg-surface-container flex items-center justify-center">
-                <span id="memberInitials" class="text-3xl font-extrabold text-primary font-headline">?</span>
+            <div class="w-14 h-14 sm:w-20 sm:h-20 shrink-0 rounded-xl bg-surface-container flex items-center justify-center">
+                <span id="memberInitials" class="text-2xl sm:text-3xl font-extrabold text-primary font-headline">?</span>
             </div>
-            <div>
+            <div class="min-w-0">
                 <span class="text-xs uppercase tracking-widest font-bold text-secondary mb-1 block">Admin Edit</span>
-                <h1 id="memberName" class="text-3xl font-extrabold tracking-tight font-headline text-primary">Loading…</h1>
-                <p id="memberMeta" class="text-on-surface-variant text-sm mt-1"></p>
+                <h1 id="memberName" class="text-2xl sm:text-3xl font-extrabold tracking-tight font-headline text-primary">Loading…</h1>
+                <p id="memberMeta" class="text-on-surface-variant text-sm mt-1 break-words"></p>
             </div>
         </div>
 
         <!-- Total points card -->
-        <div class="lg:col-span-4 bg-hero-gradient rounded-xl p-8 flex flex-col justify-center items-center text-center text-white">
+        <div class="lg:col-span-4 bg-hero-gradient rounded-xl p-5 sm:p-8 flex flex-col justify-center items-center text-center text-white">
             <span class="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-1">Total Points</span>
-            <div id="totalPoints" class="text-5xl font-extrabold font-headline">—</div>
+            <div id="totalPoints" class="text-4xl sm:text-5xl font-extrabold font-headline">—</div>
         </div>
     </section>
 
@@ -255,14 +256,14 @@ function renderEvents(m) {
             : 'No date'
         const meetings = meetingLabel(a)
         return `
-        <div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-4 relative">
+        <div class="bg-surface-container-lowest rounded-xl p-4 sm:p-5 shadow-sm flex flex-wrap items-center gap-3 sm:gap-4 relative">
             <div class="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 bg-secondary rounded-r-full"></div>
 
-            <div class="w-12 h-12 bg-surface-container rounded-xl flex items-center justify-center text-primary shrink-0">
+            <div class="hidden sm:flex w-12 h-12 bg-surface-container rounded-xl items-center justify-center text-primary shrink-0">
                 <span class="material-symbols-outlined text-2xl">${icon}</span>
             </div>
 
-            <div class="flex-1 min-w-0">
+            <div class="flex-1 min-w-[7rem]">
                 <h3 class="font-bold text-on-surface text-sm leading-tight">${esc(ev.name)}</h3>
                 <p class="text-xs text-on-surface-variant mt-0.5">${date} · ${esc(ev.category)}</p>
             </div>

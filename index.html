@@ -86,7 +86,7 @@ tailwind.config = {
 
 <!-- Nav -->
 <nav class="top-0 sticky z-50 glass-nav shadow-sm">
-    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
         <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
         <div class="hidden md:flex items-center gap-8">
             <a href="index.html"              class="text-sm font-bold border-b-2 border-[#a04100] pb-1 text-[#002D72]">Home</a>
@@ -96,47 +96,48 @@ tailwind.config = {
         </div>
         <div class="flex items-center gap-4">
             <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
-            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
-            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
-            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
-            <div class="w-10 h-10 rounded-full bg-surface-container overflow-hidden flex items-center justify-center bg-surface-container-high">
+            <span data-when-in class="hidden max-sm:!hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden max-sm:!hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="whitespace-nowrap hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
+            <div class="max-sm:hidden w-10 h-10 rounded-full bg-surface-container overflow-hidden flex items-center justify-center bg-surface-container-high">
                 <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
             </div>
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
         <a href="index.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
         <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+        <a href="admin.html" data-when-admin class="hidden text-slate-600 pb-1 whitespace-nowrap">Admin</a>
     </div>
 </nav>
 
 <main>
     <!-- Hero -->
     <section class="relative hero-gradient text-white overflow-hidden">
-        <div class="max-w-7xl mx-auto px-8 py-24 md:py-32 flex flex-col md:flex-row items-center gap-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 py-14 sm:py-24 md:py-32 flex flex-col md:flex-row items-center gap-10 md:gap-16">
             <div class="flex-1 z-10">
                 <span class="inline-block px-4 py-1 rounded-full bg-secondary text-on-secondary text-xs font-bold uppercase tracking-widest mb-6">Established 2017</span>
-                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight font-headline mb-6 leading-[1.1]">
+                <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight font-headline mb-6 leading-[1.1]">
                     Bridgeland <br/><span class="text-on-primary-container">FBLA</span>
                 </h1>
-                <p class="text-lg text-primary-fixed leading-relaxed max-w-xl mb-10">
+                <p class="text-base sm:text-lg text-primary-fixed leading-relaxed max-w-xl mb-8 sm:mb-10">
                     Bridgeland High School's Future Business Leaders of America inspires and prepares students to become community-minded business leaders in a global society through relevant career preparation and leadership experiences.
                 </p>
-                <div class="flex flex-wrap gap-4">
-                    <a href="login.html?mode=signup" data-when-out class="px-8 py-4 bg-secondary text-on-secondary font-semibold rounded-md shadow-lg hover:opacity-90 transition-all flex items-center gap-2">
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <a href="login.html?mode=signup" data-when-out class="px-4 sm:px-8 py-4 bg-secondary text-on-secondary font-semibold rounded-md shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
                         Join Bear Link
                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
                     </a>
-                    <a href="resources.html" class="px-8 py-4 bg-white/10 backdrop-blur-md text-white font-semibold rounded-md border border-white/20 hover:bg-white/20 transition-all">
+                    <a href="resources.html" class="text-center px-4 sm:px-8 py-4 bg-white/10 backdrop-blur-md text-white font-semibold rounded-md border border-white/20 hover:bg-white/20 transition-all">
                         View Resources
                     </a>
                 </div>
             </div>
             <div class="flex-1 relative">
-                <div class="relative z-10 rounded-xl overflow-hidden shadow-2xl transform rotate-2 hover:rotate-0 transition-transform duration-500 h-72">
+                <div class="relative z-10 rounded-xl overflow-hidden shadow-2xl transform md:rotate-2 hover:rotate-0 transition-transform duration-500 h-72">
                     <img src="DSC_0107.JPG" alt="Bridgeland FBLA" class="w-full h-full object-cover"/>
                 </div>
                 <div class="absolute -top-12 -right-12 w-64 h-64 bg-secondary/20 rounded-full blur-3xl -z-0"></div>
@@ -147,7 +148,7 @@ tailwind.config = {
 
     <!-- Stats -->
     <section class="bg-surface-container-low py-16">
-        <div class="max-w-7xl mx-auto px-8 grid grid-cols-3 gap-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 grid grid-cols-3 gap-8">
             <div class="text-center">
                 <div class="text-4xl font-extrabold text-primary font-headline">160</div>
                 <div class="text-sm font-medium text-slate-500 uppercase tracking-wide mt-2">Active Members</div>
@@ -164,22 +165,22 @@ tailwind.config = {
     </section>
 
     <!-- Upcoming Events -->
-    <section class="py-24 bg-surface">
-        <div class="max-w-7xl mx-auto px-8">
-            <div class="mb-16">
-                <h2 class="text-3xl font-bold font-headline text-primary mb-4">Upcoming Events</h2>
+    <section class="py-14 sm:py-24 bg-surface">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8">
+            <div class="mb-10 sm:mb-16">
+                <h2 class="text-2xl sm:text-3xl font-bold font-headline text-primary mb-4">Upcoming Events</h2>
                 <p class="text-slate-600 max-w-2xl">What is coming up for the chapter — meetings, socials, and competitive events. Everyone is welcome.</p>
             </div>
-            <div class="relative space-y-12">
-                <div class="absolute left-0 md:left-1/2 top-0 bottom-0 w-px bg-slate-200 transform md:-translate-x-1/2"></div>
+            <div class="relative">
+                <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-slate-200 transform -translate-x-1/2"></div>
 
                 <!-- Entries come from timeline_events (edited in admin.html). The
                      three below are shown if that table can't be read. -->
-                <div id="timeline" class="space-y-12">
+                <div id="timeline" class="space-y-4 md:space-y-12">
                 <!-- Timeline 1 -->
                 <div class="relative flex flex-col md:flex-row items-center md:justify-between group">
-                    <div class="md:w-[45%] mb-8 md:mb-0">
-                        <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-secondary hover:shadow-md transition-all">
+                    <div class="w-full md:w-[45%]">
+                        <div class="bg-surface-container-lowest p-5 sm:p-8 rounded-xl shadow-sm border-l-4 border-secondary hover:shadow-md transition-all">
                             <span class="text-xs font-bold text-secondary uppercase tracking-widest">Interest Meeting</span>
                             <h3 class="text-xl font-bold text-primary mt-2">Interest Meeting</h3>
                             <p class="text-slate-600 mt-3 text-sm leading-relaxed">New to FBLA? Start here. Find out what the chapter does, how competitive events work, and how to get involved this year.</p>
@@ -188,13 +189,13 @@ tailwind.config = {
                             </div>
                         </div>
                     </div>
-                    <div class="absolute left-[-4px] md:left-1/2 w-3 h-3 bg-secondary rounded-full transform md:-translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
+                    <div class="hidden md:block absolute left-1/2 w-3 h-3 bg-secondary rounded-full transform -translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
                 </div>
 
                 <!-- Timeline 2 -->
                 <div class="relative flex flex-col md:flex-row-reverse items-center md:justify-between group">
-                    <div class="md:w-[45%] mb-8 md:mb-0">
-                        <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-primary hover:shadow-md transition-all">
+                    <div class="w-full md:w-[45%]">
+                        <div class="bg-surface-container-lowest p-5 sm:p-8 rounded-xl shadow-sm border-l-4 border-primary hover:shadow-md transition-all">
                             <span class="text-xs font-bold text-primary uppercase tracking-widest">Social Event</span>
                             <h3 class="text-xl font-bold text-primary mt-2">Fusion Boba Social</h3>
                             <p class="text-slate-600 mt-3 text-sm leading-relaxed">Kick off the year with the chapter over boba. Meet the officer team and other members before the season gets busy.</p>
@@ -203,13 +204,13 @@ tailwind.config = {
                             </div>
                         </div>
                     </div>
-                    <div class="absolute left-[-4px] md:left-1/2 w-3 h-3 bg-primary rounded-full transform md:-translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
+                    <div class="hidden md:block absolute left-1/2 w-3 h-3 bg-primary rounded-full transform -translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
                 </div>
 
                 <!-- Timeline 3 -->
                 <div class="relative flex flex-col md:flex-row items-center md:justify-between group">
-                    <div class="md:w-[45%] mb-8 md:mb-0">
-                        <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-secondary hover:shadow-md transition-all">
+                    <div class="w-full md:w-[45%]">
+                        <div class="bg-surface-container-lowest p-5 sm:p-8 rounded-xl shadow-sm border-l-4 border-secondary hover:shadow-md transition-all">
                             <span class="text-xs font-bold text-secondary uppercase tracking-widest">Chapter Meeting</span>
                             <h3 class="text-xl font-bold text-primary mt-2">Chapter Meeting</h3>
                             <p class="text-slate-600 mt-3 text-sm leading-relaxed">Our first full chapter meeting of the year — chapter updates, upcoming events, and what to expect from the season ahead.</p>
@@ -218,7 +219,7 @@ tailwind.config = {
                             </div>
                         </div>
                     </div>
-                    <div class="absolute left-[-4px] md:left-1/2 w-3 h-3 bg-secondary rounded-full transform md:-translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
+                    <div class="hidden md:block absolute left-1/2 w-3 h-3 bg-secondary rounded-full transform -translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
                 </div>
                 </div>
             </div>
@@ -242,8 +243,8 @@ function timelineEntry(ev, i) {
         : 'Date TBA'
     return `
     <div class="relative flex flex-col ${i % 2 ? 'md:flex-row-reverse' : 'md:flex-row'} items-center md:justify-between group">
-        <div class="md:w-[45%] mb-8 md:mb-0">
-            <div class="bg-surface-container-lowest p-8 rounded-xl shadow-sm border-l-4 border-${accent} hover:shadow-md transition-all">
+        <div class="w-full md:w-[45%]">
+            <div class="bg-surface-container-lowest p-5 sm:p-8 rounded-xl shadow-sm border-l-4 border-${accent} hover:shadow-md transition-all">
                 ${ev.tag ? `<span class="text-xs font-bold text-${accent} uppercase tracking-widest">${esc(ev.tag)}</span>` : ''}
                 <h3 class="text-xl font-bold text-primary mt-2">${esc(ev.title)}</h3>
                 ${ev.description ? `<p class="text-slate-600 mt-3 text-sm leading-relaxed">${esc(ev.description)}</p>` : ''}
@@ -252,7 +253,7 @@ function timelineEntry(ev, i) {
                 </div>
             </div>
         </div>
-        <div class="absolute left-[-4px] md:left-1/2 w-3 h-3 bg-${accent} rounded-full transform md:-translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
+        <div class="hidden md:block absolute left-1/2 w-3 h-3 bg-${accent} rounded-full transform -translate-x-1/2 z-10 border-4 border-white shadow-sm"></div>
     </div>`
 }
 

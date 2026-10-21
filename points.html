@@ -41,7 +41,7 @@ tailwind.config = {
 
 <!-- Nav -->
 <nav class="top-0 sticky z-50 glass-nav shadow-sm">
-    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
             <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
             <div class="hidden md:flex items-center gap-6">
@@ -53,32 +53,33 @@ tailwind.config = {
         </div>
         <div class="flex items-center gap-4">
             <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
-            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
-            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
-            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
-            <div class="h-10 w-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
+            <span data-when-in class="hidden max-sm:!hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden max-sm:!hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="whitespace-nowrap hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
+            <div class="max-sm:hidden h-10 w-10 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
             </div>
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
         <a href="points.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Points</a>
+        <a href="admin.html" data-when-admin class="hidden text-slate-600 pb-1 whitespace-nowrap">Admin</a>
     </div>
 </nav>
 
-<main class="max-w-7xl mx-auto px-8 py-12">
+<main class="max-w-7xl mx-auto px-4 sm:px-8 py-12">
 
     <!-- Hero -->
-    <section class="mb-16">
-        <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#001a48] to-[#002d72] p-12 text-white shadow-xl">
+    <section class="mb-10 sm:mb-16">
+        <div class="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#001a48] to-[#002d72] p-6 sm:p-12 text-white shadow-xl">
             <div class="relative z-10 max-w-2xl">
                 <span class="inline-block px-3 py-1 bg-secondary rounded-full text-xs font-bold tracking-widest uppercase mb-4">Live Standings</span>
-                <h1 class="text-5xl md:text-6xl font-extrabold font-headline tracking-tight mb-6 leading-none">Points Leaderboard</h1>
-                <p class="text-on-primary-container text-lg leading-relaxed font-medium opacity-90 mb-8">
+                <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold font-headline tracking-tight mb-6 leading-none">Points Leaderboard</h1>
+                <p class="text-on-primary-container text-base sm:text-lg leading-relaxed font-medium opacity-90 mb-8">
                     Tracking excellence, leadership, and service. Every action brings you closer to the Nationals. Check your rank and see how you stack up against the best.
                 </p>
                 <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVHMkifrvvw0vtVqVDsq_sU2vqVFwK4AgpIcxCe6xxUuKxXA/viewform?usp=publish-editor" target="_blank" rel="noopener"
@@ -94,7 +95,7 @@ tailwind.config = {
     </section>
 
     <!-- Podium Top 3 (populated by JS) -->
-    <div id="podium" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+    <div id="podium" class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-10 sm:mb-16">
         <!-- Placeholder while loading -->
         <div class="md:col-span-3 py-12 text-center text-on-surface-variant">
             <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
@@ -103,7 +104,7 @@ tailwind.config = {
 
     <!-- Leaderboard Table -->
     <div class="bg-surface-container-low rounded-xl overflow-hidden mb-12">
-        <div class="p-8 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="p-5 sm:p-8 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h2 class="text-2xl font-bold font-headline text-primary">Member Standings</h2>
             <div class="flex flex-wrap gap-4 w-full md:w-auto">
                 <div class="relative flex-grow md:flex-grow-0">
@@ -126,16 +127,16 @@ tailwind.config = {
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-surface-container-low text-on-surface-variant">
-                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Rank</th>
-                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Member Name</th>
-                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest">Grade</th>
-                        <th class="px-8 py-4 text-xs font-bold uppercase tracking-widest text-right">Total Points</th>
+                        <th class="px-3 sm:px-8 py-4 text-xs font-bold uppercase tracking-widest">Rank</th>
+                        <th class="px-3 sm:px-8 py-4 text-xs font-bold uppercase tracking-widest">Member Name</th>
+                        <th class="px-3 sm:px-8 py-4 text-xs font-bold uppercase tracking-widest hidden sm:table-cell">Grade</th>
+                        <th class="px-3 sm:px-8 py-4 text-xs font-bold uppercase tracking-widest text-right whitespace-nowrap"><span class="sm:hidden">Points</span><span class="hidden sm:inline">Total Points</span></th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody" class="divide-y divide-outline-variant/5">
                     <!-- Populated by JS -->
                     <tr id="loadingRow">
-                        <td colspan="4" class="px-8 py-12 text-center text-on-surface-variant">
+                        <td colspan="4" class="px-4 sm:px-8 py-12 text-center text-on-surface-variant">
                             <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
                             Loading standings…
                         </td>
@@ -143,7 +144,7 @@ tailwind.config = {
                 </tbody>
             </table>
         </div>
-        <div class="p-8 bg-surface-container-low flex justify-between items-center text-sm">
+        <div class="p-5 sm:p-8 bg-surface-container-low flex justify-between items-center text-sm">
             <p id="memberCount" class="text-slate-500">Loading…</p>
         </div>
     </div>
@@ -160,7 +161,7 @@ initAuthNav()
 // Sent here by the admin gate: explain rather than silently redirecting.
 if (new URLSearchParams(location.search).get('denied') === 'admin') {
     const bar = document.createElement('div')
-    bar.className = 'max-w-7xl mx-auto px-8 pt-6'
+    bar.className = 'max-w-7xl mx-auto px-4 sm:px-8 pt-6'
     bar.innerHTML = `
         <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4 flex items-start gap-3">
             <span class="material-symbols-outlined text-amber-700 text-sm mt-0.5">lock</span>
@@ -198,14 +199,14 @@ function renderPodium(members) {
         const slot = top.indexOf(m) + 1    // podium position: 1 centre, 2 left, 3 right
         const isFirst = slot === 1
         return `
-        <a href="member.html?id=${m.id}" class="${isFirst ? 'order-1 md:order-2 bg-surface-container-lowest p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform scale-105 z-10 hover:shadow-lg transition-shadow'
-                               : 'bg-surface-container-lowest p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm hover:shadow-md transition-shadow ' + (slot===2?'order-2 md:order-1 border-l-4 border-slate-300':'order-3 border-r-4 border-orange-200')}">
+        <a href="member.html?id=${m.id}" class="${isFirst ? 'order-1 md:order-2 bg-surface-container-lowest p-6 sm:p-10 rounded-xl flex flex-col items-center justify-center relative shadow-md border-t-4 border-secondary transform md:scale-105 z-10 hover:shadow-lg transition-shadow'
+                               : 'bg-surface-container-lowest p-5 sm:p-8 rounded-xl flex flex-col items-center justify-center relative shadow-sm hover:shadow-md transition-shadow ' + (slot===2?'order-2 md:order-1 border-l-4 border-slate-300':'order-3 border-r-4 border-orange-200')}">
             ${isFirst ? `<div class="absolute -top-6 left-1/2 -translate-x-1/2">
                 <span class="material-symbols-outlined text-secondary text-4xl" style="font-variation-settings:'FILL' 1">workspace_premium</span>
             </div>` : ''}
             <div class="mb-6 relative">
                 <div class="${isFirst ? 'w-32 h-32 rounded-full border-4 border-secondary' : 'w-24 h-24 rounded-full border-4 border-slate-200'} overflow-hidden bg-surface-container flex items-center justify-center">
-                    <span class="material-symbols-outlined ${isFirst ? 'text-5xl' : 'text-4xl'} text-on-surface-variant">account_circle</span>
+                    <span class="material-symbols-outlined ${isFirst ? 'text-4xl sm:text-5xl' : 'text-4xl'} text-on-surface-variant">account_circle</span>
                 </div>
                 <div class="absolute -bottom-2 -right-2 ${isFirst ? 'bg-secondary w-10 h-10 text-lg shadow-lg' : slot===2 ? 'bg-slate-400 w-8 h-8 text-sm' : 'bg-orange-700 w-8 h-8 text-sm'} text-white rounded-full flex items-center justify-center font-bold">
                     ${m.rank}
@@ -222,23 +223,23 @@ function renderPodium(members) {
 function renderTable(members) {
     const body = document.getElementById('leaderboardBody')
     if (members.length === 0) {
-        body.innerHTML = `<tr><td colspan="4" class="px-8 py-12 text-center text-on-surface-variant">No members found.</td></tr>`
+        body.innerHTML = `<tr><td colspan="4" class="px-4 sm:px-8 py-12 text-center text-on-surface-variant">No members found.</td></tr>`
         document.getElementById('memberCount').textContent = '0 members'
         return
     }
     body.innerHTML = members.map(m => `
         <tr class="bg-surface-container-lowest hover:bg-slate-50/50 transition-colors group">
-            <td class="px-8 py-6"><span class="font-bold text-primary">#${m.rank}</span></td>
-            <td class="px-8 py-6">
-                <a href="member.html?id=${m.id}" class="flex items-center gap-4 group-hover:text-secondary transition-colors">
-                    <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center">
+            <td class="px-3 sm:px-8 py-4 sm:py-6"><span class="font-bold text-primary">#${m.rank}</span></td>
+            <td class="px-3 sm:px-8 py-4 sm:py-6">
+                <a href="member.html?id=${m.id}" class="flex items-center gap-3 sm:gap-4 group-hover:text-secondary transition-colors">
+                    <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 hidden sm:flex items-center justify-center">
                         <span class="material-symbols-outlined text-slate-400">account_circle</span>
                     </div>
                     <span class="font-bold">${esc(m.name)}</span>
                 </a>
             </td>
-            <td class="px-8 py-6">${gradeChip(m.grade, m.rank)}</td>
-            <td class="px-8 py-6 text-right"><span class="font-bold text-lg text-primary">${(m.total_points ?? 0).toLocaleString()}</span></td>
+            <td class="px-3 sm:px-8 py-4 sm:py-6 hidden sm:table-cell">${gradeChip(m.grade, m.rank)}</td>
+            <td class="px-3 sm:px-8 py-4 sm:py-6 text-right"><span class="font-bold text-lg text-primary">${(m.total_points ?? 0).toLocaleString()}</span></td>
         </tr>
     `).join('')
     document.getElementById('memberCount').textContent = `${members.length} members`
@@ -282,7 +283,7 @@ fetchLeaderboard().then(members => {
     document.getElementById('memberCount').textContent = `${members.length} total members`
 }).catch(err => {
     document.getElementById('leaderboardBody').innerHTML =
-        `<tr><td colspan="4" class="px-8 py-8 text-center text-error">Failed to load: ${err.message}</td></tr>`
+        `<tr><td colspan="4" class="px-4 sm:px-8 py-8 text-center text-error">Failed to load: ${err.message}</td></tr>`
 })
 
 document.getElementById('gradeFilter').addEventListener('change', applyFilters)

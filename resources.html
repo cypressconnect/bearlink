@@ -42,7 +42,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
 
 <!-- Nav -->
 <nav class="top-0 sticky z-50 bg-white/80 backdrop-blur-md shadow-sm">
-    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
         <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
         <div class="hidden md:flex items-center gap-8">
             <a href="index.html"              class="text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors duration-200">Home</a>
@@ -52,28 +52,29 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
         </div>
         <div class="flex items-center gap-4">
             <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
-            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
-            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
-            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex items-center justify-center">
+            <span data-when-in class="hidden max-sm:!hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden max-sm:!hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="whitespace-nowrap hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
+            <div class="max-sm:hidden w-8 h-8 rounded-full overflow-hidden bg-surface-container-high flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant text-xl">account_circle</span>
             </div>
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Resources</a>
         <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+        <a href="admin.html" data-when-admin class="hidden text-slate-600 pb-1 whitespace-nowrap">Admin</a>
     </div>
 </nav>
 
-<main class="max-w-7xl mx-auto px-8 py-16 min-h-screen">
+<main class="max-w-7xl mx-auto px-4 sm:px-8 py-16 min-h-screen">
     <!-- Header -->
-    <header class="mb-16">
+    <header class="mb-10 sm:mb-16">
         <span class="text-xs uppercase tracking-widest text-secondary font-semibold mb-4 block">Centralized Hub</span>
-        <h1 class="text-5xl md:text-6xl font-extrabold text-primary tracking-tight mb-6 max-w-2xl">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-primary tracking-tight mb-6 max-w-2xl">
             Elevate Your <span class="text-secondary">FBLA Journey</span> with Bear Link Resources.
         </h1>
         <p class="text-lg text-on-surface-variant max-w-xl leading-relaxed">
@@ -85,7 +86,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
     <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
 
         <!-- Schoology -->
-        <a href="https://my.cfisd.net" target="_blank" class="md:col-span-2 lg:col-span-3 bg-surface-container-lowest p-8 rounded-xl flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 group cursor-pointer border border-transparent hover:border-primary/10">
+        <a href="https://my.cfisd.net" target="_blank" class="md:col-span-2 lg:col-span-3 bg-surface-container-lowest p-5 sm:p-8 rounded-xl flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 group cursor-pointer border border-transparent hover:border-primary/10">
             <div>
                 <div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-6">
                     <span class="material-symbols-outlined text-white">school</span>
@@ -99,8 +100,8 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
         </a>
 
         <!-- FBLA Connect -->
-        <div class="md:col-span-2 lg:col-span-3 bg-primary text-on-primary p-8 rounded-xl flex flex-col justify-between relative overflow-hidden group cursor-pointer">
-            <div class="absolute top-0 right-0 p-8 opacity-10">
+        <div class="md:col-span-2 lg:col-span-3 bg-primary text-on-primary p-5 sm:p-8 rounded-xl flex flex-col justify-between relative overflow-hidden group cursor-pointer">
+            <div class="absolute top-0 right-0 p-5 sm:p-8 opacity-10">
                 <span class="material-symbols-outlined text-8xl">hub</span>
             </div>
             <div class="z-10">
@@ -119,7 +120,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
         </div>
 
         <!-- Remind -->
-        <div class="md:col-span-2 lg:col-span-2 bg-surface-container-low p-8 rounded-xl flex flex-col gap-4 border-l-4 border-secondary">
+        <div class="md:col-span-2 lg:col-span-2 bg-surface-container-low p-5 sm:p-8 rounded-xl flex flex-col gap-4 border-l-4 border-secondary">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-surface-container-highest rounded-full flex items-center justify-center">
                     <span class="material-symbols-outlined text-primary">chat</span>

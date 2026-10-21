@@ -43,7 +43,7 @@ tailwind.config = {
 
 <!-- Nav -->
 <nav class="top-0 sticky z-50 bg-white/80 backdrop-blur-md shadow-sm">
-    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
         <div class="flex items-center gap-8">
             <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72]">Bear Link</a>
             <div class="hidden md:flex items-center gap-6">
@@ -54,28 +54,29 @@ tailwind.config = {
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <button data-signout class="text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
-            <div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container flex items-center justify-center">
+            <button data-signout class="whitespace-nowrap text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign Out</button>
+            <div class="max-sm:hidden w-8 h-8 rounded-full overflow-hidden bg-surface-container flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant text-xl">account_circle</span>
             </div>
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
         <a href="points.html" class="text-slate-600 pb-1 whitespace-nowrap">Points</a>
+        <a href="admin.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Admin</a>
     </div>
 </nav>
 
-<main class="max-w-7xl mx-auto px-8 py-12">
+<main class="max-w-7xl mx-auto px-4 sm:px-8 py-12">
     <!-- Header -->
-    <header class="mb-12">
-        <div class="flex items-end justify-between">
+    <header class="mb-8 sm:mb-12">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
                 <span class="text-xs uppercase tracking-widest font-label font-bold text-secondary mb-2 block">Administrative Portal</span>
-                <h1 class="text-4xl font-extrabold tracking-tight font-headline text-primary">System Management</h1>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight font-headline text-primary">System Management</h1>
             </div>
             <div class="flex gap-3">
                 <div class="bg-surface-container-low px-4 py-2 rounded-xl flex items-center gap-3">
@@ -91,19 +92,19 @@ tailwind.config = {
     </header>
 
     <!-- Bento Grid -->
-    <div class="grid grid-cols-12 gap-8">
+    <div class="grid grid-cols-12 gap-6 sm:gap-8">
         <!-- Tabs -->
-        <div class="col-span-12 flex gap-4 mb-4">
+        <div class="col-span-12 flex gap-2 sm:gap-4 mb-2 sm:mb-4 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <button id="tab-members" onclick="switchTab('members')"
-                class="bg-primary text-on-primary px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors">
+                class="bg-primary text-on-primary shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors">
                 <span class="material-symbols-outlined text-sm">leaderboard</span> Member Points
             </button>
             <button id="tab-report" onclick="switchTab('report')"
-                class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                class="bg-surface-container-highest text-on-surface-variant shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
                 <span class="material-symbols-outlined text-sm">analytics</span> Chapter Report
             </button>
             <button id="tab-timeline" onclick="switchTab('timeline')"
-                class="bg-surface-container-highest text-on-surface-variant px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
+                class="bg-surface-container-highest text-on-surface-variant shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-surface-container-high transition-colors">
                 <span class="material-symbols-outlined text-sm">view_timeline</span> Homepage Timeline
             </button>
         </div>
@@ -112,16 +113,16 @@ tailwind.config = {
         <div id="panel-members" class="contents">
             <!-- Member Table -->
             <div class="col-span-12 lg:col-span-8">
-                <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                <div class="bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
                     <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
                         <h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center bg-surface-container-low px-3 py-1.5 rounded-lg">
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <div class="flex flex-1 sm:flex-none items-center bg-surface-container-low px-3 py-1.5 rounded-lg min-w-0">
                                 <span class="material-symbols-outlined text-outline text-sm mr-2">search</span>
-                                <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
+                                <input id="memberSearchInput" class="bg-transparent border-none text-sm focus:ring-0 w-full sm:w-48 text-on-surface-variant p-0" placeholder="Search members..." type="text"/>
                             </div>
                             <button onclick="openAddMember()"
-                                class="flex items-center gap-1.5 bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all">
+                                class="shrink-0 whitespace-nowrap flex items-center gap-1.5 bg-secondary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all">
                                 <span class="material-symbols-outlined text-sm">person_add</span> Add Member
                             </button>
                         </div>
@@ -179,7 +180,7 @@ tailwind.config = {
             <!-- Sidebar -->
             <div class="col-span-12 lg:col-span-4 space-y-8">
                 <!-- Add Event Card -->
-                <div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
+                <div class="bg-primary rounded-xl p-5 sm:p-8 shadow-lg relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
                     <h2 class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add New Event</h2>
                     <form id="createEventForm" class="space-y-4 relative z-10">
@@ -209,7 +210,7 @@ tailwind.config = {
                 </div>
 
                 <!-- Active Events -->
-                <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                <div class="bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
                     <h2 class="text-xl font-bold font-headline text-primary mb-6">Active Events</h2>
                     <div id="eventList" class="space-y-6 max-h-[32rem] overflow-y-auto pr-1">
                         <div class="py-4 text-center text-on-surface-variant text-sm">Loading…</div>
@@ -241,7 +242,7 @@ tailwind.config = {
         <div id="panel-report" class="col-span-12 hidden">
             <div class="bg-surface-container-lowest rounded-xl shadow-[0px_12px_32px_rgba(24,28,30,0.04)] overflow-hidden">
                 <!-- Report Header -->
-                <div class="px-8 pt-8 pb-6 border-b border-surface-container-high flex items-center justify-between">
+                <div class="px-4 sm:px-8 pt-8 pb-6 border-b border-surface-container-high flex items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-bold font-headline text-primary">Chapter Activity Report</h2>
                         <p class="text-sm text-on-surface-variant mt-1" id="report-subtitle">Bridgeland High School FBLA · <span id="report-date"></span></p>
@@ -261,7 +262,7 @@ tailwind.config = {
                 <!-- Content -->
                 <div id="report-content" class="hidden divide-y divide-surface-container-high">
                     <!-- Service Projects -->
-                    <div class="p-8">
+                    <div class="p-5 sm:p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-emerald-700">volunteer_activism</span>
@@ -278,7 +279,7 @@ tailwind.config = {
                     </div>
 
                     <!-- Socials -->
-                    <div class="p-8">
+                    <div class="p-5 sm:p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-violet-700">celebration</span>
@@ -295,7 +296,7 @@ tailwind.config = {
                     </div>
 
                     <!-- Fundraisers -->
-                    <div class="p-8">
+                    <div class="p-5 sm:p-8">
                         <div class="flex items-center gap-3 mb-6">
                             <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-amber-700">attach_money</span>
@@ -324,10 +325,10 @@ tailwind.config = {
 
         <!-- ── HOMEPAGE TIMELINE PANEL ────────────────────────── -->
         <div id="panel-timeline" class="col-span-12 hidden">
-            <div class="grid grid-cols-12 gap-8">
+            <div class="grid grid-cols-12 gap-6 sm:gap-8">
                 <!-- Entry list -->
                 <div class="col-span-12 lg:col-span-8">
-                    <div class="bg-surface-container-lowest rounded-xl p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                    <div class="bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
                         <div class="flex items-center justify-between mb-2 flex-wrap gap-4">
                             <h2 class="text-xl font-bold font-headline text-primary">Upcoming Events on the Homepage</h2>
                             <a href="index.html" target="_blank" class="text-xs font-bold text-secondary hover:text-primary flex items-center gap-1 transition-colors">
@@ -343,7 +344,7 @@ tailwind.config = {
 
                 <!-- Add / edit form -->
                 <div class="col-span-12 lg:col-span-4">
-                    <div class="bg-primary rounded-xl p-8 shadow-lg relative overflow-hidden">
+                    <div class="bg-primary rounded-xl p-5 sm:p-8 shadow-lg relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-primary-container/20 rounded-full -mr-16 -mt-16"></div>
                         <h2 id="timelineFormTitle" class="text-xl font-bold font-headline text-on-primary mb-6 relative z-10">Add Timeline Event</h2>
                         <form id="timelineForm" class="space-y-4 relative z-10">
@@ -454,25 +455,21 @@ function renderMembers(filter = '') {
         const initials = ((first[0] ?? '') + (last[0] ?? '')).toUpperCase() || '?'
         const display  = esc(m.name || `${first} ${last}`.trim())
         return `
-        <div class="grid grid-cols-12 items-center bg-surface rounded-xl p-4 transition-all hover:bg-surface-container-low">
-            <div class="col-span-1 font-bold text-primary">${String(m.rank).padStart(2,'0')}</div>
-            <div class="col-span-4 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold text-sm">
-                    ${initials}
-                </div>
-                <div>
-                    <p class="font-bold text-on-surface">${display}</p>
-                    ${m.grade ? `<p class="text-xs text-on-surface-variant">Grade ${m.grade}</p>` : ''}
-                </div>
+        <div class="flex items-center gap-3 sm:gap-4 bg-surface rounded-xl p-3 sm:p-4 transition-all hover:bg-surface-container-low">
+            <div class="w-6 sm:w-8 shrink-0 font-bold text-primary text-sm sm:text-base">${String(m.rank).padStart(2,'0')}</div>
+            <div class="hidden sm:flex w-10 h-10 shrink-0 rounded-full bg-secondary-fixed items-center justify-center text-on-secondary-fixed font-bold text-sm">
+                ${initials}
             </div>
-            <div class="col-span-3">
-                <span class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${(m.total_points ?? 0).toLocaleString()}</span>
+            <div class="flex-1 min-w-0">
+                <p class="font-bold text-on-surface leading-tight break-words">${display}</p>
+                ${m.grade ? `<p class="text-xs text-on-surface-variant">Grade ${m.grade}</p>` : ''}
             </div>
-            <div class="col-span-4 flex justify-end gap-2">
+            <span class="shrink-0 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${(m.total_points ?? 0).toLocaleString()}</span>
+            <div class="shrink-0 flex items-center gap-1 sm:gap-2">
                 <button onclick="deleteMemberRow('${m.id}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
                     <span class="material-symbols-outlined text-sm">delete</span>
                 </button>
-                <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center">Modify</a>
+                <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center">Modify</a>
             </div>
         </div>
     `}).join('')

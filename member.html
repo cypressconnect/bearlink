@@ -42,7 +42,7 @@ tailwind.config = {
 
 <!-- Nav -->
 <header class="top-0 sticky z-50 glass-nav shadow-sm">
-    <div class="flex justify-between items-center w-full px-8 py-4 max-w-7xl mx-auto">
+    <div class="flex justify-between items-center w-full px-4 sm:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
         <a href="index.html" class="text-xl font-extrabold tracking-tighter text-[#002D72] font-headline">Bear Link</a>
         <nav class="hidden md:flex items-center gap-8">
             <a href="index.html"              class="text-slate-600 hover:text-[#002D72] text-sm font-medium transition-colors duration-200">Home</a>
@@ -52,24 +52,25 @@ tailwind.config = {
         </nav>
         <div class="flex items-center gap-4">
             <a href="login.html" data-when-out class="text-sm font-medium text-slate-600 hover:text-[#a04100] transition-colors">Sign in</a>
-            <span data-when-in class="hidden text-sm font-medium text-slate-500" data-auth-name></span>
-            <a href="admin.html" data-when-admin class="hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
-            <button data-signout data-when-in class="hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
-            <div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
+            <span data-when-in class="hidden max-sm:!hidden text-sm font-medium text-slate-500" data-auth-name></span>
+            <a href="admin.html" data-when-admin class="hidden max-sm:!hidden text-sm font-medium text-slate-600 hover:text-[#002D72] transition-colors">Dashboard</a>
+            <button data-signout data-when-in class="whitespace-nowrap hidden text-sm font-medium text-slate-600 hover:text-error transition-colors">Sign out</button>
+            <div class="max-sm:hidden w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center">
                 <span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
             </div>
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-6 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
         <a href="points.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Points</a>
+        <a href="admin.html" data-when-admin class="hidden text-slate-600 pb-1 whitespace-nowrap">Admin</a>
     </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-8 py-12">
+<main class="max-w-7xl mx-auto px-4 sm:px-8 py-12">
     <!-- Back -->
     <div class="mb-8">
         <a href="points.html" class="inline-flex items-center gap-2 text-primary font-medium hover:text-secondary transition-colors duration-200 group">
@@ -79,36 +80,36 @@ tailwind.config = {
     </div>
 
     <!-- Profile Header -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16">
-        <div class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 mb-10 sm:mb-16">
+        <div class="lg:col-span-8 bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-sm relative overflow-hidden flex flex-col md:flex-row items-center gap-6 sm:gap-8">
             <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
             <div class="relative">
-                <div class="w-32 h-32 rounded-xl overflow-hidden ring-4 ring-surface-container bg-surface-container flex items-center justify-center">
-                    <span class="material-symbols-outlined text-6xl text-on-surface-variant">account_circle</span>
+                <div class="w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden ring-4 ring-surface-container bg-surface-container flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl sm:text-6xl text-on-surface-variant">account_circle</span>
                 </div>
                 <div class="absolute -bottom-2 -right-2 bg-secondary text-on-secondary px-3 py-1 rounded-full text-xs font-bold tracking-widest uppercase">Active</div>
             </div>
             <div class="flex-1 text-center md:text-left">
-                <h1 id="memberName" class="text-4xl font-extrabold tracking-tight font-headline text-primary mb-2">Loading…</h1>
+                <h1 id="memberName" class="text-3xl sm:text-4xl font-extrabold tracking-tight font-headline text-primary mb-2">Loading…</h1>
                 <p id="memberMeta" class="text-on-surface-variant mb-4"></p>
                 <div id="memberBadges" class="flex flex-wrap justify-center md:justify-start gap-3"></div>
             </div>
         </div>
-        <div class="lg:col-span-4 bg-hero-gradient rounded-xl p-8 flex flex-col justify-center items-center text-center text-white">
+        <div class="lg:col-span-4 bg-hero-gradient rounded-xl p-5 sm:p-8 flex flex-col justify-center items-center text-center text-white">
             <span class="text-white/60 text-xs font-bold uppercase tracking-[0.2em] mb-2">Total Points</span>
-            <div id="memberPoints" class="text-6xl font-extrabold font-headline mb-2">—</div>
+            <div id="memberPoints" class="text-5xl sm:text-6xl font-extrabold font-headline mb-2">—</div>
         </div>
     </section>
 
     <!-- Event History -->
     <section>
-        <div class="flex justify-between items-end mb-12">
+        <div class="flex justify-between items-end mb-6 sm:mb-12">
             <div>
-                <h2 class="text-3xl font-bold tracking-tight font-headline text-primary">Event History</h2>
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight font-headline text-primary">Event History</h2>
                 <p class="text-on-surface-variant mt-1">A detailed log of academic and professional engagements.</p>
             </div>
         </div>
-        <div id="eventHistory" class="space-y-6">
+        <div id="eventHistory" class="space-y-3 sm:space-y-6">
             <div class="py-12 text-center text-on-surface-variant">
                 <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
                 Loading history…
@@ -166,24 +167,24 @@ if (!memberId) {
                 : 'No date'
             const meetings = meetingLabel(a)
             return `
-            <div class="group bg-surface-container-low rounded-xl p-6 transition-all hover:bg-surface-container flex flex-col md:flex-row items-center justify-between gap-6 relative">
+            <div class="group bg-surface-container-low rounded-xl p-4 sm:p-6 transition-all hover:bg-surface-container flex items-center justify-between gap-3 sm:gap-6 relative">
                 <div class="absolute left-0 top-1/2 -translate-y-1/2 h-12 w-1 bg-secondary rounded-r-full"></div>
-                <div class="flex items-center gap-6 flex-1">
-                    <div class="w-14 h-14 bg-surface-container-lowest rounded-xl flex items-center justify-center text-primary shadow-sm">
-                        <span class="material-symbols-outlined text-3xl">${icon}</span>
+                <div class="flex items-center gap-3 sm:gap-6 flex-1 min-w-0">
+                    <div class="w-10 h-10 sm:w-14 sm:h-14 shrink-0 bg-surface-container-lowest rounded-xl flex items-center justify-center text-primary shadow-sm">
+                        <span class="material-symbols-outlined text-2xl sm:text-3xl">${icon}</span>
                     </div>
-                    <div>
-                        <h3 class="text-lg font-bold font-headline text-primary">${esc(ev.name)}</h3>
+                    <div class="min-w-0">
+                        <h3 class="text-base sm:text-lg font-bold font-headline text-primary">${esc(ev.name)}</h3>
                         <p class="text-sm text-on-surface-variant">${date} • ${esc(ev.category)}</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-8">
+                <div class="flex items-center gap-8 shrink-0">
                     <div class="text-right">
-                        <div class="text-sm font-bold text-secondary">POINTS EARNED</div>
+                        <div class="hidden sm:block text-sm font-bold text-secondary">POINTS EARNED</div>
                         <div class="text-2xl font-extrabold font-headline text-primary">+${a.points_awarded}</div>
                         ${meetings ? `<div class="text-sm font-semibold text-on-surface-variant">${meetings}</div>` : ''}
                     </div>
-                    <div class="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                    <div class="hidden sm:flex w-12 h-12 rounded-full bg-secondary/10 items-center justify-center text-secondary">
                         <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">check_circle</span>
                     </div>
                 </div>

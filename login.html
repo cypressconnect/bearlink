@@ -103,6 +103,14 @@ tailwind.config = {
                 <p id="pwHint" class="hidden text-xs text-on-surface-variant mt-1.5">At least 8 characters.</p>
             </div>
 
+            <!-- Sign-up only -->
+            <div id="confirmField" class="hidden">
+                <label for="confirmPassword" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Confirm Password</label>
+                <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password"
+                    placeholder="••••••••"
+                    class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 text-on-surface"/>
+            </div>
+
             <button type="submit" id="submitBtn"
                 class="w-full py-3.5 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary-container transition-colors flex items-center justify-center gap-2 mt-2">
                 <span id="btnLabel">Sign in</span>
@@ -150,6 +158,8 @@ const els = {
     fullName: document.getElementById('fullName'),
     email  : document.getElementById('email'),
     pw     : document.getElementById('password'),
+    confirmBox: document.getElementById('confirmField'),
+    confirm: document.getElementById('confirmPassword'),
     title  : document.getElementById('cardTitle'),
     blurb  : document.getElementById('cardBlurb'),
     label  : document.getElementById('btnLabel'),
@@ -193,7 +203,9 @@ function setMode(which) {
     els.name.classList.toggle('hidden', !up)
     els.emailHint.classList.toggle('hidden', !up)
     els.pwHint.classList.toggle('hidden', !up)
+    els.confirmBox.classList.toggle('hidden', !up)
     els.fullName.required = up
+    els.confirm.required  = up
     els.pw.autocomplete = up ? 'new-password' : 'current-password'
 
     els.title.textContent = up ? 'Create your account' : 'Welcome back'
@@ -218,6 +230,7 @@ if (params.get('mode') === 'signup') setMode('signup')
 document.getElementById('togglePw').addEventListener('click', () => {
     const hidden = els.pw.type === 'password'
     els.pw.type = hidden ? 'text' : 'password'
+    els.confirm.type = els.pw.type
     document.getElementById('pwIcon').textContent = hidden ? 'visibility' : 'visibility_off'
 })
 
@@ -243,6 +256,11 @@ els.form.addEventListener('submit', async (e) => {
     const password = els.pw.value
 
     if (mode === 'signup') {
+        if (password !== els.confirm.value) {
+            showError('Passwords do not match.')
+            els.confirm.focus()
+            return
+        }
         busy(true, 'Creating…')
         const { error, needsConfirmation } = await signUpStudent({
             fullName: els.fullName.value, email, password,

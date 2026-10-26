@@ -284,7 +284,7 @@ fetchLeaderboard().then(members => {
     document.getElementById('memberCount').textContent = `${members.length} total members`
 }).catch(err => {
     document.getElementById('leaderboardBody').innerHTML =
-        `<tr><td colspan="4" class="px-4 sm:px-8 py-8 text-center text-error">Failed to load: ${err.message}</td></tr>`
+        `<tr><td colspan="4" class="px-4 sm:px-8 py-8 text-center text-error">Failed to load: ${esc(err.message)}</td></tr>`
 })
 
 document.getElementById('gradeFilter').addEventListener('change', applyFilters)

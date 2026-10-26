@@ -406,7 +406,7 @@ import { requireAdmin, initAuthNav } from './js/auth.js'
 import {
     CATEGORIES, categoryInfo, fetchLeaderboard,
     createEvent, deleteEvent, createMember, deleteMember,
-    fetchEventsWithCounts, sheetHealth,
+    fetchEventsWithCounts, fetchAllAssignments, sheetHealth,
     fetchTimeline, createTimelineEvent, updateTimelineEvent, deleteTimelineEvent,
     fetchAccessCodes, updateAccessCodes,
 } from './js/data.js'
@@ -503,7 +503,9 @@ window.deleteMemberRow = async (id) => {
     if (!confirm(`Delete ${name || 'this member'}?\n\nThis removes all of their points and deletes their row from the Google Sheet. It cannot be undone.`)) return
     try {
         await deleteMember(id)
+        reportData = null
         loadMembers(document.getElementById('memberSearchInput').value)
+        loadEvents()   // their points came off each event's "members awarded" count
     } catch (err) {
         alert('Could not delete member: ' + err.message)
     }
@@ -592,10 +594,10 @@ async function loadEvents() {
                     </div>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
-                    <a href="admin-assign.html?event=${ev.id}" class="text-secondary opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Assign points">
+                    <a href="admin-assign.html?event=${ev.id}" class="text-secondary [@media(hover:hover)]:opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1" title="Assign points">
                         <span class="material-symbols-outlined text-sm">how_to_reg</span>
                     </a>
-                    <button onclick="removeEvent('${ev.id}')" class="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1" title="Delete event">
+                    <button onclick="removeEvent('${ev.id}')" class="text-error [@media(hover:hover)]:opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity p-1" title="Delete event">
                         <span class="material-symbols-outlined text-sm">close</span>
                     </button>
                 </div>
@@ -625,6 +627,7 @@ window.removeEvent = async (id) => {
                 `Delete the column by hand, otherwise the next sheet import will recreate the event.`
             )
         }
+        reportData = null
         loadEvents()
         loadMembers(document.getElementById('memberSearchInput').value)
     } catch (err) {
@@ -741,7 +744,10 @@ codesForm.addEventListener('submit', async (e) => {
         member_code: codesForm.elements.member_code.value.trim(),
         admin_code : codesForm.elements.admin_code.value.trim(),
     }
-    if (savedCodes && next.member_code === savedCodes.member_code && next.admin_code === savedCodes.admin_code) return
+    if (savedCodes && next.member_code === savedCodes.member_code && next.admin_code === savedCodes.admin_code) {
+        codesStatus.innerHTML = `<span class="text-on-surface-variant">No changes to save.</span>`
+        return
+    }
     if (!confirm('Save the new codes?\n\nEveryone who signed in with an old code will need the new one.')) return
     try {
         savedCodes = await updateAccessCodes(next)
@@ -894,12 +900,8 @@ async function loadReport() {
         const eventIds = (events ?? []).map(e => e.id)
         let attendanceMap = {}
         if (eventIds.length > 0) {
-            const { data: assignments, error: aErr } = await supabase
-                .from('point_assignments')
-                .select('event_id')
-                .in('event_id', eventIds)
-            if (aErr) throw aErr
-            ;(assignments ?? []).forEach(a => {
+            const assignments = await fetchAllAssignments('event_id', eventIds)
+            assignments.forEach(a => {
                 attendanceMap[a.event_id] = (attendanceMap[a.event_id] || 0) + 1
             })
         }

@@ -235,13 +235,23 @@ if (info) {
 }
 
 // ── Members + who already has this event ─────────────────────
-const [{ data: members }, { data: existing }] = await Promise.all([
+const [{ data: members, error: memErr }, { data: existing, error: paErr }] = await Promise.all([
     supabase.from('members')
         .select('id, name, first_name, last_name, total_points, grade, student_id')
         .order('last_name'),
     supabase.from('point_assignments')
         .select('member_id, points_awarded').eq('event_id', eventId),
 ])
+
+// Without this a failed load looks like an empty chapter ("No members
+// found"), and submitting would overwrite points nobody could see.
+if (memErr || paErr) {
+    document.getElementById('memberGrid').innerHTML =
+        `<div class="col-span-3 py-12 text-center text-error">Could not load members: ${esc((memErr ?? paErr).message)}. Reload the page to try again.</div>`
+    submitBtn.disabled = true
+    submitBtn.classList.add('opacity-40', 'cursor-not-allowed')
+    await new Promise(() => {})   // stop here; nothing below should run
+}
 
 const allMembers  = members ?? []
 const alreadyHas  = new Map((existing ?? []).map(a => [a.member_id, a.points_awarded]))

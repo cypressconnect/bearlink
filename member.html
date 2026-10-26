@@ -147,7 +147,7 @@ if (!memberId) {
         document.getElementById('memberMeta').textContent   =
             // Any student can open this page, so no student ID here.
             (m.grade ? `Grade ${m.grade}` : 'Chapter member')
-        document.getElementById('memberPoints').textContent = m.total_points.toLocaleString()
+        document.getElementById('memberPoints').textContent = (m.total_points ?? 0).toLocaleString()
 
         // Badges
         const badges = document.getElementById('memberBadges')
@@ -193,7 +193,7 @@ if (!memberId) {
         }).join('')
     }).catch(err => {
         document.getElementById('memberName').textContent = 'Error loading member'
-        document.getElementById('eventHistory').innerHTML = `<p class="text-error py-4">${err.message}</p>`
+        document.getElementById('eventHistory').innerHTML = `<p class="text-error py-4">${esc(err.message)}</p>`
     })
 }
 </script>

@@ -454,7 +454,8 @@ Deno.serve(async (req) => {
       // ── Add a column for a brand-new event ────────────────────
       case 'add_event_column': {
         const { data: ev, error } = await sb
-          .from('events').select('id, name, category, sheet_tab, sheet_header').eq('id', body.event_id).single()
+          // point_value is the weight added to a weighted (BAA) total below.
+          .from('events').select('id, name, category, point_value, sheet_tab, sheet_header').eq('id', body.event_id).single()
         if (error) throw new Error(`Event not found: ${error.message}`)
 
         // Attendance uses two fixed columns -- nothing to add.

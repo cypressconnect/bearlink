@@ -189,15 +189,33 @@ export async function fetchEvents() {
     return data
 }
 
+/**
+ * Every point_assignments row, a page at a time. Supabase returns at most
+ * 1000 rows per request, and a full year of events passes that, so a single
+ * select would quietly undercount.
+ */
+export async function fetchAllAssignments(columns, eventIds = null) {
+    const PAGE = 1000
+    const all  = []
+    for (let from = 0; ; from += PAGE) {
+        let q = supabase.from('point_assignments').select(columns)
+            .order('member_id').order('event_id').range(from, from + PAGE - 1)
+        if (eventIds) q = q.in('event_id', eventIds)
+        const { data, error } = await q
+        if (error) throw error
+        all.push(...(data ?? []))
+        if (!data || data.length < PAGE) return all
+    }
+}
+
 /** Events with how many members have been awarded each one. */
 export async function fetchEventsWithCounts() {
-    const [{ data: events, error: evErr }, { data: rows, error: paErr }] = await Promise.all([
+    const [{ data: events, error: evErr }, rows] = await Promise.all([
         supabase.from('events').select('*')
             .order('event_date', { ascending: false, nullsFirst: false }),
-        supabase.from('point_assignments').select('event_id, points_awarded'),
+        fetchAllAssignments('event_id, points_awarded'),
     ])
     if (evErr) throw evErr
-    if (paErr) throw paErr
 
     const counts = new Map()
     for (const r of rows ?? []) {

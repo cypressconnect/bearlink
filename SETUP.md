@@ -87,34 +87,30 @@ The spreadsheet must be shared with the service-account email as **Editor**.
 
 ### Accounts
 
-There are two kinds, and the difference is which table holds a row for them.
+Nobody has an account. Everyone signs in on `login.html` with a code and
+gets an anonymous session with no name or email attached.
 
-**Students** sign up themselves at `login.html` with their CFISD student
-address. The accepted shape is enforced by `SCHOOL_EMAIL_RE` in `js/auth.js`
-and by a CHECK constraint on `student_profiles`; change it in both places if
-the district ever changes format. A database trigger creates the profile row,
-so there is nothing to do by hand. Students read the whole site and change
-nothing.
+* **Members** use the member code (starts as `FBLA2627`) on the "Member
+  code" tab. They read the whole site and change nothing.
+* **Officers/admins** use the admin code (starts as `fblaadmin`) on the
+  "Admin" tab. That gives the session an `admin_profiles` row, so it can
+  reach the admin pages and write to the sheet.
 
-**Officers/admins** are created by you:
+Codes are not case sensitive. Setup, once (migration 009):
 
-```sql
--- 1. Authentication -> Users -> Add user (tick Auto Confirm User)
--- 2. then:
-insert into public.admin_profiles (id, name)
-select id, email from auth.users
-where email = 'your-admin-email@example.com'
-on conflict (id) do nothing;
-```
+1. Authentication -> Sign In / Providers -> turn on **Allow anonymous sign-ins**
+2. Run `supabase/migrations/009_member_code_login.sql` in the SQL Editor.
 
-Only accounts with an `admin_profiles` row reach the admin pages or write to
-the sheet. An admin address does not need to be a school address.
+Change either code from **admin.html -> Login Codes** (e.g. the member code
+to `FBLA2728` next year). Changing a code signs out everyone who used the
+old one, except the admin making the change. Change the admin code whenever
+an officer leaves.
 
 To see who has what:
 
 ```sql
-select (select count(*) from public.admin_profiles)   as admins,
-       (select count(*) from public.student_profiles) as students;
+select (select count(*) from public.admin_profiles where via_code) as code_admins,
+       (select count(*) from public.code_sessions)                 as member_logins;
 ```
 
 ### Who can see what

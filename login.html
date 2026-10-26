@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Admin Login | Bear Link</title>
+<title>Member Login | Bear Link</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
@@ -48,72 +48,36 @@ tailwind.config = {
 
         <!-- Tabs -->
         <div class="flex gap-1 p-1 bg-surface-container-low rounded-lg mb-8">
-            <button type="button" id="tab-signin"
+            <button type="button" id="tab-code"
                 class="flex-1 py-2.5 rounded-md text-sm font-bold bg-surface-container-lowest text-primary shadow-sm transition-all">
-                Sign in
+                Member code
             </button>
-            <button type="button" id="tab-signup"
+            <button type="button" id="tab-admin"
                 class="flex-1 py-2.5 rounded-md text-sm font-bold text-on-surface-variant hover:text-primary transition-all">
-                Create account
+                Admin
             </button>
         </div>
 
-        <h1 id="cardTitle" class="text-2xl font-extrabold font-headline text-primary mb-2">Welcome back</h1>
-        <p id="cardBlurb" class="text-on-surface-variant text-sm mb-8">Sign in to see the leaderboard, events and resources.</p>
+        <h1 id="cardTitle" class="text-2xl font-extrabold font-headline text-primary mb-2">Enter the member code</h1>
+        <p id="cardBlurb" class="text-on-surface-variant text-sm mb-8">Get the code from an officer. No account or email needed.</p>
 
-        <!-- Banners -->
+        <!-- Banner -->
         <div id="errorBanner" class="hidden mb-6 p-4 bg-error-container rounded-lg flex items-start gap-3">
             <span class="material-symbols-outlined text-error text-sm mt-0.5">error</span>
             <p id="errorMsg" class="text-sm text-error font-medium"></p>
         </div>
-        <div id="okBanner" class="hidden mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-600 rounded-lg flex items-start gap-3">
-            <span class="material-symbols-outlined text-emerald-700 text-sm mt-0.5">check_circle</span>
-            <p id="okMsg" class="text-sm text-emerald-900 font-medium"></p>
-        </div>
 
         <form id="authForm" class="space-y-5" novalidate>
-            <!-- Name: sign-up only -->
-            <div id="nameField" class="hidden">
-                <label for="fullName" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Full Name</label>
-                <input id="fullName" name="fullName" type="text" autocomplete="name"
-                    placeholder="Your full name"
-                    class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 text-on-surface placeholder-outline/60"/>
-            </div>
-
             <div>
-                <label for="email" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Email</label>
-                <input id="email" name="email" type="email" autocomplete="email" required
-                    placeholder="Your school email"
-                    class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 text-on-surface placeholder-outline/60"/>
-                <p id="emailHint" class="hidden text-xs text-on-surface-variant mt-1.5">
-                    Use your CFISD student email address.
-                </p>
-            </div>
-
-            <div>
-                <label for="password" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Password</label>
-                <div class="relative">
-                    <input id="password" name="password" type="password" autocomplete="current-password" required
-                        placeholder="••••••••"
-                        class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 text-on-surface pr-12"/>
-                    <button type="button" id="togglePw" class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined text-xl" id="pwIcon">visibility_off</span>
-                    </button>
-                </div>
-                <p id="pwHint" class="hidden text-xs text-on-surface-variant mt-1.5">At least 8 characters.</p>
-            </div>
-
-            <!-- Sign-up only -->
-            <div id="confirmField" class="hidden">
-                <label for="confirmPassword" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Confirm Password</label>
-                <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password"
-                    placeholder="••••••••"
-                    class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20 text-on-surface"/>
+                <label id="codeLabel" for="code" class="block text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1.5">Member Code</label>
+                <input id="code" name="code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"
+                    placeholder="Enter code"
+                    class="w-full px-4 py-3 bg-surface-container-low border-none rounded-lg text-lg font-bold tracking-[0.2em] uppercase focus:ring-2 focus:ring-primary/20 text-on-surface placeholder:font-normal placeholder:tracking-normal placeholder:normal-case placeholder-outline/60"/>
             </div>
 
             <button type="submit" id="submitBtn"
                 class="w-full py-3.5 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary-container transition-colors flex items-center justify-center gap-2 mt-2">
-                <span id="btnLabel">Sign in</span>
+                <span id="btnLabel">Enter</span>
                 <span id="btnSpinner" class="hidden material-symbols-outlined text-sm animate-spin">progress_activity</span>
             </button>
         </form>
@@ -127,10 +91,10 @@ tailwind.config = {
 </div>
 
 <script type="module">
-import { signIn, signUpStudent, getIdentity, schoolEmailError } from './js/auth.js'
+import { signInWithCode, getIdentity } from './js/auth.js'
 
 const params = new URLSearchParams(location.search)
-// Where to go after signing in. A student bounced off an admin page arrives
+// Where to go after signing in. A member bounced off an admin page arrives
 // here with next=admin.html; sending them back would just bounce them again,
 // so admin destinations are only honoured for admins.
 const ADMIN_PAGES   = /^admin(-assign|-member)?\.html/
@@ -143,104 +107,63 @@ const nextFor = (isAdmin) =>
         ? requestedNext
         : (isAdmin ? 'admin.html' : 'points.html')
 
-// Already signed in? Go where they were headed. A failure here must not
-// stop the form from rendering -- this is the page people land on when
-// something else has already gone wrong.
+// Already signed in? Go where they were headed -- unless a member opened
+// the Admin tab to step up. A failure here must not stop the form from
+// rendering -- this is the page people land on when something else has
+// already gone wrong.
 let me = null
 try { me = await getIdentity() } catch { me = null }
-if (me) {
+if (me && (me.isAdmin || params.get('mode') !== 'admin')) {
     location.replace(nextFor(me.isAdmin))
 }
 
 const els = {
-    form   : document.getElementById('authForm'),
-    name   : document.getElementById('nameField'),
-    fullName: document.getElementById('fullName'),
-    email  : document.getElementById('email'),
-    pw     : document.getElementById('password'),
-    confirmBox: document.getElementById('confirmField'),
-    confirm: document.getElementById('confirmPassword'),
-    title  : document.getElementById('cardTitle'),
-    blurb  : document.getElementById('cardBlurb'),
-    label  : document.getElementById('btnLabel'),
-    spinner: document.getElementById('btnSpinner'),
-    btn    : document.getElementById('submitBtn'),
-    errBox : document.getElementById('errorBanner'),
-    errMsg : document.getElementById('errorMsg'),
-    okBox  : document.getElementById('okBanner'),
-    okMsg  : document.getElementById('okMsg'),
-    tabIn  : document.getElementById('tab-signin'),
-    tabUp  : document.getElementById('tab-signup'),
-    emailHint: document.getElementById('emailHint'),
-    pwHint : document.getElementById('pwHint'),
+    form      : document.getElementById('authForm'),
+    code      : document.getElementById('code'),
+    codeLabel : document.getElementById('codeLabel'),
+    title     : document.getElementById('cardTitle'),
+    blurb     : document.getElementById('cardBlurb'),
+    label     : document.getElementById('btnLabel'),
+    spinner   : document.getElementById('btnSpinner'),
+    btn       : document.getElementById('submitBtn'),
+    errBox    : document.getElementById('errorBanner'),
+    errMsg    : document.getElementById('errorMsg'),
+    tabCode   : document.getElementById('tab-code'),
+    tabAdmin  : document.getElementById('tab-admin'),
 }
 
-let mode = 'signin'
+let mode = 'code'
 
 const showError = (msg) => {
-    els.okBox.classList.add('hidden')
     els.errMsg.textContent = msg
     els.errBox.classList.remove('hidden')
 }
-const showOk = (msg) => {
-    els.errBox.classList.add('hidden')
-    els.okMsg.textContent = msg
-    els.okBox.classList.remove('hidden')
-}
-const clearBanners = () => {
-    els.errBox.classList.add('hidden')
-    els.okBox.classList.add('hidden')
-}
+const clearError = () => els.errBox.classList.add('hidden')
 
-const ACTIVE   = ['bg-surface-container-lowest', 'text-primary', 'shadow-sm']
-const INACTIVE = ['text-on-surface-variant']
+const ACTIVE = ['bg-surface-container-lowest', 'text-primary', 'shadow-sm']
 
 function setMode(which) {
     mode = which
-    clearBanners()
-    const up = mode === 'signup'
+    clearError()
+    const admin = mode === 'admin'
 
-    els.name.classList.toggle('hidden', !up)
-    els.emailHint.classList.toggle('hidden', !up)
-    els.pwHint.classList.toggle('hidden', !up)
-    els.confirmBox.classList.toggle('hidden', !up)
-    els.fullName.required = up
-    els.confirm.required  = up
-    els.pw.autocomplete = up ? 'new-password' : 'current-password'
+    els.codeLabel.textContent = admin ? 'Admin Code' : 'Member Code'
+    els.title.textContent = admin ? 'Enter the admin code' : 'Enter the member code'
+    els.blurb.textContent = admin
+        ? 'Officers and advisers only.'
+        : 'Get the code from an officer. No account or email needed.'
+    document.title = `${admin ? 'Admin Login' : 'Member Login'} | Bear Link`
 
-    els.title.textContent = up ? 'Create your account' : 'Welcome back'
-    els.blurb.textContent = up
-        ? 'Students — sign up with your school email to see the leaderboard, events and resources.'
-        : 'Sign in to see the leaderboard, events and resources.'
-    els.label.textContent = up ? 'Create account' : 'Sign in'
-
-    els.tabUp.classList.toggle('bg-surface-container-lowest', up)
-    els.tabUp.classList.toggle('text-primary', up)
-    els.tabUp.classList.toggle('shadow-sm', up)
-    els.tabIn.classList.toggle('bg-surface-container-lowest', !up)
-    els.tabIn.classList.toggle('text-primary', !up)
-    els.tabIn.classList.toggle('shadow-sm', !up)
+    ACTIVE.forEach(c => {
+        els.tabAdmin.classList.toggle(c, admin)
+        els.tabCode.classList.toggle(c, !admin)
+    })
+    els.code.focus()
 }
 
-els.tabIn.addEventListener('click', () => setMode('signin'))
-els.tabUp.addEventListener('click', () => setMode('signup'))
-if (params.get('mode') === 'signup') setMode('signup')
-
-// Password visibility
-document.getElementById('togglePw').addEventListener('click', () => {
-    const hidden = els.pw.type === 'password'
-    els.pw.type = hidden ? 'text' : 'password'
-    els.confirm.type = els.pw.type
-    document.getElementById('pwIcon').textContent = hidden ? 'visibility' : 'visibility_off'
-})
-
-// Validate the school email as they type, but only while signing up --
-// admins sign in with an address that will never match.
-els.email.addEventListener('blur', () => {
-    if (mode !== 'signup' || !els.email.value.trim()) return
-    const problem = schoolEmailError(els.email.value)
-    if (problem) showError(problem); else clearBanners()
-})
+els.tabCode.addEventListener('click', () => setMode('code'))
+els.tabAdmin.addEventListener('click', () => setMode('admin'))
+setMode(params.get('mode') === 'admin' ? 'admin' : 'code')
 
 function busy(on, label) {
     els.btn.disabled = on
@@ -250,60 +173,18 @@ function busy(on, label) {
 
 els.form.addEventListener('submit', async (e) => {
     e.preventDefault()
-    clearBanners()
+    clearError()
 
-    const email    = els.email.value.trim()
-    const password = els.pw.value
-
-    if (mode === 'signup') {
-        if (password !== els.confirm.value) {
-            showError('Passwords do not match.')
-            els.confirm.focus()
-            return
-        }
-        busy(true, 'Creating…')
-        const { error, needsConfirmation } = await signUpStudent({
-            fullName: els.fullName.value, email, password,
-        })
-        if (error) {
-            showError(error.message.includes('already registered')
-                ? 'That email already has an account. Try signing in instead.'
-                : error.message)
-            busy(false, 'Create account')
-            return
-        }
-        if (needsConfirmation) {
-            // Switch tabs first: setMode clears the banners.
-            setMode('signin')
-            busy(false, 'Sign in')
-            showOk(`Account created. Check ${email} for a confirmation link, then come back and sign in.`)
-            return
-        }
-        location.replace(nextFor(false))
-        return
-    }
-
-    busy(true, 'Signing in…')
-    const { error } = await signIn(email, password)
+    const admin = mode === 'admin'
+    busy(true, 'Checking…')
+    const { error } = await signInWithCode(els.code.value, { admin })
     if (error) {
-        const msg = /not confirmed/i.test(error.message)
-            ? 'Your account still needs confirming. Check your school email for the link — if it never arrived, ask an officer to confirm you.'
-            : error.message === 'Invalid login credentials'
-                ? 'Incorrect email or password.'
-                : error.message
-        showError(msg)
-        busy(false, 'Sign in')
+        showError(error.message)
+        busy(false, 'Enter')
+        els.code.select()
         return
     }
-
-    const who = await getIdentity({ refresh: true })
-    if (!who) { showError('Signed in, but your account has no access yet. Ask an officer.'); busy(false, 'Sign in'); return }
-    if (!who.isAdmin && !who.profile) {
-        showError('That account is not set up as a student or an officer. Ask an officer to check it.')
-        busy(false, 'Sign in')
-        return
-    }
-    location.replace(nextFor(who.isAdmin))
+    location.replace(nextFor(admin))
 })
 </script>
 </body>

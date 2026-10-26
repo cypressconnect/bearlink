@@ -234,6 +234,28 @@ tailwind.config = {
                         Not checked yet.
                     </div>
                 </div>
+
+                <!-- Login codes -->
+                <div class="bg-surface-container-low rounded-xl p-6 border-l-4 border-primary">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings:'FILL' 1">key</span>
+                        <span class="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Login Codes</span>
+                    </div>
+                    <form id="codesForm" class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Member Code</label>
+                            <input name="member_code" type="text" autocomplete="off" spellcheck="false" placeholder="Loading…"
+                                class="w-full bg-surface border border-outline-variant rounded-lg text-sm font-bold tracking-widest text-on-surface focus:ring-1 focus:ring-secondary"/>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-1 block">Admin Code</label>
+                            <input name="admin_code" type="text" autocomplete="off" spellcheck="false" placeholder="Loading…"
+                                class="w-full bg-surface border border-outline-variant rounded-lg text-sm font-bold tracking-widest text-on-surface focus:ring-1 focus:ring-secondary"/>
+                        </div>
+                        <button type="submit" class="w-full bg-primary text-on-primary py-2 rounded-lg text-sm font-bold hover:bg-primary-container transition-colors">Save codes</button>
+                    </form>
+                    <p id="codesStatus" class="text-xs text-on-surface-variant mt-3">Not case sensitive. Changing a code signs out everyone who used the old one, except you.</p>
+                </div>
             </div>
         </div>
         <!-- ── END MEMBER POINTS PANEL ────────────────────────── -->
@@ -386,6 +408,7 @@ import {
     createEvent, deleteEvent, createMember, deleteMember,
     fetchEventsWithCounts, sheetHealth,
     fetchTimeline, createTimelineEvent, updateTimelineEvent, deleteTimelineEvent,
+    fetchAccessCodes, updateAccessCodes,
 } from './js/data.js'
 
 await requireAdmin()
@@ -697,6 +720,36 @@ window.checkSheet = async () => {
         btn.disabled = false
     }
 }
+
+// ── Login codes ──────────────────────────────────────────────
+const codesForm   = document.getElementById('codesForm')
+const codesStatus = document.getElementById('codesStatus')
+let savedCodes    = null
+
+fetchAccessCodes().then(row => {
+    savedCodes = row
+    codesForm.elements.member_code.value = row?.member_code ?? ''
+    codesForm.elements.admin_code.value  = row?.admin_code ?? ''
+}).catch(err => {
+    codesStatus.innerHTML = `<span class="text-error">Could not load the codes: ${esc(err.message)}.
+        If this mentions access_codes, run supabase/migrations/009_member_code_login.sql first.</span>`
+})
+
+codesForm.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const next = {
+        member_code: codesForm.elements.member_code.value.trim(),
+        admin_code : codesForm.elements.admin_code.value.trim(),
+    }
+    if (savedCodes && next.member_code === savedCodes.member_code && next.admin_code === savedCodes.admin_code) return
+    if (!confirm('Save the new codes?\n\nEveryone who signed in with an old code will need the new one.')) return
+    try {
+        savedCodes = await updateAccessCodes(next)
+        codesStatus.innerHTML = `<span class="text-emerald-700 font-semibold">Saved.</span>`
+    } catch (err) {
+        codesStatus.innerHTML = `<span class="text-error">${esc(err.message)}</span>`
+    }
+})
 
 // ── Search ───────────────────────────────────────────────────
 let searchTimer

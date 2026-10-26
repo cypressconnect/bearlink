@@ -1,29 +1,17 @@
 // ── Auth helpers ─────────────────────────────────────────────
 //
-// Two kinds of account:
-//   admin   – a row in admin_profiles. Full access, including admin pages.
-//   student – a row in student_profiles. Reads everything, edits nothing.
-//   nobody  – signed out. Homepage only.
+// Two ways in:
+//   admin  – typed the admin code. Gets a row in admin_profiles. Full
+//            access, including admin pages.
+//   member – typed the member code. Reads everything, edits nothing.
 //
-// Access is enforced in the database by RLS (migration 005). The gates here
-// exist so people see a login screen instead of an empty page.
+// Both get an anonymous session with no name or email attached.
+//   nobody – signed out. Homepage only.
+//
+// Access is enforced in the database by RLS (migrations 005 and 009). The
+// gates here exist so people see a login screen instead of an empty page.
 
 import { supabase } from './supabase-client.js'
-
-/** A CFISD student address: 4 letters, 4 digits, @stu.cfisd.net */
-export const SCHOOL_EMAIL_RE = /^[a-z]{4}[0-9]{4}@stu\.cfisd\.net$/i
-
-export function schoolEmailError(email) {
-    const value = String(email ?? '').trim()
-    if (!value) return 'Enter your school email.'
-    if (!value.toLowerCase().endsWith('@stu.cfisd.net')) {
-        return 'Use your CFISD student email address.'
-    }
-    if (!SCHOOL_EMAIL_RE.test(value)) {
-        return 'That is not a valid CFISD student email address.'
-    }
-    return null
-}
 
 // ── Session ──────────────────────────────────────────────────
 
@@ -43,7 +31,9 @@ export async function getSession() {
 let cachedIdentity = null
 
 /**
- * Who is signed in: { session, isAdmin, profile, displayName } or null.
+ * Who is signed in: { session, isAdmin, isMember, displayName } or null.
+ * A session that is neither an admin nor a current code login -- an old
+ * student account, or a code from last year -- counts as signed out.
  * Cached for the life of the page so a gate plus a nav render is one lookup.
  */
 export async function getIdentity({ refresh = false } = {}) {
@@ -52,24 +42,25 @@ export async function getIdentity({ refresh = false } = {}) {
     const session = await getSession()
     if (!session) { cachedIdentity = null; return null }
 
-    // Each visitor can only ever read their own row in one of these, so the
-    // other comes back empty. Treat an error as "no row" rather than letting
-    // it take down the whole page.
-    const [admin, profile] = await Promise.all([
+    // A visitor can only ever read their own admin_profiles row, so this
+    // comes back empty for members. Treat an error as "no" rather than
+    // letting it take down the whole page.
+    const [admin, isMember] = await Promise.all([
         supabase.from('admin_profiles').select('id, name')
             .eq('id', session.user.id).maybeSingle()
             .then(r => r.data).catch(() => null),
-        supabase.from('student_profiles').select('id, full_name, email, member_id')
-            .eq('id', session.user.id).maybeSingle()
-            .then(r => r.data).catch(() => null),
+        supabase.rpc('is_chapter_user')
+            .then(r => !!r.data).catch(() => false),
     ])
+
+    if (!admin && !isMember) { cachedIdentity = null; return null }
 
     cachedIdentity = {
         session,
         user       : session.user,
         isAdmin    : !!admin,
-        profile    : profile ?? null,
-        displayName: profile?.full_name ?? admin?.name ?? session.user.email ?? 'Signed in',
+        isMember   : true,
+        displayName: admin ? (admin.name ?? 'Admin') : 'Member',
     }
     return cachedIdentity
 }
@@ -92,9 +83,9 @@ function holdPaint() {
     return () => document.getElementById('auth-gate')?.remove()
 }
 
-function goToLogin() {
+function goToLogin({ admin = false } = {}) {
     const next = encodeURIComponent(location.pathname.split('/').pop() + location.search)
-    location.replace(`login.html?next=${next}`)
+    location.replace(`login.html?${admin ? 'mode=admin&' : ''}next=${next}`)
 }
 
 /**
@@ -137,9 +128,9 @@ export async function requireAdmin() {
         return await new Promise(() => {})
     }
 
-    if (!me) { goToLogin(); return await new Promise(() => {}) }
+    if (!me) { goToLogin({ admin: true }); return await new Promise(() => {}) }
     if (!me.isAdmin) {
-        // Signed in, but not an admin: send them somewhere they can use
+        // A member, not an admin: send them somewhere they can use
         // rather than bouncing them to a login screen they already passed.
         location.replace('points.html?denied=admin')
         return await new Promise(() => {})
@@ -148,47 +139,49 @@ export async function requireAdmin() {
     return me
 }
 
-// ── Sign in / up / out ───────────────────────────────────────
-
-/** Email + password. Works for admins and students alike. */
-export async function signIn(email, password) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: String(email ?? '').trim().toLowerCase(),
-        password,
-    })
-    if (!error) cachedIdentity = null
-    return { data, error }
-}
+// ── Sign in / out ─────────────────────────────────────────────
 
 /**
- * Create a student account.
+ * Sign in with a code: the member code, or the admin code if admin is true.
  *
- * The student_profiles row is written by a database trigger, so there is
- * nothing to insert here and no window where an account exists without a
- * profile. If the project has email confirmation switched on, signUp comes
- * back without a session -- that is not an error, they just have to confirm
- * first, so say so rather than looking broken.
+ * Starts an anonymous session (no name, no email) and asks the database
+ * whether the code is right. A wrong code leaves no session behind, so the
+ * next try starts clean. Needs "Allow anonymous sign-ins" switched on in
+ * the Supabase dashboard -- see migration 009.
  */
-export async function signUpStudent({ fullName, email, password }) {
-    const name = String(fullName ?? '').trim()
-    if (name.length < 2) return { error: { message: 'Enter your full name.' } }
+export async function signInWithCode(code, { admin = false } = {}) {
+    const value = String(code ?? '').trim()
+    if (!value) return { error: { message: `Enter the ${admin ? 'admin' : 'member'} code.` } }
 
-    const emailError = schoolEmailError(email)
-    if (emailError) return { error: { message: emailError } }
-
-    if (String(password ?? '').length < 8) {
-        return { error: { message: 'Password must be at least 8 characters.' } }
+    // Reuse an anonymous session (a member stepping up to admin, or someone
+    // retyping a code after it changed), but never attach a code to a real
+    // account like an old student or email-admin login.
+    let session = await getSession()
+    if (session && !session.user.is_anonymous) {
+        await supabase.auth.signOut()
+        session = null
+    }
+    const startedHere = !session
+    if (!session) {
+        const { data, error } = await supabase.auth.signInAnonymously()
+        if (error) {
+            return { error: /anonymous/i.test(error.message)
+                ? { message: 'Code login is not switched on yet. Ask an officer.' }
+                : error }
+        }
+        session = data.session
     }
 
-    const { data, error } = await supabase.auth.signUp({
-        email   : String(email).trim().toLowerCase(),
-        password,
-        options : { data: { full_name: name } },
-    })
-    if (error) return { error }
+    const fn = admin ? 'redeem_admin_code' : 'redeem_member_code'
+    const { data: ok, error } = await supabase.rpc(fn, { p_code: value })
+    if (error || !ok) {
+        if (startedHere) await supabase.auth.signOut()
+        cachedIdentity = null
+        return { error: error ?? { message: 'That code is not right. Check with an officer.' } }
+    }
 
     cachedIdentity = null
-    return { data, needsConfirmation: !data.session }
+    return { data: { session } }
 }
 
 export async function signOut(redirectTo = 'index.html') {

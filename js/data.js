@@ -379,6 +379,33 @@ export async function deleteTimelineEvent(id) {
     if (error) throw error
 }
 
+// ── Login codes ──────────────────────────────────────────────
+
+/** The member and admin codes. Admins only (migration 009). */
+export async function fetchAccessCodes() {
+    const { data, error } = await supabase
+        .from('access_codes').select('member_code, admin_code, updated_at').maybeSingle()
+    if (error) throw error
+    return data
+}
+
+/**
+ * Changing a code signs out everyone who used the old one -- apart from
+ * the admin making the change.
+ */
+export async function updateAccessCodes({ member_code, admin_code }) {
+    const member = String(member_code ?? '').trim()
+    const admin  = String(admin_code ?? '').trim()
+    if (member.length < 4 || admin.length < 4) throw new Error('Each code needs at least 4 characters.')
+    if (member.toUpperCase() === admin.toUpperCase()) throw new Error('The member and admin codes must be different.')
+    const { error } = await supabase
+        .from('access_codes')
+        .update({ member_code: member, admin_code: admin, updated_at: new Date().toISOString() })
+        .eq('id', true)
+    if (error) throw error
+    return { member_code: member, admin_code: admin }
+}
+
 /**
  * total_points is maintained by a database trigger on point_assignments,
  * so there is nothing to recompute here -- just read the fresh value.

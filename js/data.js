@@ -228,6 +228,37 @@ export async function fetchEventsWithCounts() {
 }
 
 /**
+ * Every event except meeting attendance, each with the members who were
+ * awarded it (A->Z). Attendance is left out: its two "events" only hold a
+ * meeting count per member, not a list of who came to what.
+ */
+export async function fetchEventAttendance() {
+    const [{ data: events, error: evErr }, { data: members, error: mErr }, rows] = await Promise.all([
+        supabase.from('events').select('id, name, category, event_date')
+            .neq('category', 'Attendance')
+            .order('event_date', { ascending: false, nullsFirst: false })
+            .order('name', { ascending: true }),
+        supabase.from('members').select('id, name'),
+        fetchAllAssignments('event_id, member_id'),
+    ])
+    if (evErr) throw evErr
+    if (mErr) throw mErr
+
+    const memberById = new Map((members ?? []).map(m => [m.id, m]))
+    const byEvent = new Map()
+    for (const r of rows) {
+        const m = memberById.get(r.member_id)
+        if (!m) continue
+        if (!byEvent.has(r.event_id)) byEvent.set(r.event_id, [])
+        byEvent.get(r.event_id).push(m)
+    }
+    return (events ?? []).map(e => ({
+        ...e,
+        attendees: (byEvent.get(e.id) ?? []).sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '')),
+    }))
+}
+
+/**
  * Create an event and add its column to the spreadsheet.
  * Rejects duplicates up front so the sheet never grows a second column
  * for the same thing.

@@ -83,11 +83,18 @@ tailwind.config = {
                 <p class="text-on-primary-container text-base sm:text-lg leading-relaxed font-medium opacity-90 mb-8">
                     Tracking excellence, leadership, and service. Every action brings you closer to the Nationals. Check your rank and see how you stack up against the best.
                 </p>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVHMkifrvvw0vtVqVDsq_sU2vqVFwK4AgpIcxCe6xxUuKxXA/viewform?usp=publish-editor" target="_blank" rel="noopener"
-                   class="inline-flex items-center gap-2 bg-secondary text-white px-6 py-3 rounded-md font-bold hover:opacity-90 transition-all shadow-lg">
-                    <span class="material-symbols-outlined text-sm">flag</span>
-                    Report a Discrepancy
-                </a>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVHMkifrvvw0vtVqVDsq_sU2vqVFwK4AgpIcxCe6xxUuKxXA/viewform?usp=publish-editor" target="_blank" rel="noopener"
+                       class="inline-flex items-center justify-center gap-2 bg-secondary text-white px-6 py-3 rounded-md font-bold hover:opacity-90 transition-all shadow-lg">
+                        <span class="material-symbols-outlined text-sm">flag</span>
+                        Report a Discrepancy
+                    </a>
+                    <a href="#chapterEvents"
+                       class="inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-md text-white px-6 py-3 rounded-md font-bold border border-white/20 hover:bg-white/20 transition-all">
+                        <span class="material-symbols-outlined text-sm">event</span>
+                        See Chapter Events
+                    </a>
+                </div>
             </div>
             <div class="absolute right-0 top-0 w-1/3 h-full opacity-10 pointer-events-none">
                 <span class="material-symbols-outlined text-[300px] absolute -right-20 -top-20">trending_up</span>
@@ -150,11 +157,33 @@ tailwind.config = {
         </div>
     </div>
 
+    <!-- Chapter Events: every event from the sheet, grouped by category, with who attended -->
+    <section id="chapterEvents" class="bg-surface-container-low rounded-xl overflow-hidden mb-12 scroll-mt-24">
+        <div class="p-5 sm:p-8 border-b border-outline-variant/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold font-headline text-primary">Chapter Events</h2>
+                <p class="text-sm text-on-surface-variant mt-1">Every event on the points sheet, and who attended. Tap an event to see the list.</p>
+            </div>
+            <div class="relative w-full md:w-auto">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                <input id="eventSearch" class="bg-white border-none rounded-lg pl-10 text-sm focus:ring-2 focus:ring-primary/20 w-full md:w-64 py-2" placeholder="Find an event or member..." type="text"/>
+            </div>
+        </div>
+        <!-- Category filter chips (populated by JS) -->
+        <div id="eventCategoryChips" class="px-5 sm:px-8 pt-5 flex gap-2 overflow-x-auto pb-1"></div>
+        <div id="eventGroups" class="p-5 sm:p-8 space-y-10">
+            <div class="py-8 text-center text-on-surface-variant">
+                <span class="material-symbols-outlined animate-spin text-2xl block mx-auto mb-2">progress_activity</span>
+                Loading events…
+            </div>
+        </div>
+    </section>
+
 </main>
 
 <script type="module">
 import { requireUser, initAuthNav } from './js/auth.js'
-import { fetchLeaderboard } from './js/data.js'
+import { fetchLeaderboard, fetchEventAttendance } from './js/data.js'
 
 await requireUser()
 initAuthNav()
@@ -289,6 +318,121 @@ fetchLeaderboard().then(members => {
 
 document.getElementById('gradeFilter').addEventListener('change', applyFilters)
 document.getElementById('memberSearch').addEventListener('input',  applyFilters)
+
+// ── Chapter Events ───────────────────────────────────────────
+// Sheet tabs in the order officers think of them. Attendance (meeting
+// counts) is not listed -- fetchEventAttendance leaves it out.
+const EVENT_SECTIONS = [
+    { value: 'Social',        label: 'Socials',                     icon: 'groups' },
+    { value: 'Service',       label: 'Service Projects',            icon: 'volunteer_activism' },
+    { value: 'Fundraising',   label: 'Fundraisers',                 icon: 'savings' },
+    { value: 'Committee',     label: 'Committee Meetings',          icon: 'diversity_3' },
+    { value: 'Conference',    label: 'Conferences',                 icon: 'emoji_events' },
+    { value: 'BAA',           label: 'Business Achievement Awards', icon: 'military_tech' },
+    { value: 'Miscellaneous', label: 'Other Points',                icon: 'star' },
+]
+
+let chapterEvents = []
+let eventCategory = ''   // '' = all
+
+function eventDate(ev) {
+    return ev.event_date
+        ? new Date(ev.event_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        : null
+}
+
+function eventCard(ev, openIt) {
+    const date = eventDate(ev)
+    const n    = ev.attendees.length
+    const list = n
+        ? `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 pt-4">${
+            ev.attendees.map(m => `
+                <a href="member.html?id=${m.id}" class="flex items-center gap-2 text-sm text-on-surface hover:text-secondary transition-colors min-w-0">
+                    <span class="material-symbols-outlined text-slate-400 text-base shrink-0">person</span>
+                    <span class="truncate">${esc(m.name)}</span>
+                </a>`).join('')
+          }</div>`
+        : `<p class="pt-4 text-sm text-on-surface-variant italic">No attendance recorded yet.</p>`
+    return `
+    <details class="group bg-surface-container-lowest rounded-xl shadow-sm" ${openIt ? 'open' : ''}>
+        <summary class="list-none cursor-pointer select-none p-4 sm:p-5 flex items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
+            <div class="min-w-0">
+                <h4 class="font-bold text-primary leading-tight break-words">${esc(ev.name)}</h4>
+                ${date ? `<p class="text-xs text-on-surface-variant mt-0.5">${date}</p>` : ''}
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <span class="px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-xs font-bold whitespace-nowrap">${n} member${n === 1 ? '' : 's'}</span>
+                <span class="material-symbols-outlined text-slate-400 transition-transform group-open:rotate-180">expand_more</span>
+            </div>
+        </summary>
+        <div class="px-4 sm:px-5 pb-5 border-t border-outline-variant/10">${list}</div>
+    </details>`
+}
+
+function renderCategoryChips() {
+    const counts = {}
+    for (const ev of chapterEvents) counts[ev.category] = (counts[ev.category] ?? 0) + 1
+    const chip = (value, label, count) => {
+        const on = eventCategory === value
+        return `<button type="button" data-cat="${value}"
+            class="shrink-0 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
+                on ? 'bg-primary text-on-primary shadow-sm' : 'bg-white text-on-surface-variant hover:text-primary'}">
+            ${label} <span class="${on ? 'opacity-80' : 'text-slate-400'}">${count}</span></button>`
+    }
+    document.getElementById('eventCategoryChips').innerHTML =
+        chip('', 'All', chapterEvents.length) +
+        EVENT_SECTIONS.filter(s => counts[s.value]).map(s => chip(s.value, s.label, counts[s.value])).join('')
+}
+
+function renderChapterEvents() {
+    const q = document.getElementById('eventSearch').value.toLowerCase().trim()
+    const groups = document.getElementById('eventGroups')
+
+    const html = EVENT_SECTIONS
+        .filter(s => !eventCategory || s.value === eventCategory)
+        .map(s => {
+            const events = chapterEvents
+                .filter(ev => ev.category === s.value)
+                .map(ev => {
+                    if (!q) return { ev, open: false }
+                    // A member search opens the events they attended.
+                    const byName   = ev.name.toLowerCase().includes(q)
+                    const byMember = ev.attendees.some(m => (m.name ?? '').toLowerCase().includes(q))
+                    return byName || byMember ? { ev, open: byMember && !byName } : null
+                })
+                .filter(Boolean)
+            if (!events.length) return ''
+            return `
+            <div>
+                <h3 class="flex items-center gap-2 text-lg font-bold font-headline text-primary mb-4">
+                    <span class="material-symbols-outlined text-secondary">${s.icon}</span>${s.label}
+                    <span class="text-sm font-medium text-on-surface-variant">· ${events.length} event${events.length === 1 ? '' : 's'}</span>
+                </h3>
+                <div class="space-y-3">${events.map(({ ev, open }) => eventCard(ev, open)).join('')}</div>
+            </div>`
+        }).join('')
+
+    groups.innerHTML = html || `<p class="py-8 text-center text-on-surface-variant">${
+        chapterEvents.length ? 'No events match your search.' : 'No events recorded yet this year.'}</p>`
+}
+
+document.getElementById('eventCategoryChips').addEventListener('click', e => {
+    const btn = e.target.closest('[data-cat]')
+    if (!btn) return
+    eventCategory = btn.dataset.cat
+    renderCategoryChips()
+    renderChapterEvents()
+})
+document.getElementById('eventSearch').addEventListener('input', renderChapterEvents)
+
+fetchEventAttendance().then(events => {
+    chapterEvents = events
+    renderCategoryChips()
+    renderChapterEvents()
+}).catch(err => {
+    document.getElementById('eventGroups').innerHTML =
+        `<p class="py-8 text-center text-error">Could not load events: ${esc(err.message)}</p>`
+})
 </script>
 
 </body>

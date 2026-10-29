@@ -61,7 +61,7 @@ tailwind.config = {
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex gap-4 min-[400px]:gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-slate-600 pb-1 whitespace-nowrap">Resources</a>
@@ -94,7 +94,7 @@ tailwind.config = {
     <!-- Bento Grid -->
     <div class="grid grid-cols-12 gap-6 sm:gap-8">
         <!-- Tabs -->
-        <div class="col-span-12 flex gap-2 sm:gap-4 mb-2 sm:mb-4 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div class="col-span-12 flex flex-wrap gap-2 sm:gap-4 mb-2 sm:mb-4">
             <button id="tab-members" onclick="switchTab('members')"
                 class="bg-primary text-on-primary shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors">
                 <span class="material-symbols-outlined text-sm">leaderboard</span> Member Points
@@ -113,7 +113,7 @@ tailwind.config = {
         <div id="panel-members" class="contents">
             <!-- Member Table -->
             <div class="col-span-12 lg:col-span-8">
-                <div class="bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
+                <div class="bg-surface-container-lowest rounded-xl p-3 sm:p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
                     <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
                         <h2 class="text-xl font-bold font-headline text-primary">Member Leaderboard Management</h2>
                         <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -353,7 +353,7 @@ tailwind.config = {
                     <div class="bg-surface-container-lowest rounded-xl p-5 sm:p-8 shadow-[0px_12px_32px_rgba(24,28,30,0.04)]">
                         <div class="flex items-center justify-between mb-2 flex-wrap gap-4">
                             <h2 class="text-xl font-bold font-headline text-primary">Upcoming Events on the Homepage</h2>
-                            <a href="index.html" target="_blank" class="text-xs font-bold text-secondary hover:text-primary flex items-center gap-1 transition-colors">
+                            <a href="index.html" target="_blank" rel="noopener" class="text-xs font-bold text-secondary hover:text-primary flex items-center gap-1 transition-colors">
                                 <span class="material-symbols-outlined text-sm">open_in_new</span> View homepage
                             </a>
                         </div>
@@ -478,21 +478,21 @@ function renderMembers(filter = '') {
         const initials = ((first[0] ?? '') + (last[0] ?? '')).toUpperCase() || '?'
         const display  = esc(m.name || `${first} ${last}`.trim())
         return `
-        <div class="flex items-center gap-3 sm:gap-4 bg-surface rounded-xl p-3 sm:p-4 transition-all hover:bg-surface-container-low">
+        <div class="flex items-center gap-2 sm:gap-4 bg-surface rounded-xl p-3 sm:p-4 transition-all hover:bg-surface-container-low">
             <div class="w-6 sm:w-8 shrink-0 font-bold text-primary text-sm sm:text-base">${String(m.rank).padStart(2,'0')}</div>
             <div class="hidden sm:flex w-10 h-10 shrink-0 rounded-full bg-secondary-fixed items-center justify-center text-on-secondary-fixed font-bold text-sm">
                 ${initials}
             </div>
             <div class="flex-1 min-w-0">
                 <p class="font-bold text-on-surface leading-tight break-words">${display}</p>
-                ${m.grade ? `<p class="text-xs text-on-surface-variant">Grade ${m.grade}</p>` : ''}
+                <p class="text-xs text-on-surface-variant"><span class="sm:hidden font-bold text-primary">${(m.total_points ?? 0).toLocaleString()} pts</span>${m.grade ? `<span class="sm:hidden"> · </span>Grade ${m.grade}` : ''}</p>
             </div>
-            <span class="shrink-0 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${(m.total_points ?? 0).toLocaleString()}</span>
+            <span class="hidden sm:inline shrink-0 bg-primary-container text-on-primary-container px-3 py-1 rounded-full text-sm font-bold">${(m.total_points ?? 0).toLocaleString()}</span>
             <div class="shrink-0 flex items-center gap-1 sm:gap-2">
-                <button onclick="deleteMemberRow('${m.id}')" class="p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
+                <button onclick="deleteMemberRow('${m.id}')" class="p-1.5 sm:p-2 rounded-lg text-error hover:bg-error/10 transition-colors" title="Delete">
                     <span class="material-symbols-outlined text-sm">delete</span>
                 </button>
-                <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-3 sm:px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center">Modify</a>
+                <a href="admin-member.html?id=${m.id}" onclick="sessionStorage.setItem('editMemberId','${m.id}')" class="bg-secondary text-white px-2 sm:px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:opacity-90 transition-opacity flex items-center justify-center" title="Modify"><span class="material-symbols-outlined text-sm sm:hidden">edit</span><span class="hidden sm:inline">Modify</span></a>
             </div>
         </div>
     `}).join('')

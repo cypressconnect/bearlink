@@ -62,7 +62,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
         </div>
     </div>
     <!-- Phones: the links above are hidden below md -->
-    <div id="mobileNav" class="md:hidden flex justify-center gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto">
+    <div id="mobileNav" class="md:hidden flex gap-4 min-[400px]:gap-5 px-4 pb-3 text-sm font-medium overflow-x-auto [&>*:first-child]:ml-auto [&>*:last-child]:mr-auto">
         <a href="index.html" class="text-slate-600 pb-1 whitespace-nowrap">Home</a>
         <a href="competitive-events.html" class="text-slate-600 pb-1 whitespace-nowrap">Events</a>
         <a href="resources.html" class="text-[#002D72] font-bold border-b-2 border-[#a04100] pb-1 whitespace-nowrap">Resources</a>
@@ -87,7 +87,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
     <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-6">
 
         <!-- Schoology -->
-        <a href="https://my.cfisd.net" target="_blank" class="md:col-span-2 lg:col-span-3 bg-surface-container-lowest p-5 sm:p-8 rounded-xl flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 group cursor-pointer border border-transparent hover:border-primary/10">
+        <a href="https://my.cfisd.net" target="_blank" rel="noopener" class="md:col-span-2 lg:col-span-3 bg-surface-container-lowest p-5 sm:p-8 rounded-xl flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 group cursor-pointer border border-transparent hover:border-primary/10">
             <div>
                 <div class="w-12 h-12 bg-primary-container rounded-lg flex items-center justify-center mb-6">
                     <span class="material-symbols-outlined text-white">school</span>
@@ -113,7 +113,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
                 <p class="text-on-primary-container text-sm max-w-xs">Manage your national membership, register for conferences, and explore competitive events.</p>
             </div>
             <div class="mt-8 z-10">
-                <a href="https://connect.fbla.org" target="_blank"
+                <a href="https://connect.fbla.org" target="_blank" rel="noopener"
                    class="inline-block bg-on-primary text-primary px-6 py-2 rounded-lg font-bold text-sm hover:bg-secondary-fixed transition-colors">
                     Access National Hub
                 </a>
@@ -132,7 +132,7 @@ h1, h2, h3 { font-family: 'Manrope', sans-serif; }
         </div>
 
         <!-- Instagram -->
-        <a href="https://www.instagram.com/bhs.fbla_/" target="_blank" class="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group flex items-center gap-6 cursor-pointer">
+        <a href="https://www.instagram.com/bhs.fbla_/" target="_blank" rel="noopener" class="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group flex items-center gap-6 cursor-pointer">
             <div class="w-16 h-16 rounded-xl bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center shrink-0">
                 <span class="material-symbols-outlined text-white text-3xl">photo_camera</span>
             </div>
